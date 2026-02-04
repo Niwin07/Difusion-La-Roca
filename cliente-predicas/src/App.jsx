@@ -12,7 +12,10 @@ function App() {
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/predicas')
+    // Usamos la variable de entorno. Si no existe (en local a veces), usa localhost como respaldo.
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    
+    fetch(`${apiUrl}/api/predicas`)
       .then(res => res.json())
       .then(data => {
         setPredicas(data);
