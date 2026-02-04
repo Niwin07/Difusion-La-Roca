@@ -1,60 +1,85 @@
-/* --- VARIABLES DE TEMA --- */
+/* --- VARIABLES DE TEMA PREMIUM --- */
 :root {
-  /* MODO CLARO (Dorado y Gris Suave) */
-  --bg-color: #f8fafc;       /* Fondo gris muy claro */
-  --card-bg: #ffffff;        /* Tarjetas blancas */
-  --text-primary: #d4af37;   /* TEXTO DORADO */
-  --text-secondary: #a3a3a3; /* Gris para subtítulos */
-  --accent: #d4af37;         /* Dorado para acentos */
-  --border: #e2e8f0;         /* Borde sutil */
-  --hover-bg: #f1f5f9;       /* Color hover claro */
-  --shadow: rgba(212, 175, 55, 0.15); /* Sombra dorada suave */
-  --button-text: #ffffff;    /* Texto blanco en botones dorados */
+  /* MODO CLARO (Día) */
+  --bg-color: #fcfcfc;       /* Casi blanco puro */
+  --card-bg: #ffffff;
   
-  /* Fuentes */
-  --font-title: 'Playfair Display', serif;
-  --font-body: 'Lato', sans-serif;
+  /* IMPORTANTE: Texto del cuerpo en gris oscuro para que SE LEA */
+  --text-body: #334155;      
+  
+  /* Dorado para títulos y acentos */
+  --text-primary: #b8860b;   /* Dorado oscuro (DarkGoldenRod) para que contraste en blanco */
+  --accent: #d4af37;         /* Dorado clásico brillante */
+  
+  --text-secondary: #94a3b8; /* Gris suave para fechas */
+  --border: #e2e8f0;
+  --hover-bg: #f8fafc;
+  --shadow: rgba(212, 175, 55, 0.1); /* Sombra dorada muy sutil */
+  --button-text: #ffffff;
 }
 
-/* MODO OSCURO (Azul Profundo y Blanco/Dorado) */
+/* MODO OSCURO (Noche) */
 .dark {
-  --bg-color: #0f172a;       /* Azul noche profundo */
-  --card-bg: #1e293b;        /* Gris azulado oscuro */
-  --text-primary: #f1f5f9;   /* Blanco suave */
-  --text-secondary: #94a3b8; /* Gris azulado claro */
-  --accent: #d4af37;         /* Dorado para acentos */
-  --border: #334155;         /* Borde oscuro */
-  --hover-bg: #334155;       /* Color hover oscuro */
-  --shadow: rgba(0, 0, 0, 0.3); /* Sombra oscura */
-  --button-text: #0f172a;    /* Texto oscuro en botones dorados */
+  --bg-color: #0f172a;       /* Azul noche */
+  --card-bg: #1e293b;
+  --text-body: #e2e8f0;      /* Texto claro */
+  --text-primary: #fbbf24;   /* Dorado brillante (Amber 400) para resaltar en oscuro */
+  --accent: #d4af37;
+  --text-secondary: #94a3b8;
+  --border: #334155;
+  --hover-bg: #334155;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --button-text: #0f172a;
 }
 
-/* --- RESET & GLOBAL --- */
+/* --- ESTILOS GLOBALES --- */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   background-color: var(--bg-color);
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  color: var(--text-body);
+  font-family: 'Lato', sans-serif;
   margin: 0;
   padding: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
-  display: flex;          /* Usar Flexbox para centrado */
-  justify-content: center; /* Centrar horizontalmente */
-  align-items: flex-start; /* Alinear arriba */
+  /* Centrado Vertical y Horizontal del Layout completo */
+  display: flex;
+  justify-content: center;
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* --- FONDO DE ÁGUILA (Watermark) --- */
+.eagle-background-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vw;
+  max-width: 600px;
+  opacity: 0.04; /* MUY sutil para no molestar */
+  z-index: -1;   /* Detrás de todo */
+  pointer-events: none;
+  color: var(--text-primary); /* Se tiñe del color del tema */
+}
+
+.eagle-bg {
+  width: 100%;
+  height: auto;
+}
+
+/* --- CONTENEDOR PRINCIPAL --- */
 .container {
+  width: 100%;
   max-width: 900px;
-  width: 100%;            /* Ocupar el ancho disponible hasta max-width */
   padding: 40px 20px;
-  /* margin: 0 auto; <- Ya no es necesario con Flexbox en body */
+  z-index: 1; /* Por encima del fondo */
 }
 
-/* --- HEADER CON ÁGUILA --- */
+/* --- HEADER --- */
 .hero {
   text-align: center;
   margin-bottom: 50px;
@@ -64,12 +89,13 @@ body {
   align-items: center;
 }
 
-.eagle-icon {
-  width: 80px;  /* Tamaño explícito */
-  height: 80px; /* Tamaño explícito */
+/* El Águila del Logo */
+.eagle-logo {
+  width: 100px;
+  height: 100px;
   margin-bottom: 20px;
-  color: var(--accent); /* Color dorado explícito */
-  fill: currentColor; /* Usar el color actual para el relleno */
+  color: var(--accent); /* Siempre dorada */
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
 .subtitle-badge {
@@ -87,22 +113,22 @@ body {
 }
 
 .hero h1 {
-  font-family: var(--font-title);
+  font-family: 'Playfair Display', serif;
   font-size: 3rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary); /* Título Dorado */
   margin: 0;
   letter-spacing: -1px;
 }
 
-/* --- BOTÓN DE TEMA --- */
+/* Botón Tema */
 .theme-toggle {
   position: absolute;
   top: 0;
   right: 0;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  color: var(--text-primary);
+  color: var(--text-body);
   padding: 10px;
   border-radius: 50%;
   cursor: pointer;
@@ -110,15 +136,13 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  z-index: 10; /* Asegurar que esté por encima */
 }
-
 .theme-toggle:hover {
   background: var(--hover-bg);
   transform: rotate(15deg);
 }
 
-/* --- BARRA DE CONTROLES --- */
+/* --- CONTROLES --- */
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -139,13 +163,12 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--text-body);
   outline: none;
   transition: border-color 0.2s;
 }
-
 .search-input:focus {
-  border-color: var(--accent); /* Borde dorado al enfocar */
+  border-color: var(--accent);
 }
 
 .search-icon {
@@ -162,23 +185,15 @@ select {
   border: 1px solid var(--border);
   padding: 0 15px;
   border-radius: 12px;
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  color: var(--text-body);
+  font-family: 'Lato', sans-serif;
   font-size: 0.95rem;
   cursor: pointer;
   height: 50px;
   outline: none;
-  -webkit-appearance: none; /* Eliminar estilo nativo en Safari/Chrome */
-  -moz-appearance: none;    /* Eliminar estilo nativo en Firefox */
-  appearance: none;         /* Eliminar estilo nativo estándar */
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23d4af37%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  background-position: right 15px top 50%;
-  background-size: 12px auto;
-  padding-right: 40px; /* Espacio para el icono */
 }
 
-/* --- LISTA DE TARJETAS --- */
+/* --- TARJETAS --- */
 .grid {
   display: flex;
   flex-direction: column;
@@ -220,9 +235,9 @@ select {
 
 .card h3 {
   margin: 0 0 5px 0;
-  font-family: var(--font-title);
+  font-family: 'Playfair Display', serif;
   font-size: 1.4rem;
-  color: var(--text-primary);
+  color: var(--text-primary); /* Título de tarjeta dorado */
 }
 
 .predicador {
@@ -230,58 +245,48 @@ select {
   font-style: italic;
 }
 
-/* Botón Play Redondo */
 .play-btn-round {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background-color: var(--accent); /* Fondo dorado */
-  color: var(--button-text);       /* Texto según el modo */
+  background-color: var(--accent);
+  color: var(--button-text);
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: transform 0.2s, background-color 0.2s;
+  transition: transform 0.2s;
   flex-shrink: 0;
 }
-
 .play-btn-round:hover {
   transform: scale(1.1);
-  filter: brightness(1.1); /* Aclarar un poco al hover */
 }
 
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-secondary);
-  font-style: italic;
-}
+.loading { text-align: center; padding: 40px; color: var(--text-secondary); }
 
-/* --- MOBILE RESPONSIVE --- */
+/* --- MOBILE --- */
 @media (max-width: 768px) {
   .hero h1 { font-size: 2.2rem; }
   
   .controls {
     flex-direction: column;
   }
-
   .search-box, select {
     width: 100%;
     flex: none;
   }
-
+  
   .card {
     flex-direction: column;
     align-items: flex-start;
   }
-
+  
   .play-btn-round {
     width: 100%;
     border-radius: 12px;
     height: 45px;
     margin-top: 15px;
   }
-  
   .play-btn-round::after {
     content: "ESCUCHAR AHORA";
     font-weight: 800;

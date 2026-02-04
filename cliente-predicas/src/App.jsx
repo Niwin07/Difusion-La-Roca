@@ -2,16 +2,79 @@ import { useEffect, useState, useMemo } from 'react';
 import { Play, Search, Sun, Moon } from 'lucide-react';
 import './App.css';
 
-// Componente SVG del Águila
-const EagleIcon = () => (
+// --- 1. ÁGUILA PRINCIPAL (Logo Detallado) ---
+const MainEagle = () => (
   <svg 
-    viewBox="0 0 24 24" 
-    className="eagle-icon"
-    xmlns="http://www.w3.org/2000/svg"
+    version="1.1" 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 360.081 360.081" 
+    className="eagle-logo"
+    fill="currentColor" // Hereda el color dorado
   >
-    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-    {/* Si tienes un SVG más detallado, pégalo aquí dentro del <svg> */}
+    <path d="M358.839,130.772c-0.666-0.618-1.432-0.931-2.278-0.931c-3.092,0-6.364,4.36-9.251,8.208
+      c-1.091,1.454-2.527,3.368-3.262,4.005c-0.086-1.467,1.019-5.633,1.85-8.764c2.099-7.914,4.27-16.096,0.735-18
+      c-0.368-0.198-0.757-0.299-1.157-0.299c-2.545,0-4.492,3.814-7.458,10.037c-2.322,4.871-5.211,10.934-7.597,10.934
+      c-0.152,0-0.302-0.026-0.456-0.081c-0.42-0.75-0.383-4.184-0.355-6.71c0.072-6.618,0.153-14.118-4.047-14.678
+      c-0.125-0.017-0.25-0.025-0.374-0.025c-3.63,0-5.748,6.793-7.99,13.986c-1.092,3.504-2.743,8.8-3.677,9.158
+      c-1.255-0.251-3.792-4.038-5.83-7.081c-3.343-4.99-6.533-9.684-9.487-9.441c-3.081,0.257-3.033,4.63-2.983,9.261
+      c0.041,3.803,0.093,8.537-1.81,9.561c-0.184,0.099-0.384,0.147-0.61,0.147c-2.116,0-5.594-3.792-8.389-6.839
+      c-3.259-3.552-5.348-5.73-7.152-5.73c-0.446,0-0.866,0.138-1.214,0.399c-1.985,1.489-1.873,5.99-1.754,10.755
+      c0.06,2.402,0.15,5.988-0.344,6.747c-0.916-0.125-3.528-1.861-5.844-3.398c-5.123-3.402-11.498-7.637-16.64-7.637
+      c-0.846,0-1.641,0.118-2.363,0.351c-5.578,1.796-6.648,4.437-7.356,6.185c-0.371,0.916-0.557,1.33-1.071,1.55
+      c-0.643,0.274-1.683,0.166-2.827-0.007c-0.757-0.115-1.541-0.233-2.374-0.233c-1.837,0-3.357,0.627-4.649,1.919
+      c-1.313,1.313-2.487,2.87-3.623,4.375c-1.689,2.24-3.286,4.356-4.824,4.933c-0.813,0.305-2.441,2.006-7.028,6.88
+      c-10.088,10.717-31.079,33.019-41.837,33.02c-2.013,0-3.517-0.806-4.597-2.464c-1.786-2.741-4.461-7.761-7.848-14.118
+      c-10.695-20.071-26.858-50.404-40.608-57.508C84.014,100.41,52.865,70.21,36.131,53.986c-9.126-8.848-12.368-11.908-14.058-11.908
+      c-0.479,0-0.899,0.218-1.154,0.599c-0.489,0.729-0.313,1.869,0.648,4.208c2.911,7.082,9.584,16.8,14.947,24.608
+      c3.098,4.511,6.55,9.539,7.476,11.644c-2.52-1.166-7.368-6.289-11.35-10.497C25.625,65.23,21.154,60.73,18.201,60.73
+      c-0.564,0-1.063,0.162-1.48,0.479c-2.261,1.718,0.989,6.297,6.928,14.243c2.367,3.167,5.852,7.83,6.29,9.438
+      c-1.261-0.268-4.061-2.483-6.338-4.285c-3.86-3.054-7.853-6.212-10.77-6.212c-0.56,0-1.073,0.115-1.526,0.341
+      c-0.667,0.333-1.102,0.876-1.26,1.571c-0.481,2.12,1.733,5.176,5.167,9.597c1.496,1.925,3.712,4.779,3.886,5.796
+      c-0.138,0.028-0.29,0.042-0.453,0.042c-1.562,0-3.849-1.215-6.061-2.391c-2.423-1.288-4.712-2.504-6.602-2.504
+      c-0.645,0-1.22,0.144-1.709,0.427c-2.151,1.245-0.206,5.114,1.854,9.209c0.563,1.121,1.296,2.578,1.563,3.347
+      c-0.509,0.071-1.345,0.072-1.95,0.073c-1.945,0.003-3.957,0.006-5.05,1.119c-0.46,0.467-0.697,1.086-0.687,1.79
+      c0.042,2.656,42.16,92.95,91.761,127.749c6.636,4.656,9.21,12.982,11.699,21.034c0.909,2.94,1.767,5.717,2.806,8.239
+      c0.374,0.909,0.379,1.669,0.017,2.394c-1.564,3.123-9.652,5.201-18.215,7.4c-4.941,1.27-10.049,2.582-15.005,4.292
+      c-61.734,7.598-61.731,11.024-61.731,12.672c0,3.317,2.206,4.9,3.817,6.056c1.625,1.166,1.86,1.497,1.573,2.215
+      c-0.376,0.941-1.279,1.909-2.234,2.934c-2.065,2.217-4.636,4.975-3.093,9.09c0.558,1.487,2.389,2.21,5.597,2.21
+      c5.546,0,14.548-2.09,21.165-3.857c-14.858,8.494-14.859,10.045-14.859,10.603c0,0.755,0,2.162,8.549,2.162
+      c8.537,0,22.06-1.545,32.073-5.898c3.096-1.346,5.734-2.64,8.285-3.89c2.409-1.181,4.688-2.298,6.98-3.265
+      c26.126,1.41,66.339,3.05,94.063,3.05c15.604,0,25.431-0.522,29.205-1.551c5.059-1.38,10.855-3.62,16.993-5.991
+      c11.324-4.375,23.033-8.9,32.104-8.9c1.857,0,3.552,0.198,5.037,0.589c13.288,3.496,18.372,14.022,18.422,14.128l0.201,0.427
+      l0.456,0.117c0.079,0.02,0.506,0.121,1.167,0.121c0,0,0,0,0,0c1.913,0,6.598-0.903,8.793-9.264c1.29-4.914-1.226-8.538-2.162-9.672
+      c0.235-2.671,0.776-15.885-10.323-24.661c-6.735-5.326-13.414-7.774-17.833-9.395c-2.089-0.766-4.951-1.815-4.901-2.371
+      c0.454-2.894,28.565-60.374,68.724-73.151c31.045-9.878,38.504-29.301,40.27-37.192
+      C360.485,136.389,360.254,132.086,358.839,130.772z"/>
   </svg>
+);
+
+// --- 2. ÁGUILA DE FONDO (Watermark) ---
+const BackgroundEagle = () => (
+  <div className="eagle-background-container">
+    <svg 
+      version="1.1" 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 235.512 235.512"
+      className="eagle-bg"
+      fill="currentColor"
+    >
+      <g>
+        <path d="M233.696,131.172l-38.391-17.801c-0.729-0.307-1.567-0.383-2.316-0.104l-14.619,5.085L159.059,68.56
+          c-0.385-0.966-1.207-1.671-2.225-1.896L14.687,35.002c-1.31-0.247-2.645,0.291-3.338,1.445c-0.681,1.146-0.555,2.606,0.323,3.618
+          l29.637,34.266L3.484,69.55c-1.262-0.165-2.542,0.495-3.14,1.655c-0.595,1.146-0.407,2.561,0.471,3.526l114.781,124.839
+          c0.613,0.646,1.453,0.998,2.292,0.998c0.683,0,1.364-0.217,1.939-0.674l68.685-54.938l44.446-7.914
+          c1.343-0.245,2.365-1.319,2.533-2.666C235.645,133.036,234.915,131.753,233.696,131.172z M49.455,74.291L22.473,43.113
+          L153.86,72.367l18.635,48.025l-11.897,4.12l-18.522-36.095c-0.465-0.898-1.347-1.525-2.377-1.651L49.834,75.407
+          C49.708,75.04,49.738,74.613,49.455,74.291z M186.609,139.006c-0.497,0.093-0.981,0.309-1.387,0.629l-27.783,22.218l-7.357-7.29
+          c-1.198-1.218-3.174-1.206-4.396,0.017c-1.202,1.202-1.187,3.166,0.024,4.376l6.845,6.784l-34.382,27.516L82.869,154.84
+          l56.124-12.392c1.142-0.261,2.04-1.126,2.341-2.252c0.288-1.142-0.076-2.332-0.958-3.105l-13.309-11.686
+          c-1.291-1.15-3.246-1.026-4.391,0.276c-1.132,1.29-0.998,3.238,0.291,4.388l8.704,7.65l-53.664,11.866L53.2,122.6l56.298-6.853
+          c1.16-0.145,2.142-0.922,2.541-2.016c0.403-1.116,0.143-2.331-0.651-3.178L99.268,97.648c-1.178-1.258-3.132-1.305-4.382-0.15
+          c-1.246,1.154-1.31,3.132-0.148,4.382l7.937,8.443l-54.637,6.659l-36.96-40.199L137.27,92.741l19.02,37.021
+          c0.689,1.379,2.332,2.056,3.764,1.503l33.758-11.714l28.316,13.116L186.609,139.006z"/>
+      </g>
+    </svg>
+  </div>
 );
 
 function App() {
@@ -41,7 +104,6 @@ function App() {
     setTema(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  // CARGAR PRÉDICAS
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     fetch(`${apiUrl}/api/predicas`)
@@ -50,10 +112,9 @@ function App() {
         setPredicas(data);
         setCargando(false);
       })
-      .catch(err => console.error("Error cargando prédicas:", err));
+      .catch(err => console.error("Error:", err));
   }, []);
 
-  // FILTROS
   const listas = useMemo(() => {
     const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))].sort((a,b) => b-a);
     const predicadores = [...new Set(predicas.map(p => p.predicador))].sort();
@@ -71,60 +132,72 @@ function App() {
   }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda]);
 
   return (
-    <div className="container">
-      <header className="hero">
-        <button onClick={toggleTema} className="theme-toggle" title="Cambiar tema">
-          {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-        </button>
-        <EagleIcon />
-        <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
-        <h1>Canal de Difusión</h1>
-      </header>
+    <>
+      {/* FONDO DECORATIVO */}
+      <BackgroundEagle />
 
-      <div className="controls">
-        <div className="search-box">
-          <Search size={18} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Buscar mensaje..." 
-            className="search-input"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
+      <div className="container">
+        
+        {/* HEADER */}
+        <header className="hero">
+          <button onClick={toggleTema} className="theme-toggle" title="Cambiar tema">
+            {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
+
+          {/* ÁGUILA LOGO PRINCIPAL */}
+          <MainEagle />
+          
+          <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
+          <h1>Canal de Difusión</h1>
+        </header>
+
+        {/* CONTROLES */}
+        <div className="controls">
+          <div className="search-box">
+            <Search size={18} className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Buscar mensaje..." 
+              className="search-input"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+          <select value={predicadorSeleccionado} onChange={(e) => setPredicadorSeleccionado(e.target.value)}>
+            <option value="Todos">Todos los Predicadores</option>
+            {listas.predicadores.map(pred => (<option key={pred} value={pred}>{pred}</option>))}
+          </select>
+          <select value={anioSeleccionado} onChange={(e) => setAnioSeleccionado(e.target.value)}>
+            <option value="Todos">Todos los Años</option>
+            {listas.anios.map(anio => (<option key={anio} value={anio}>{anio}</option>))}
+          </select>
         </div>
-        <select value={predicadorSeleccionado} onChange={(e) => setPredicadorSeleccionado(e.target.value)}>
-          <option value="Todos">Todos los Predicadores</option>
-          {listas.predicadores.map(pred => (<option key={pred} value={pred}>{pred}</option>))}
-        </select>
-        <select value={anioSeleccionado} onChange={(e) => setAnioSeleccionado(e.target.value)}>
-          <option value="Todos">Todos los Años</option>
-          {listas.anios.map(anio => (<option key={anio} value={anio}>{anio}</option>))}
-        </select>
-      </div>
 
-      {cargando ? (
-        <p className="loading">Cargando contenido...</p>
-      ) : (
-        <div className="grid">
-          {predicasFiltradas.map((predica) => (
-            <div key={predica.id} className="card">
-              <div className="card-content">
-                <div className="card-meta">
-                  <span>{new Date(predica.fecha).toLocaleDateString()}</span>
-                  <span>•</span>
-                  <span style={{color: 'var(--accent)'}}>Audio</span>
+        {/* LISTA DE MENSAJES */}
+        {cargando ? (
+          <p className="loading">Cargando biblioteca...</p>
+        ) : (
+          <div className="grid">
+            {predicasFiltradas.map((predica) => (
+              <div key={predica.id} className="card">
+                <div className="card-content">
+                  <div className="card-meta">
+                    <span>{new Date(predica.fecha).toLocaleDateString()}</span>
+                    <span>•</span>
+                    <span style={{color: 'var(--accent)'}}>Audio</span>
+                  </div>
+                  <h3>{predica.titulo}</h3>
+                  <div className="predicador">{predica.predicador}</div>
                 </div>
-                <h3>{predica.titulo}</h3>
-                <div className="predicador">{predica.predicador}</div>
+                <a href={predica.url_audio} target="_blank" rel="noreferrer" className="play-btn-round" title="Reproducir">
+                  <Play size={20} fill="currentColor" />
+                </a>
               </div>
-              <a href={predica.url_audio} target="_blank" rel="noreferrer" className="play-btn-round" title="Reproducir">
-                <Play size={20} fill="currentColor" />
-              </a>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
