@@ -1,6 +1,23 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Play, Calendar, Search, Filter, Mic2 } from 'lucide-react';
+import { Play, Calendar, Search, Sun, Moon } from 'lucide-react';
 import './App.css';
+
+// Componente SVG del Águila (Icono personalizado)
+const EagleIcon = () => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className="eagle-icon"
+  >
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+    {/* Este es un diseño abstracto tipo "capas" o alas. 
+        Si querés un águila más realista, podemos cambiar el path */}
+  </svg>
+);
 
 function App() {
   const [predicas, setPredicas] = useState([]);
@@ -11,10 +28,34 @@ function App() {
   const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
 
-  useEffect(() => {
-    // Usamos la variable de entorno. Si no existe (en local a veces), usa localhost como respaldo.
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  // --- LÓGICA DE TEMA (CLARO / OSCURO) ---
+  const [tema, setTema] = useState(() => {
+    // 1. Revisar si el usuario ya guardó una preferencia
+    const guardado = localStorage.getItem('tema');
+    if (guardado) return guardado;
     
+    // 2. Si no, revisar la preferencia del sistema
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    // Aplicar la clase al body
+    if (tema === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+    // Guardar elección
+    localStorage.setItem('tema', tema);
+  }, [tema]);
+
+  const toggleTema = () => {
+    setTema(prev => prev === 'light' ? 'dark' : 'light');
+  };
+  // ----------------------------------------
+
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     fetch(`${apiUrl}/api/predicas`)
       .then(res => res.json())
       .then(data => {
@@ -24,16 +65,12 @@ function App() {
       .catch(err => console.error("Error:", err));
   }, []);
 
-  // --- LÓGICA DE FILTROS INTELIGENTES ---
-  
-  // 1. Obtener listas únicas para los selectores
   const listas = useMemo(() => {
     const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))].sort((a,b) => b-a);
     const predicadores = [...new Set(predicas.map(p => p.predicador))].sort();
     return { anios, predicadores };
   }, [predicas]);
 
-  // 2. Filtrar la data en tiempo real
   const predicasFiltradas = useMemo(() => {
     return predicas.filter(p => {
       const coincideAnio = anioSeleccionado === 'Todos' || new Date(p.fecha).getFullYear() === parseInt(anioSeleccionado);
@@ -48,13 +85,24 @@ function App() {
   return (
     <div className="container">
       
-      {/* HEADER MINIMALISTA */}
+      {/* HEADER CON ÁGUILA Y TOGGLE */}
       <header className="hero">
-        <span className="subtitle-badge">Ministerio Profético La Roca</span>
+        
+        {/* Botón de cambio de tema */}
+        <button onClick={toggleTema} className="theme-toggle" title="Cambiar tema">
+          {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+
+        {/* Logo Águila */}
+        <EagleIcon />
+        
+        <div>
+          <span className="subtitle-badge">Ministerio Profético La Roca</span>
+        </div>
         <h1>Canal de Difusión</h1>
       </header>
 
-      {/* BARRA DE CONTROLES (Igual que antes) */}
+      {/* BARRA DE CONTROLES */}
       <div className="controls">
         <div className="search-box">
           <Search size={18} className="search-icon" />
@@ -99,7 +147,8 @@ function App() {
               <div className="card-content">
                 <div className="card-meta">
                   <span>{new Date(predica.fecha).toLocaleDateString()}</span>
-                  <span>Audio</span>
+                  <span>•</span>
+                  <span style={{color: 'var(--accent)'}}>Audio</span>
                 </div>
                 <h3>{predica.titulo}</h3>
                 <div className="predicador">{predica.predicador}</div>
@@ -112,7 +161,7 @@ function App() {
                 className="play-btn-round"
                 title="Reproducir"
               >
-                <Play size={18} fill="currentColor" />
+                <Play size={20} fill="currentColor" />
               </a>
 
             </div>
@@ -122,6 +171,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

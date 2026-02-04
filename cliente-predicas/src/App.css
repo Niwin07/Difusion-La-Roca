@@ -1,18 +1,35 @@
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
+/* --- VARIABLES DE TEMA (Claro por defecto) --- */
 :root {
-  /* --- PALETA MODO OSCURO "LA ROCA" --- */
-  --bg-color: #0f172a;       /* Azul oscuro profundo (Noche en Ushuaia) */
-  --card-bg: #1e293b;        /* Gris azulado para tarjetas */
-  --text-primary: #f8fafc;   /* Blanco humo (no quema los ojos) */
-  --text-secondary: #94a3b8; /* Gris medio para datos */
-  --accent: #38bdf8;         /* Un celeste sutil para detalles (opcional) */
-  --border: #334155;         /* Bordes sutiles */
+  /* Colores Base (Modo Claro - "Día") */
+  --bg-color: #f8fafc;       /* Blanco humo */
+  --card-bg: #ffffff;        /* Blanco puro */
+  --text-primary: #1e293b;   /* Azul acero muy oscuro */
+  --text-secondary: #64748b; /* Gris acero */
+  --accent: #0f172a;         /* Azul noche (Identidad Roca) */
+  --border: #e2e8f0;         /* Borde sutil */
+  --hover-bg: #f1f5f9;       
+  --shadow: rgba(0, 0, 0, 0.05);
   
+  /* Fuentes */
   --font-title: 'Playfair Display', serif;
   --font-body: 'Lato', sans-serif;
+}
+
+/* --- MODO OSCURO (Se activa con la clase .dark) --- */
+.dark {
+  --bg-color: #0f172a;       /* Azul noche profundo */
+  --card-bg: #1e293b;        /* Gris azulado oscuro */
+  --text-primary: #f1f5f9;   /* Blanco suave */
+  --text-secondary: #94a3b8; /* Gris azulado claro */
+  --accent: #38bdf8;         /* Celeste brillante para destacar */
+  --border: #334155;         /* Borde oscuro */
+  --hover-bg: #334155;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* --- RESET & GLOBAL --- */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
@@ -21,28 +38,35 @@ body {
   font-family: var(--font-body);
   margin: 0;
   padding: 0;
-  /* Un degradado muy sutil para que no sea plano aburrido */
-  background-image: linear-gradient(to bottom, #0f172a, #0b1120);
+  transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
 }
 
 .container {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 60px 20px;
+  max-width: 900px; /* Ancho de lectura cómodo */
+  margin: 0 auto;   /* CENTRADO AUTOMÁTICO IMPORTANTE */
+  padding: 40px 20px;
+  width: 100%;
 }
 
-/* --- HEADER --- */
+/* --- HEADER CON ÁGUILA --- */
 .hero {
   text-align: center;
   margin-bottom: 50px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.eagle-icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 15px;
+  color: var(--text-primary);
+  opacity: 0.9;
 }
 
 .subtitle-badge {
   display: inline-block;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--hover-bg);
   color: var(--text-secondary);
   padding: 6px 14px;
   border-radius: 50px;
@@ -50,32 +74,53 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
-  margin-bottom: 15px;
-  border: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
 }
 
 .hero h1 {
   font-family: var(--font-title);
   font-size: 3rem;
-  font-weight: 400; /* Más fino queda más elegante en dark mode */
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -1px;
 }
 
-/* --- BARRA DE CONTROL (FIX DE SOBREPOSICIÓN) --- */
+/* --- BOTÓN DE TEMA (Flotante o en Header) --- */
+.theme-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg);
+  transform: rotate(15deg);
+}
+
+/* --- BARRA DE CONTROLES (SOLUCIÓN LAYOUT) --- */
 .controls {
   display: flex;
-  flex-wrap: wrap; /* CLAVE: Permite que bajen si no entran */
+  flex-wrap: wrap; /* Permite que bajen en pantallas chicas */
   gap: 15px;
   margin-bottom: 40px;
-  align-items: center;
+  justify-content: center; /* Centra los elementos */
 }
 
 .search-box {
-  flex: 2 1 300px; /* Crece (2), se encoge (1), base mínima 300px */
+  flex: 2 1 300px; /* Crece el doble, base 300px */
   position: relative;
-  min-width: 280px; /* Evita que se aplaste en celu */
 }
 
 .search-input {
@@ -83,16 +128,14 @@ body {
   padding: 14px 15px 14px 45px;
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 1rem;
   color: var(--text-primary);
-  /* Box-sizing es vital para que el padding no rompa el ancho */
-  box-sizing: border-box; 
+  outline: none;
   transition: border-color 0.2s;
 }
 
 .search-input:focus {
-  outline: none;
   border-color: var(--text-secondary);
 }
 
@@ -105,23 +148,20 @@ body {
 }
 
 select {
-  flex: 1 1 200px; /* Crece (1), se encoge (1), base mínima 200px */
+  flex: 1 1 180px; /* Crece normal, base 180px */
   background: var(--card-bg);
   border: 1px solid var(--border);
-  padding: 14px 15px;
-  border-radius: 8px;
+  padding: 0 15px;
+  border-radius: 12px;
   color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: 0.95rem;
   cursor: pointer;
-  box-sizing: border-box;
-}
-
-select:focus {
+  height: 50px; /* Altura fija igual al input */
   outline: none;
-  border-color: var(--text-secondary);
 }
 
-/* --- LISTA DE TARJETAS (MODO OSCURO) --- */
+/* --- LISTA DE TARJETAS --- */
 .grid {
   display: flex;
   flex-direction: column;
@@ -131,162 +171,102 @@ select:focus {
 .card {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 20px 25px;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: all 0.2s ease;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
-  background-color: #263345; /* Un pelín más claro al pasar el mouse */
-  border-color: #475569;
-  transform: translateX(5px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px var(--shadow);
+  border-color: var(--text-secondary);
 }
 
 .card-content {
   flex: 1;
-  padding-right: 20px; /* Espacio para que el texto no toque el botón */
+  padding-right: 20px;
 }
 
 .card-meta {
   display: flex;
-  gap: 15px;
-  font-size: 0.75rem;
+  gap: 10px;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  font-weight: 600;
-  opacity: 0.8;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
 }
 
 .card h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 5px 0;
   font-family: var(--font-title);
   font-size: 1.4rem;
-  font-weight: 400;
   color: var(--text-primary);
-  line-height: 1.3;
 }
 
 .predicador {
-  color: #94a3b8; /* Gris claro */
+  color: var(--text-secondary);
   font-style: italic;
-  font-size: 0.95rem;
 }
 
-/* Botón de Play Minimalista */
+/* Botón Play Redondo */
 .play-btn-round {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background-color: var(--text-primary); /* Botón blanco */
-  color: var(--bg-color); /* Ícono oscuro */
+  background-color: var(--text-primary);
+  color: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s, background-color 0.2s;
-  flex-shrink: 0;
   text-decoration: none;
+  transition: transform 0.2s;
+  flex-shrink: 0;
 }
 
 .play-btn-round:hover {
   transform: scale(1.1);
-  background-color: white; /* Blanco puro al hover */
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
-.loading { 
-  text-align: center; 
-  color: var(--text-secondary); 
-  margin-top: 50px;
-  font-style: italic;
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
 }
 
-/* --- RESPONSIVE (CELULAR) - SIN FLEXBOX EN CONTROLES --- */
+/* --- MOBILE RESPONSIVE (Blindado) --- */
 @media (max-width: 768px) {
+  .hero h1 { font-size: 2.2rem; }
   
-  /* 1. Contenedor principal */
-  .container {
-    padding: 20px 15px;
-    width: 100%;
-    overflow-x: hidden;
-  }
-
-  .hero h1 { 
-    font-size: 1.8rem;
-    padding: 0 5px;
-  }
-  
-  /* 2. CONTROLES: La solución nuclear */
-  /* Quitamos Flexbox. Usamos bloques normales uno abajo del otro */
   .controls {
-    display: block !important; /* Chau Flex */
-    width: 100%;
-    margin-bottom: 30px;
-    padding: 0;
-    border: none;
+    flex-direction: column; /* Apilar verticalmente */
   }
 
-  /* 3. CAJA DE BÚSQUEDA (El padre de la lupa) */
-  .search-box {
-    display: block;
-    width: 100% !important;
-    position: relative !important; /* CLAVE: Mantiene la lupa adentro */
-    margin-bottom: 15px; /* Espacio abajo manual ya que no hay 'gap' */
-    height: 50px; /* Altura fija para evitar colapsos */
+  .search-box, select {
+    width: 100%; /* Ocupar todo el ancho */
+    flex: none;
   }
 
-  .search-input {
-    width: 100% !important;
-    height: 100%; /* Llenar la altura fija */
-    margin: 0 !important;
-    box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
-  }
-
-  /* Aseguramos la posición de la lupa */
-  .search-icon {
-    top: 50% !important;
-    left: 15px !important;
-    transform: translateY(-50%) !important;
-    z-index: 10;
-  }
-
-  /* 4. SELECTORES (Años y Predicadores) */
-  select {
-    display: block;
-    width: 100% !important;
-    margin-bottom: 15px; /* Espacio manual */
-    box-sizing: border-box;
-    height: 50px; /* Misma altura que el buscador */
-  }
-  
-  /* 5. TARJETAS */
   .card {
     flex-direction: column;
     align-items: flex-start;
-    padding: 15px;
-  }
-  
-  .play-btn-round {
-    width: 100%;
-    height: 45px;
-    border-radius: 8px;
-    margin-top: 15px;
-    margin-left: 0;
-    position: relative;
-    background-color: var(--text-primary);
-    color: var(--bg-color);
-    text-decoration: none;
   }
 
+  .play-btn-round {
+    width: 100%;
+    border-radius: 12px;
+    height: 45px;
+    margin-top: 15px;
+  }
+  
   .play-btn-round::after {
-    content: "ESCUCHAR MENSAJE";
-    font-size: 0.85rem;
+    content: "ESCUCHAR AHORA";
     font-weight: 800;
     margin-left: 10px;
-    letter-spacing: 1px;
+    font-size: 0.9rem;
   }
 }
