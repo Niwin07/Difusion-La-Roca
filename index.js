@@ -200,7 +200,10 @@ setInterval(async () => {
     let connection;
     try {
         console.log('💓 Enviando ping a la DB para mantenerla despierta...');
-        connection = await mysql.createConnection(dbConfig);
+        
+        // CORRECCIÓN AQUÍ: Usamos 'dbConnectionConfig' en lugar de 'dbConfig'
+        connection = await mysql.createConnection(dbConnectionConfig);
+        
         await connection.execute('SELECT 1'); // Consulta ultra ligera
         console.log('💓 Pong! DB activa.');
     } catch (error) {
