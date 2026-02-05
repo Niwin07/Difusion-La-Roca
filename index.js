@@ -192,6 +192,10 @@ app.get('/api/predicas', async (req, res) => {
     }
 });
 
+app.get('/ping', (req, res) => {
+    res.send('Pong! Estoy vivo 🏓');
+});
+
 setInterval(async () => {
     let connection;
     try {
