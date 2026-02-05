@@ -192,6 +192,20 @@ app.get('/api/predicas', async (req, res) => {
     }
 });
 
+setInterval(async () => {
+    let connection;
+    try {
+        console.log('💓 Enviando ping a la DB para mantenerla despierta...');
+        connection = await mysql.createConnection(dbConfig);
+        await connection.execute('SELECT 1'); // Consulta ultra ligera
+        console.log('💓 Pong! DB activa.');
+    } catch (error) {
+        console.error('💀 Error en el ping de mantenimiento:', error.message);
+    } finally {
+        if (connection) await connection.end();
+    }
+}, 300000); // 5 minutos
+
 app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
 });
