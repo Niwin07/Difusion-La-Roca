@@ -92,30 +92,41 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO (VERSIÓN PROXY) ===
+// === REPRODUCTOR DE AUDIO TIPO SPOTIFY ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Nuevos estados para la barra de progreso
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-  // Función para extraer SOLO el ID
+  // Formatear tiempo: de segundos a MM:SS
+  const formatTime = (time) => {
+    if (time && !isNaN(time)) {
+      const minutes = Math.floor(time / 60);
+      const formatMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+      const seconds = Math.floor(time % 60);
+      const formatSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
+      return `${formatMinutes}:${formatSeconds}`;
+    }
+    return '00:00';
+  };
+
+  // Extraer ID (Misma lógica blindada de antes)
   const getDriveId = (url) => {
     const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (matchD) return matchD[1];
-    
     const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
     if (matchId) return matchId[1];
-    
     return null;
   };
 
-  // Construimos la URL apuntando a TU PROPIO SERVIDOR
   const audioUrl = useMemo(() => {
     const id = getDriveId(predica.url_audio);
-    if (!id) return predica.url_audio; // Fallback por si acaso
-    
-    // Usamos la variable de entorno para saber dónde está el backend
+    if (!id) return predica.url_audio;
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
@@ -124,18 +135,43 @@ const AudioPlayer = ({ predica, onClose }) => {
     setError(false);
     setLoading(true);
     setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
     
     if (audioRef.current) {
       audioRef.current.load();
     }
   }, [audioUrl]);
 
-  const handleCanPlay = () => {
+  // Eventos de audio
+  const onLoadedMetadata = () => {
     setLoading(false);
     if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+      // Intentar autoplay suave
       audioRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(err => console.log("Autoplay:", err));
+        .catch(() => setIsPlaying(false)); // Si falla autoplay, queda en pausa
+    }
+  };
+
+  const onTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const onEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  // Control manual de la barra
+  const handleSeek = (e) => {
+    const newTime = parseFloat(e.target.value);
+    setCurrentTime(newTime);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
     }
   };
 
@@ -156,7 +192,7 @@ const AudioPlayer = ({ predica, onClose }) => {
         <div className="player-container">
           <div className="player-info">
             <div className="player-title">{predica.titulo}</div>
-            <div className="player-artist" style={{color: '#f87171'}}>⚠️ Error al cargar audio</div>
+            <div className="player-artist" style={{color: '#f87171'}}>⚠️ Error de carga</div>
           </div>
           <div className="player-controls">
             <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn link-btn">
@@ -171,37 +207,66 @@ const AudioPlayer = ({ predica, onClose }) => {
 
   return (
     <div className="audio-player">
-      <div className="player-container">
+      <div className="player-container-spotify">
+        
+        {/* INFO (Izquierda) */}
         <div className="player-info">
           <div className="player-title">{predica.titulo}</div>
           <div className="player-artist">{predica.predicador}</div>
         </div>
-        
+
+        {/* CONTROLES Y BARRA (Centro/Abajo) */}
+        <div className="player-center">
+          
+          {/* Botones */}
+          <div className="player-controls-main">
+             {loading ? (
+              <div className="player-btn spinning"><RefreshCw size={24} /></div>
+            ) : (
+              <button onClick={togglePlay} className="player-btn play-pause-btn-large">
+                {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{marginLeft:'4px'}} />}
+              </button>
+            )}
+          </div>
+
+          {/* Barra de Progreso */}
+          <div className="progress-bar-container">
+            <span className="time-display">{formatTime(currentTime)}</span>
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              value={currentTime}
+              onChange={handleSeek}
+              className="progress-range"
+              style={{
+                backgroundSize: `${(currentTime * 100) / duration}% 100%`
+              }}
+            />
+            <span className="time-display">{formatTime(duration)}</span>
+          </div>
+
+        </div>
+
+        {/* EXTRAS (Derecha) */}
+        <div className="player-extras">
+          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn" title="Ver en Drive">
+            <ExternalLink size={20} />
+          </a>
+          <button onClick={onClose} className="icon-btn close-btn" title="Cerrar">
+            <X size={24} />
+          </button>
+        </div>
+
         <audio 
           ref={audioRef} 
           src={audioUrl}
-          onEnded={() => setIsPlaying(false)}
+          onLoadedMetadata={onLoadedMetadata}
+          onTimeUpdate={onTimeUpdate}
+          onEnded={onEnded}
           onError={() => setError(true)}
-          onCanPlay={handleCanPlay}
         />
         
-        <div className="player-controls">
-          {loading ? (
-            <div className="player-btn spinning"><RefreshCw size={20} /></div>
-          ) : (
-            <button onClick={togglePlay} className="player-btn play-pause-btn">
-              {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
-            </button>
-          )}
-          
-          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn">
-            <ExternalLink size={18} />
-          </a>
-          
-          <button onClick={onClose} className="player-btn close-player-btn">
-            <X size={18} />
-          </button>
-        </div>
       </div>
     </div>
   );

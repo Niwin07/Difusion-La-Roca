@@ -575,19 +575,19 @@ select:hover, select:focus {
   }
 }
 
-/* === REPRODUCTOR === */
+/* === REPRODUCTOR SPOTIFY STYLE === */
 .audio-player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--overlay);
-  backdrop-filter: blur(20px);
-  border-top: 2px solid var(--border);
-  padding: 20px;
-  z-index: 100;
-  box-shadow: 0 -8px 32px var(--shadow-lg);
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(15, 23, 42, 0.95); /* Fondo oscuro elegante siempre */
+  backdrop-filter: blur(15px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  z-index: 1000;
+  animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  color: white;
 }
 
 @keyframes slideUp {
@@ -607,26 +607,84 @@ select:hover, select:focus {
   align-items: center;
 }
 
+.player-container-spotify {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* 3 columnas: Info - Barra - Botones */
+  align-items: center;
+  gap: 20px;
+}
+
 .player-info {
-  flex: 1;
+  overflow: hidden;
 }
 
 .player-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  margin: 0 0 4px 0;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
 }
 
 .player-artist {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+/* 2. CENTRO (Controles + Barra) */
+.player-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .player-controls {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.player-controls-main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.play-pause-btn-large {
+  background: white;
+  color: black;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.play-pause-btn-large:hover {
+  transform: scale(1.1);
+}
+
+/* LA BARRA DE PROGRESO (La magia) */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.time-display {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+  min-width: 35px;
 }
 
 .player-btn {
@@ -663,6 +721,118 @@ select:hover, select:focus {
   border-color: #ef4444;
   color: white;
   transform: scale(1.1) rotate(90deg);
+}
+
+/* Input Range Personalizado */
+.progress-range {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  background-image: linear-gradient(var(--accent), var(--accent)); /* Color dorado */
+  background-repeat: no-repeat;
+  /* background-size se controla por React en línea */
+}
+
+/* El puntito (Thumb) - Webkit */
+.progress-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  transition: transform 0.1s;
+  opacity: 0; /* Oculto hasta que pasas el mouse */
+}
+
+/* El puntito (Thumb) - Firefox */
+.progress-range::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  opacity: 0;
+}
+
+.progress-bar-container:hover .progress-range::-webkit-slider-thumb {
+  opacity: 1;
+}
+.progress-bar-container:hover .progress-range::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* 3. EXTRAS (Derecha) */
+.player-extras {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  align-items: center;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.icon-btn:hover {
+  color: white;
+}
+
+.close-btn:hover {
+  color: #ef4444;
+}
+
+/* --- RESPONSIVE DEL REPRODUCTOR --- */
+@media (max-width: 768px) {
+  .player-container-spotify {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .audio-player {
+    padding: 15px;
+    padding-bottom: 25px; /* Espacio para iPhone swipe bar */
+  }
+
+  .player-info {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .player-center {
+    width: 100%;
+    flex-direction: row-reverse; /* Botón a la derecha, barra a la izquierda */
+    justify-content: space-between;
+    gap: 15px;
+  }
+
+  .progress-bar-container {
+    flex: 1;
+  }
+
+  /* En celular, ocultamos extras o los ponemos flotando */
+  .player-extras {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+  }
+  
+  .play-pause-btn-large {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 /* === RESPONSIVE === */
