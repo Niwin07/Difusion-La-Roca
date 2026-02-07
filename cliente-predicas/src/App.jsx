@@ -1,8 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Play, Search, Sun, Moon, RefreshCw, TrendingUp, Calendar } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink } from 'lucide-react';
 import './App.css';
 
-// --- ÁGUILA PRINCIPAL ---
+// === ÁGUILA PRINCIPAL ===
 const MainEagle = () => (
   <svg 
     version="1.1" 
@@ -48,7 +48,7 @@ const MainEagle = () => (
   </svg>
 );
 
-// --- ÁGUILA DE FONDO ---
+// === ÁGUILA DE FONDO ===
 const BackgroundEagle = () => (
   <div className="eagle-background-container">
     <svg 
@@ -77,13 +77,94 @@ const BackgroundEagle = () => (
   </div>
 );
 
+// === COMPONENTE TOAST ===
+const Toast = ({ message, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="toast">
+      <Share2 size={20} />
+      <span>{message}</span>
+    </div>
+  );
+};
+
+// === REPRODUCTOR DE AUDIO ===
+const AudioPlayer = ({ predica, onClose }) => {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  }, [predica]);
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  return (
+    <div className="audio-player">
+      <div className="player-container">
+        <div className="player-info">
+          <div className="player-title">{predica.titulo}</div>
+          <div className="player-artist">{predica.predicador}</div>
+        </div>
+        
+        <audio 
+          ref={audioRef} 
+          src={predica.url_audio}
+          onEnded={() => setIsPlaying(false)}
+        />
+        
+        <div className="player-controls">
+          <button onClick={togglePlay} className="player-btn">
+            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
+          </button>
+          
+          <a 
+            href={predica.url_audio} 
+            target="_blank" 
+            rel="noreferrer"
+            className="player-btn"
+            title="Abrir en Drive"
+          >
+            <ExternalLink size={18} />
+          </a>
+          
+          <button onClick={onClose} className="player-btn close-player-btn">
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// === COMPONENTE PRINCIPAL ===
 function App() {
   const [predicas, setPredicas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
   const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
-  const [mostrarStats, setMostrarStats] = useState(false);
+  const [filtroFecha, setFiltroFecha] = useState('Todos'); // 'Todos', 'ultimos30', 'ultimoAño'
+  const [favoritos, setFavoritos] = useState(() => {
+    const saved = localStorage.getItem('favoritos');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [toastMessage, setToastMessage] = useState(null);
+  const [predicaReproduciendo, setPredicaReproduciendo] = useState(null);
 
   // === TEMA ===
   const [tema, setTema] = useState(() => {
@@ -118,6 +199,41 @@ function App() {
     cargarPredicas();
   }, []);
 
+  // === FAVORITOS ===
+  const toggleFavorito = (id) => {
+    setFavoritos(prev => {
+      const newFavs = prev.includes(id) 
+        ? prev.filter(fid => fid !== id)
+        : [...prev, id];
+      localStorage.setItem('favoritos', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  };
+
+  // === COMPARTIR ===
+  const compartirPredica = async (predica) => {
+    const texto = `🦅 ${predica.titulo}\n👤 ${predica.predicador}\n🔗 ${predica.url_audio}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({ 
+          title: predica.titulo,
+          text: texto,
+          url: predica.url_audio
+        });
+      } catch (err) {
+        copiarAlPortapapeles(predica.url_audio);
+      }
+    } else {
+      copiarAlPortapapeles(predica.url_audio);
+    }
+  };
+
+  const copiarAlPortapapeles = (texto) => {
+    navigator.clipboard.writeText(texto);
+    setToastMessage('¡Link copiado al portapapeles!');
+  };
+
   // === LISTAS DINÁMICAS ===
   const listas = useMemo(() => {
     const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))]
@@ -127,11 +243,22 @@ function App() {
     return { anios, predicadores };
   }, [predicas]);
 
-  // === FILTRADO MEJORADO ===
+  // === FILTRADO CON FECHAS ===
   const predicasFiltradas = useMemo(() => {
+    const ahora = new Date();
+    const hace30Dias = new Date(ahora.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const hace1Anio = new Date(ahora.getTime() - (365 * 24 * 60 * 60 * 1000));
+
     return predicas.filter(p => {
+      const fechaPredica = new Date(p.fecha);
+      
+      // Filtro por rango de fechas
+      if (filtroFecha === 'ultimos30' && fechaPredica < hace30Dias) return false;
+      if (filtroFecha === 'ultimoAnio' && fechaPredica < hace1Anio) return false;
+      
+      // Filtros existentes
       const anioCoincide = anioSeleccionado === 'Todos' || 
-        new Date(p.fecha).getFullYear() === parseInt(anioSeleccionado);
+        fechaPredica.getFullYear() === parseInt(anioSeleccionado);
       
       const predicadorCoincide = predicadorSeleccionado === 'Todos' || 
         p.predicador === predicadorSeleccionado;
@@ -142,26 +269,23 @@ function App() {
       
       return anioCoincide && predicadorCoincide && textoCoincide;
     });
-  }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda]);
+  }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda, filtroFecha]);
 
-  // === STATS RÁPIDAS ===
+  // === STATS ===
   const stats = useMemo(() => {
     if (!predicas.length) return null;
     
-    const porPredicador = predicas.reduce((acc, p) => {
-      acc[p.predicador] = (acc[p.predicador] || 0) + 1;
-      return acc;
-    }, {});
-    
-    const topPredicador = Object.entries(porPredicador)
-      .sort((a, b) => b[1] - a[1])[0];
-    
     return {
       total: predicas.length,
-      topPredicador: topPredicador ? `${topPredicador[0]} (${topPredicador[1]})` : 'N/A',
-      ultimoAnio: new Date(predicas[0]?.fecha).getFullYear()
+      ultimoAnio: new Date(predicas[0]?.fecha).getFullYear(),
+      favoritos: favoritos.length
     };
-  }, [predicas]);
+  }, [predicas, favoritos]);
+
+  // === REPRODUCIR ===
+  const reproducir = (predica) => {
+    setPredicaReproduciendo(predica);
+  };
 
   return (
     <>
@@ -186,6 +310,12 @@ function App() {
               <span title="Total de mensajes">{stats.total} mensajes</span>
               <span>•</span>
               <span title="Último año">{stats.ultimoAnio}</span>
+              {stats.favoritos > 0 && (
+                <>
+                  <span>•</span>
+                  <span style={{color: '#ef4444'}}>❤️ {stats.favoritos}</span>
+                </>
+              )}
               {predicasFiltradas.length !== predicas.length && (
                 <>
                   <span>•</span>
@@ -201,7 +331,6 @@ function App() {
         {/* CONTROLES */}
         <div className="controls">
           <div className="search-box">
-            <Search size={18} className="search-icon" />
             <input 
               type="text" 
               placeholder="Buscar por título o predicador..." 
@@ -209,6 +338,7 @@ function App() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
+            <Search size={18} className="search-icon" />
           </div>
           
           <select 
@@ -239,12 +369,37 @@ function App() {
           >
             <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
           </button>
+
+          {/* FILTROS RÁPIDOS DE FECHA */}
+          <div className="quick-filters">
+            <button 
+              className={`filter-chip ${filtroFecha === 'Todos' ? 'active' : ''}`}
+              onClick={() => setFiltroFecha('Todos')}
+            >
+              <Calendar size={14} />
+              Todos
+            </button>
+            <button 
+              className={`filter-chip ${filtroFecha === 'ultimos30' ? 'active' : ''}`}
+              onClick={() => setFiltroFecha('ultimos30')}
+            >
+              <Calendar size={14} />
+              Últimos 30 días
+            </button>
+            <button 
+              className={`filter-chip ${filtroFecha === 'ultimoAnio' ? 'active' : ''}`}
+              onClick={() => setFiltroFecha('ultimoAnio')}
+            >
+              <Calendar size={14} />
+              Último año
+            </button>
+          </div>
         </div>
 
         {/* LISTA DE MENSAJES */}
         {cargando ? (
           <div className="loading">
-            <RefreshCw size={32} className="spinning" />
+            <RefreshCw size={40} className="spinning" />
             <p>Cargando biblioteca...</p>
           </div>
         ) : predicasFiltradas.length === 0 ? (
@@ -255,6 +410,7 @@ function App() {
                 setBusqueda('');
                 setAnioSeleccionado('Todos');
                 setPredicadorSeleccionado('Todos');
+                setFiltroFecha('Todos');
               }}
               className="reset-btn"
             >
@@ -275,20 +431,53 @@ function App() {
                   <h3>{predica.titulo}</h3>
                   <div className="predicador">{predica.predicador}</div>
                 </div>
-                <a 
-                  href={predica.url_audio} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="play-btn-round" 
-                  title="Reproducir"
-                >
-                  <Play size={20} fill="currentColor" />
-                </a>
+                
+                <div className="card-actions">
+                  <button 
+                    onClick={() => toggleFavorito(predica.id)}
+                    className={`favorite-btn ${favoritos.includes(predica.id) ? 'active' : ''}`}
+                    title={favoritos.includes(predica.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                  >
+                    <Heart size={20} fill={favoritos.includes(predica.id) ? 'currentColor' : 'none'} />
+                  </button>
+
+                  <button 
+                    onClick={() => compartirPredica(predica)}
+                    className="share-btn"
+                    title="Compartir"
+                  >
+                    <Share2 size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => reproducir(predica)}
+                    className="play-btn-round"
+                    title="Reproducir aquí"
+                  >
+                    <Play size={20} fill="currentColor" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* REPRODUCTOR */}
+      {predicaReproduciendo && (
+        <AudioPlayer 
+          predica={predicaReproduciendo} 
+          onClose={() => setPredicaReproduciendo(null)} 
+        />
+      )}
+
+      {/* TOAST */}
+      {toastMessage && (
+        <Toast 
+          message={toastMessage} 
+          onClose={() => setToastMessage(null)} 
+        />
+      )}
     </>
   );
 }
