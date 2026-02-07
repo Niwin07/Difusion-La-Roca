@@ -277,6 +277,45 @@ app.post('/api/sync', async (req, res) => {
     res.json({ message: 'Sincronización iniciada' });
 });
 
+// --- 🎧 PROXY DE AUDIO (STREAMING) ---
+// Esto soluciona el error de "Virus Scan" de Google Drive
+app.get('/api/audio/:id', async (req, res) => {
+    try {
+        const fileId = req.params.id;
+        const drive = google.drive({ version: 'v3', auth });
+
+        // 1. Obtenemos info del archivo (para saber el tamaño)
+        const fileMetadata = await drive.files.get({
+            fileId: fileId,
+            fields: 'size, mimeType'
+        });
+
+        // 2. Preparamos los headers para que el navegador sepa que es audio
+        res.setHeader('Content-Type', fileMetadata.data.mimeType || 'audio/mpeg');
+        res.setHeader('Content-Length', fileMetadata.data.size);
+        res.setHeader('Accept-Ranges', 'bytes');
+
+        // 3. Pedimos el stream a Google
+        const response = await drive.files.get(
+            { fileId: fileId, alt: 'media' },
+            { responseType: 'stream' }
+        );
+
+        // 4. Conectamos el tubo (Pipe): Google -> Tu Server -> Tu Web
+        response.data
+            .on('end', () => console.log(`🎵 Audio terminado: ${fileId}`))
+            .on('error', err => {
+                console.error('Error en stream:', err);
+                res.status(500).end();
+            })
+            .pipe(res);
+
+    } catch (error) {
+        console.error("❌ Error streameando audio:", error.message);
+        res.status(500).send("Error al obtener el audio");
+    }
+});
+
 // === 📊 ENDPOINT: Stats ===
 app.get('/api/stats', async (req, res) => {
     try {

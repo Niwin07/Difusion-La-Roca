@@ -92,115 +92,83 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO BLINDADO (COMPLETO) ===
+// === REPRODUCTOR DE AUDIO (VERSIÓN PROXY) ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Función para sacar el ID y armar el link de descarga directa
-  const getDriveDirectUrl = (url) => {
-    let id = null;
-    
-    // Intento 1: Buscar patrón /d/ID/
+  // Función para extraer SOLO el ID
+  const getDriveId = (url) => {
     const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (matchD) id = matchD[1];
-
-    // Intento 2: Buscar patrón id=ID
-    if (!id) {
-      const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (matchId) id = matchId[1];
-    }
-
-    // Si tenemos ID, armamos el link mágico con &confirm=t
-    if (id) {
-      return `https://docs.google.com/uc?export=download&id=${id}&confirm=t`;
-    }
+    if (matchD) return matchD[1];
     
-    return url; 
+    const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (matchId) return matchId[1];
+    
+    return null;
   };
 
-  const audioUrl = useMemo(() => getDriveDirectUrl(predica.url_audio), [predica.url_audio]);
+  // Construimos la URL apuntando a TU PROPIO SERVIDOR
+  const audioUrl = useMemo(() => {
+    const id = getDriveId(predica.url_audio);
+    if (!id) return predica.url_audio; // Fallback por si acaso
+    
+    // Usamos la variable de entorno para saber dónde está el backend
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    return `${apiUrl}/api/audio/${id}`;
+  }, [predica.url_audio]);
 
   useEffect(() => {
-    // Resetear todo cuando cambia la prédica
     setError(false);
     setLoading(true);
     setIsPlaying(false);
     
-    // Cargar audio
-    const playAudio = async () => {
-      if (audioRef.current) {
-        try {
-          audioRef.current.load();
-        } catch (e) {
-          console.error("Error cargando:", e);
-        }
-      }
-    };
-    playAudio();
+    if (audioRef.current) {
+      audioRef.current.load();
+    }
   }, [audioUrl]);
 
   const handleCanPlay = () => {
     setLoading(false);
-    // Intentar reproducir si ya cargó
     if (audioRef.current) {
       audioRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(err => console.log("Autoplay bloqueado (esperando clic):", err));
+        .catch(err => console.log("Autoplay:", err));
     }
   };
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(err => {
-        console.error("Error al dar play:", err);
-        setError(true);
-      });
+      audioRef.current.play();
       setIsPlaying(true);
     }
   };
 
-  // CASO 1: SI HAY ERROR (Muestra botón para ir a Drive)
   if (error) {
     return (
       <div className="audio-player error-state">
         <div className="player-container">
           <div className="player-info">
             <div className="player-title">{predica.titulo}</div>
-            <div className="player-artist" style={{color: '#f87171'}}>
-              ⚠️ No se puede reproducir aquí
-            </div>
+            <div className="player-artist" style={{color: '#f87171'}}>⚠️ Error al cargar audio</div>
           </div>
-          
           <div className="player-controls">
-            <a 
-              href={predica.url_audio} 
-              target="_blank" 
-              rel="noreferrer"
-              className="player-btn link-btn"
-              style={{width: 'auto', padding: '0 15px', borderRadius: '20px', gap: '5px'}}
-            >
-              <span>Escuchar en Drive</span>
-              <ExternalLink size={16} />
+            <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn link-btn">
+              <ExternalLink size={16} /> Drive
             </a>
-            
-            <button onClick={onClose} className="player-btn close-player-btn">
-              <X size={18} />
-            </button>
+            <button onClick={onClose} className="player-btn close-player-btn"><X size={18} /></button>
           </div>
         </div>
       </div>
     );
   }
 
-  // CASO 2: SI TODO OK (Muestra el reproductor)
   return (
     <div className="audio-player">
       <div className="player-container">
@@ -213,32 +181,20 @@ const AudioPlayer = ({ predica, onClose }) => {
           ref={audioRef} 
           src={audioUrl}
           onEnded={() => setIsPlaying(false)}
-          onError={(e) => {
-            console.error("Error de tag audio:", e);
-            setError(true);
-          }}
+          onError={() => setError(true)}
           onCanPlay={handleCanPlay}
-          preload="metadata"
         />
         
         <div className="player-controls">
           {loading ? (
-            <div className="player-btn spinning">
-              <RefreshCw size={20} />
-            </div>
+            <div className="player-btn spinning"><RefreshCw size={20} /></div>
           ) : (
             <button onClick={togglePlay} className="player-btn play-pause-btn">
               {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
             </button>
           )}
           
-          <a 
-            href={predica.url_audio} 
-            target="_blank" 
-            rel="noreferrer"
-            className="player-btn"
-            title="Abrir original en Drive"
-          >
+          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn">
             <ExternalLink size={18} />
           </a>
           
