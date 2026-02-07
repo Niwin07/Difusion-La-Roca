@@ -4,59 +4,62 @@ const mysql = require('mysql2/promise');
 const { google } = require('googleapis');
 const cron = require('node-cron');
 const cors = require('cors');
+const path = require('path'); // Agregamos esto para local
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- ⚙️ CONFIGURACIÓN ---
 const PORT = process.env.PORT || 3001;
-const FOLDER_ID = process.env.FOLDER_ID; // Se lee de variable de entorno
+const FOLDER_ID = process.env.FOLDER_ID;
 
-// --- ☁️ CONFIGURACIÓN DE BASE DE DATOS (AIVEN/CLOUD) ---
-// Usamos la URI completa que te dio Aiven
-const dbConnectionConfig = {
+// --- 🏊‍♂️ BASE DE DATOS: POOL DE CONEXIONES (Gestión Automática) ---
+const pool = mysql.createPool({
     uri: process.env.DATABASE_URL, 
-    ssl: { rejectUnauthorized: false } // OBLIGATORIO para Aiven
-};
+    ssl: { rejectUnauthorized: false }, 
+    waitForConnections: true,
+    connectionLimit: 5,
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
+});
 
-// --- 🔐 AUTENTICACIÓN GOOGLE (CLOUD) ---
-// En la nube no leemos archivos .json, leemos una variable de texto con el contenido
+// --- 🔐 AUTENTICACIÓN GOOGLE (HÍBRIDA: NUBE + LOCAL) ---
 let auth;
 try {
     if (process.env.GOOGLE_CREDENTIALS_JSON) {
-        // Modo Nube: Lee el JSON desde la variable de entorno
+        // OPCIÓN A: Estamos en Render (Leemos variable de entorno)
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
         auth = new google.auth.GoogleAuth({
             credentials,
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
         });
-        console.log("🔐 Autenticación Google cargada desde Variable de Entorno.");
+        console.log("☁️  Modo Nube: Auth cargada desde Variable.");
     } else {
-        // Fallback: Modo Local (si tenés el archivo credenciales_drive.json)
-        const path = require('path');
+        // OPCIÓN B: Estamos en Local (Leemos archivo)
         const CREDENTIALS_PATH = path.join(__dirname, 'credenciales_drive.json');
         auth = new google.auth.GoogleAuth({
             keyFile: CREDENTIALS_PATH,
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
         });
-        console.log("🔐 Autenticación Google cargada desde Archivo Local.");
+        console.log("💻 Modo Local: Auth cargada desde Archivo.");
     }
 } catch (error) {
-    console.error("❌ Error iniciando Auth de Google:", error.message);
+    console.error("❌ Error Fatal en Auth Google:", error.message);
 }
 
-// --- 🧠 LÓGICA DE ALIAS ---
-async function obtenerMapaDeAlias(connection) {
+// --- 🧠 CEREBRO DE ALIAS ---
+async function obtenerMapaDeAlias() {
     try {
-        const [rows] = await connection.execute('SELECT alias_detectado, nombre_oficial FROM predicador_alias');
+        const [rows] = await pool.query('SELECT alias_detectado, nombre_oficial FROM predicador_alias');
         return rows.sort((a, b) => b.alias_detectado.length - a.alias_detectado.length);
     } catch (error) {
-        console.error("⚠️ Error cargando alias (Posiblemente tabla vacía o inexistente):", error.message);
+        console.error("⚠️ Error cargando alias (Checkear DB):", error.message);
         return [];
     }
 }
 
+// --- 🤖 PROCESAMIENTO DE NOMBRES ---
 function procesarNombreConAlias(nombreArchivo, listaAlias) {
     let nombreLimpio = nombreArchivo.replace(/\.mp3$/i, '').replace(/_/g, '-');
     const nombreLower = nombreLimpio.toLowerCase();
@@ -91,31 +94,21 @@ function procesarNombreConAlias(nombreArchivo, listaAlias) {
     }
 
     if (!encontrado) {
-        predicadorOficial = textoParaAnalizar
-            .replace('predica', '')
-            .replace(/[-]/g, ' ')
-            .trim();
+        predicadorOficial = textoParaAnalizar.replace('predica', '').replace(/[-]/g, ' ').trim();
         predicadorOficial = predicadorOficial.replace(/\b\w/g, l => l.toUpperCase());
     }
 
     return { titulo, predicador: predicadorOficial, fecha: fechaSQL };
 }
 
-// --- 🔄 MOTOR DE SINCRONIZACIÓN ---
+// --- 🔄 SINCRONIZACIÓN ---
 async function sincronizarDrive() {
-    console.log('🔄 Iniciando sincronización...');
-    let connection;
-
+    console.log('🔄 Sincronizando Drive...');
     try {
-        // Conexión usando la URI de Aiven
-        connection = await mysql.createConnection(dbConnectionConfig);
+        const listaAlias = await obtenerMapaDeAlias();
         
-        const listaAlias = await obtenerMapaDeAlias(connection);
-        console.log(`🧠 Alias cargados: ${listaAlias.length} reglas activas.`);
-
         const drive = google.drive({ version: 'v3', auth });
-        
-        // Obtenemos FOLDER_ID de la variable de entorno o fallback hardcodeado si olvidaste ponerla
+        // Si no hay variable, usa el ID hardcodeado por seguridad
         const driveFolderId = FOLDER_ID || '1mLxXbJ9s6HYYjE6G4ruy6JZGEmCsIxwT';
 
         const res = await drive.files.list({
@@ -124,95 +117,67 @@ async function sincronizarDrive() {
         });
 
         const archivos = res.data.files;
-        console.log(`📂 Drive: ${archivos.length} archivos encontrados.`);
-
+        
         for (const archivo of archivos) {
             const nombreLower = archivo.name.toLowerCase();
-
+            // Filtro Anti-Ruido
             if (!nombreLower.includes('predica') || 
                 nombreLower.includes('adoracion') || 
-                nombreLower.includes('reunion') ||
-                nombreLower.includes('ministracion') || 
+                nombreLower.includes('reunion') || 
                 nombreLower.endsWith('.wav')) {
                 continue; 
             }
 
             const datos = procesarNombreConAlias(archivo.name, listaAlias);
 
-            const [rows] = await connection.execute(
-                'SELECT id FROM predicas WHERE drive_id = ?', 
-                [archivo.id]
-            );
+            // Verificamos existencia
+            const [rows] = await pool.query('SELECT id FROM predicas WHERE drive_id = ?', [archivo.id]);
 
             if (rows.length === 0) {
-                await connection.execute(
-                    `INSERT INTO predicas (titulo, predicador, fecha, url_audio, drive_id) 
-                     VALUES (?, ?, ?, ?, ?)`,
+                await pool.query(
+                    `INSERT INTO predicas (titulo, predicador, fecha, url_audio, drive_id) VALUES (?, ?, ?, ?, ?)`,
                     [datos.titulo, datos.predicador, datos.fecha, archivo.webViewLink, archivo.id]
                 );
-                console.log(`✅ [NUEVO] ${datos.predicador} - ${datos.titulo}`);
+                console.log(`✅ Nuevo: ${datos.titulo}`);
             } else {
-                await connection.execute(
-                    `UPDATE predicas 
-                     SET titulo = ?, predicador = ?, fecha = ?, url_audio = ?
-                     WHERE drive_id = ?`,
+                await pool.query(
+                    `UPDATE predicas SET titulo = ?, predicador = ?, fecha = ?, url_audio = ? WHERE drive_id = ?`,
                     [datos.titulo, datos.predicador, datos.fecha, archivo.webViewLink, archivo.id]
                 );
             }
         }
-        console.log('✨ Sincronización finalizada.');
-
     } catch (error) {
-        console.error('❌ Error fatal en sincronización:', error);
-    } finally {
-        if (connection) await connection.end();
+        console.error('❌ Error en Sync:', error.message);
     }
 }
 
-// --- ⏲️ CRON JOBS ---
+// --- ⏲️ CRON (Cada 30 min) ---
 cron.schedule('*/30 * * * *', () => {
     sincronizarDrive();
 });
 
-// Ejecutar al iniciar (Importante para Render)
-sincronizarDrive();
-
-// --- 🌐 RUTAS API ---
-app.get('/api/predicas', async (req, res) => {
-    let connection;
+// --- 💓 HEALTH CHECK (Para que no se duerma) ---
+app.get('/ping', async (req, res) => {
     try {
-        connection = await mysql.createConnection(dbConnectionConfig);
-        const [rows] = await connection.execute('SELECT * FROM predicas ORDER BY fecha DESC');
+        await pool.query('SELECT 1'); 
+        res.send('Pong! DB Alive 🦅');
+    } catch (error) {
+        res.status(500).send('DB Error');
+    }
+});
+
+// --- 🚀 API PÚBLICA ---
+app.get('/api/predicas', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM predicas ORDER BY fecha DESC');
         res.json(rows);
     } catch (error) {
         console.error(error);
         res.status(500).send('Error de servidor');
-    } finally {
-        if (connection) await connection.end();
     }
 });
-
-app.get('/ping', (req, res) => {
-    res.send('Pong! Estoy vivo 🏓');
-});
-
-setInterval(async () => {
-    let connection;
-    try {
-        console.log('💓 Enviando ping a la DB para mantenerla despierta...');
-        
-        // CORRECCIÓN AQUÍ: Usamos 'dbConnectionConfig' en lugar de 'dbConfig'
-        connection = await mysql.createConnection(dbConnectionConfig);
-        
-        await connection.execute('SELECT 1'); // Consulta ultra ligera
-        console.log('💓 Pong! DB activa.');
-    } catch (error) {
-        console.error('💀 Error en el ping de mantenimiento:', error.message);
-    } finally {
-        if (connection) await connection.end();
-    }
-}, 300000); // 5 minutos
 
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`🚀 Servidor La Roca corriendo en puerto ${PORT}`);
+    sincronizarDrive(); // Primer sync al arrancar
 });
