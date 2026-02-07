@@ -294,6 +294,12 @@ function App() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
+  // === 1. NUEVO ESTADO DE PAGINACIÓN ===
+  const [paginaActual, setPaginaActual] = useState(1);
+  const itemsPorPagina = 9; // Mostramos 9 para que quede grilla de 3x3 linda
+
+  
+
   useEffect(() => {
     document.body.classList.toggle('dark', tema === 'dark');
     localStorage.setItem('tema', tema);
@@ -319,6 +325,10 @@ function App() {
   useEffect(() => {
     cargarPredicas();
   }, []);
+
+  useEffect(() => {
+      setPaginaActual(1);
+    }, [busqueda, anioSeleccionado, predicadorSeleccionado, filtroFecha]);
 
   // === FAVORITOS ===
   const toggleFavorito = (id) => {
@@ -393,6 +403,22 @@ function App() {
       return anioCoincide && predicadorCoincide && textoCoincide;
     });
   }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda, filtroFecha]);
+  // === 3. LÓGICA DE CORTE (SLICING) ===
+  const indiceUltimo = paginaActual * itemsPorPagina;
+  const indicePrimero = indiceUltimo - itemsPorPagina;
+  const predicasVisibles = predicasFiltradas.slice(indicePrimero, indiceUltimo);
+  const totalPaginas = Math.ceil(predicasFiltradas.length / itemsPorPagina);
+
+  // Función para cambiar página y scrollear arriba
+  const cambiarPagina = (numero) => {
+    setPaginaActual(numero);
+    // Scroll suave al inicio de la lista
+    const grid = document.querySelector('.grid');
+    if (grid) {
+      const y = grid.getBoundingClientRect().top + window.scrollY - 100;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
 
   // === STATS ===
   const stats = useMemo(() => {
@@ -416,7 +442,7 @@ function App() {
 
       <div className="container">
         
-        {/* HEADER */}
+        {/* === HEADER === */}
         <header className="hero">
           <button onClick={toggleTema} className="theme-toggle" title="Cambiar tema">
             {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
@@ -427,31 +453,23 @@ function App() {
           <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
           <h1>Canal de Difusión</h1>
 
-          {/* STATS MINI */}
+          {/* MINI STATS */}
           {stats && (
             <div className="mini-stats">
-              <span title="Total de mensajes">{stats.total} mensajes</span>
+              <span>{stats.total} mensajes</span>
               <span>•</span>
-              <span title="Último año">{stats.ultimoAnio}</span>
+              <span>{stats.ultimoAnio}</span>
               {stats.favoritos > 0 && (
                 <>
                   <span>•</span>
                   <span style={{color: '#ef4444'}}>❤️ {stats.favoritos}</span>
                 </>
               )}
-              {predicasFiltradas.length !== predicas.length && (
-                <>
-                  <span>•</span>
-                  <span style={{color: 'var(--accent)'}}>
-                    {predicasFiltradas.length} filtrados
-                  </span>
-                </>
-              )}
             </div>
           )}
         </header>
 
-        {/* CONTROLES */}
+        {/* === CONTROLES === */}
         <div className="controls">
           <div className="search-box">
             <input 
@@ -493,33 +511,30 @@ function App() {
             <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
           </button>
 
-          {/* FILTROS RÁPIDOS DE FECHA CORREGIDOS */}
+          {/* FILTROS RÁPIDOS */}
           <div className="quick-filters">
             <button 
               className={`filter-chip ${filtroFecha === 'Todos' ? 'active' : ''}`}
               onClick={() => setFiltroFecha('Todos')}
             >
-              <Calendar size={14} />
-              Todos
+              <Calendar size={14} /> Todos
             </button>
             <button 
               className={`filter-chip ${filtroFecha === 'ultimos30' ? 'active' : ''}`}
               onClick={() => setFiltroFecha('ultimos30')}
             >
-              <Calendar size={14} />
-              Últimos 30 días
+              <Calendar size={14} /> Últimos 30 días
             </button>
             <button 
               className={`filter-chip ${filtroFecha === 'esteAnio' ? 'active' : ''}`}
               onClick={() => setFiltroFecha('esteAnio')}
             >
-              <Calendar size={14} />
-              Este año ({new Date().getFullYear()})
+              <Calendar size={14} /> Este año
             </button>
           </div>
         </div>
 
-        {/* LISTA DE MENSAJES */}
+        {/* === CONTENIDO PRINCIPAL === */}
         {cargando ? (
           <div className="loading">
             <RefreshCw size={40} className="spinning" />
@@ -541,52 +556,106 @@ function App() {
             </button>
           </div>
         ) : (
-          <div className="grid">
-            {predicasFiltradas.map((predica) => (
-              <div key={predica.id} className="card">
-                <div className="card-content">
-                  <div className="card-meta">
-                    <Calendar size={14} />
-                    <span>{new Date(predica.fecha).toLocaleDateString('es-AR')}</span>
-                    <span>•</span>
-                    <span style={{color: 'var(--accent)'}}>Audio</span>
+          <>
+            {/* GRILLA DE TARJETAS (Usamos predicasVisibles) */}
+            <div className="grid">
+              {predicasVisibles.map((predica) => (
+                <div key={predica.id} className="card">
+                  <div className="card-content">
+                    <div className="card-meta">
+                      <Calendar size={14} />
+                      <span>{new Date(predica.fecha).toLocaleDateString('es-AR')}</span>
+                      <span>•</span>
+                      <span style={{color: 'var(--accent)'}}>Audio</span>
+                    </div>
+                    <h3>{predica.titulo}</h3>
+                    <div className="predicador">{predica.predicador}</div>
                   </div>
-                  <h3>{predica.titulo}</h3>
-                  <div className="predicador">{predica.predicador}</div>
+                  
+                  <div className="card-actions">
+                    <button 
+                      onClick={() => toggleFavorito(predica.id)}
+                      className={`favorite-btn ${favoritos.includes(predica.id) ? 'active' : ''}`}
+                    >
+                      <Heart size={20} fill={favoritos.includes(predica.id) ? 'currentColor' : 'none'} />
+                    </button>
+
+                    <button 
+                      onClick={() => compartirPredica(predica)}
+                      className="share-btn"
+                    >
+                      <Share2 size={18} />
+                    </button>
+
+                    <button
+                      onClick={() => reproducir(predica)}
+                      className="play-btn-round"
+                    >
+                      <Play size={20} fill="currentColor" />
+                    </button>
+                  </div>
                 </div>
-                
-                <div className="card-actions">
+              ))}
+            </div>
+
+            {/* === CONTROLES DE PAGINACIÓN === */}
+            {totalPaginas > 1 && (
+              <>
+                <div className="pagination">
                   <button 
-                    onClick={() => toggleFavorito(predica.id)}
-                    className={`favorite-btn ${favoritos.includes(predica.id) ? 'active' : ''}`}
-                    title={favoritos.includes(predica.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                    onClick={() => cambiarPagina(paginaActual - 1)} 
+                    disabled={paginaActual === 1}
+                    className="page-btn prev-next"
                   >
-                    <Heart size={20} fill={favoritos.includes(predica.id) ? 'currentColor' : 'none'} />
+                    Anterior
                   </button>
+                  
+                  {/* GENERACIÓN INTELIGENTE DE NÚMEROS */}
+                  {[...Array(totalPaginas)].map((_, index) => {
+                    const num = index + 1;
+                    // Mostrar: Primera, Última, y vecinas a la actual
+                    if (
+                      num === 1 || 
+                      num === totalPaginas || 
+                      (num >= paginaActual - 1 && num <= paginaActual + 1)
+                    ) {
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => cambiarPagina(num)}
+                          className={`page-btn ${paginaActual === num ? 'active' : ''}`}
+                        >
+                          {num}
+                        </button>
+                      );
+                    } else if (
+                      num === paginaActual - 2 || 
+                      num === paginaActual + 2
+                    ) {
+                      return <span key={num} className="page-dots">...</span>;
+                    }
+                    return null;
+                  })}
 
                   <button 
-                    onClick={() => compartirPredica(predica)}
-                    className="share-btn"
-                    title="Compartir"
+                    onClick={() => cambiarPagina(paginaActual + 1)} 
+                    disabled={paginaActual === totalPaginas}
+                    className="page-btn prev-next"
                   >
-                    <Share2 size={18} />
-                  </button>
-
-                  <button
-                    onClick={() => reproducir(predica)}
-                    className="play-btn-round"
-                    title="Reproducir aquí"
-                  >
-                    <Play size={20} fill="currentColor" />
+                    Siguiente
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
+
+                <div className="page-info">
+                  Mostrando {indicePrimero + 1} - {Math.min(indiceUltimo, predicasFiltradas.length)} de {predicasFiltradas.length} mensajes
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
 
-      {/* REPRODUCTOR */}
+      {/* COMPONENTES FLOTANTES */}
       {predicaReproduciendo && (
         <AudioPlayer 
           predica={predicaReproduciendo} 
@@ -594,7 +663,6 @@ function App() {
         />
       )}
 
-      {/* TOAST */}
       {toastMessage && (
         <Toast 
           message={toastMessage} 

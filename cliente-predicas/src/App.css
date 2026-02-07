@@ -997,3 +997,87 @@ select:hover, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-hover);
 }
+
+/* === PAGINACIÓN PREMIUM === */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  color: var(--text-body);
+  min-width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Lato', sans-serif;
+}
+
+.page-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.page-btn.active {
+  background: var(--accent);
+  color: var(--button-text);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+  transform: scale(1.1);
+}
+
+.page-btn.prev-next {
+  padding: 0 20px;
+  width: auto;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--hover-bg);
+  border-color: transparent;
+}
+
+.page-dots {
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 0 4px;
+}
+
+.page-info {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Ajuste Mobile */
+@media (max-width: 480px) {
+  .page-btn {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  
+  .page-btn.prev-next {
+    padding: 0 12px;
+    font-size: 0.75rem;
+  }
+}
