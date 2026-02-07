@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 const { google } = require('googleapis');
 const cron = require('node-cron');
 const cors = require('cors');
-const path = require('path'); // Agregamos esto para local
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -13,171 +13,295 @@ app.use(express.json());
 const PORT = process.env.PORT || 3001;
 const FOLDER_ID = process.env.FOLDER_ID;
 
-// --- 🏊‍♂️ BASE DE DATOS: POOL DE CONEXIONES (Gestión Automática) ---
+// === 🚀 CACHE SIMPLE (Evita consultas innecesarias a DB) ===
+let cachePredicas = null;
+let ultimaActualizacion = null;
+
+// === 🏊‍♂️ POOL OPTIMIZADO ===
 const pool = mysql.createPool({
     uri: process.env.DATABASE_URL, 
     ssl: { rejectUnauthorized: false }, 
     waitForConnections: true,
-    connectionLimit: 5,
+    connectionLimit: 3, // Reducido para servicios gratuitos
     queueLimit: 0,
     enableKeepAlive: true,
-    keepAliveInitialDelay: 0
+    keepAliveInitialDelay: 0,
+    idleTimeout: 60000 // Cierra conexiones ociosas
 });
 
-// --- 🔐 AUTENTICACIÓN GOOGLE (HÍBRIDA: NUBE + LOCAL) ---
+// === 🔐 AUTENTICACIÓN GOOGLE (HÍBRIDA) ===
 let auth;
 try {
     if (process.env.GOOGLE_CREDENTIALS_JSON) {
-        // OPCIÓN A: Estamos en Render (Leemos variable de entorno)
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
         auth = new google.auth.GoogleAuth({
             credentials,
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
         });
-        console.log("☁️  Modo Nube: Auth cargada desde Variable.");
+        console.log("☁️  Modo Nube");
     } else {
-        // OPCIÓN B: Estamos en Local (Leemos archivo)
-        const CREDENTIALS_PATH = path.join(__dirname, 'credenciales_drive.json');
         auth = new google.auth.GoogleAuth({
-            keyFile: CREDENTIALS_PATH,
+            keyFile: path.join(__dirname, 'credenciales_drive.json'),
             scopes: ['https://www.googleapis.com/auth/drive.readonly'],
         });
-        console.log("💻 Modo Local: Auth cargada desde Archivo.");
+        console.log("💻 Modo Local");
     }
 } catch (error) {
-    console.error("❌ Error Fatal en Auth Google:", error.message);
+    console.error("❌ Error Auth:", error.message);
 }
 
-// --- 🧠 CEREBRO DE ALIAS ---
-async function obtenerMapaDeAlias() {
+// === 🧠 CACHE DE ALIAS (Se carga una sola vez) ===
+let mapaAlias = [];
+
+async function cargarAlias() {
+    if (mapaAlias.length > 0) return mapaAlias;
+    
     try {
-        const [rows] = await pool.query('SELECT alias_detectado, nombre_oficial FROM predicador_alias');
-        return rows.sort((a, b) => b.alias_detectado.length - a.alias_detectado.length);
+        const [rows] = await pool.query(
+            'SELECT alias_detectado, nombre_oficial FROM predicador_alias ORDER BY LENGTH(alias_detectado) DESC'
+        );
+        mapaAlias = rows;
+        console.log(`📋 Alias cargados: ${rows.length}`);
+        return rows;
     } catch (error) {
-        console.error("⚠️ Error cargando alias (Checkear DB):", error.message);
+        console.error("⚠️ Error alias:", error.message);
         return [];
     }
 }
 
-// --- 🤖 PROCESAMIENTO DE NOMBRES ---
+// === 🤖 PROCESAMIENTO MEJORADO ===
 function procesarNombreConAlias(nombreArchivo, listaAlias) {
-    let nombreLimpio = nombreArchivo.replace(/\.mp3$/i, '').replace(/_/g, '-');
+    let nombreLimpio = nombreArchivo
+        .replace(/\.mp3$/i, '')
+        .replace(/_/g, '-')
+        .trim();
+    
     const nombreLower = nombreLimpio.toLowerCase();
-    const regexFecha = /[-_](\d{1,2}[-_]\d{1,2}[-_]\d{2,4})$/;
+    
+    // Regex más robusto para fechas
+    const regexFecha = /[-_](\d{1,2})[-_](\d{1,2})[-_](\d{2,4})(?=\s|$|\.)/;
     const match = nombreLimpio.match(regexFecha);
-
-    let fechaSQL = new Date();
+    
+    let fechaSQL = new Date().toISOString().split('T')[0];
     let titulo = "Mensaje";
     let textoParaAnalizar = nombreLower;
-
+    
     if (match) {
-        const fechaRaw = match[1].replace(/_/g, '-');
-        const partesFecha = fechaRaw.split('-');
-        let [dia, mes, anio] = partesFecha;
+        let [_, dia, mes, anio] = match;
         if (anio.length === 2) anio = '20' + anio;
-        fechaSQL = `${anio}-${mes}-${dia}`;
-        titulo = `Mensaje del ${dia}/${mes}/${anio}`;
-        textoParaAnalizar = nombreLower.substring(0, match.index);
+        
+        // Validación de fecha
+        const diaNum = parseInt(dia);
+        const mesNum = parseInt(mes);
+        if (diaNum >= 1 && diaNum <= 31 && mesNum >= 1 && mesNum <= 12) {
+            fechaSQL = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+            titulo = `Mensaje del ${dia}/${mes}/${anio}`;
+            textoParaAnalizar = nombreLower.substring(0, match.index).trim();
+        }
     } else {
+        // Si no hay fecha, usa el nombre completo como título
         titulo = nombreLimpio.replace(/-/g, ' ');
     }
-
-    let predicadorOficial = "Predicador Invitado"; 
-    let encontrado = false;
-
+    
+    // Buscar predicador por alias
+    let predicadorOficial = "Predicador Invitado";
+    
     for (const item of listaAlias) {
-        if (textoParaAnalizar.includes(item.alias_detectado.toLowerCase())) {
+        const aliasLower = item.alias_detectado.toLowerCase();
+        if (textoParaAnalizar.includes(aliasLower)) {
             predicadorOficial = item.nombre_oficial;
-            encontrado = true;
             break;
         }
     }
-
-    if (!encontrado) {
-        predicadorOficial = textoParaAnalizar.replace('predica', '').replace(/[-]/g, ' ').trim();
-        predicadorOficial = predicadorOficial.replace(/\b\w/g, l => l.toUpperCase());
+    
+    // Si no se encontró alias, extraer del nombre
+    if (predicadorOficial === "Predicador Invitado" && textoParaAnalizar) {
+        let extracted = textoParaAnalizar
+            .replace(/predica/gi, '')
+            .replace(/mensaje/gi, '')
+            .replace(/[-]/g, ' ')
+            .trim();
+        
+        if (extracted.length > 2) {
+            predicadorOficial = extracted
+                .split(' ')
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+        }
     }
-
+    
     return { titulo, predicador: predicadorOficial, fecha: fechaSQL };
 }
 
-// --- 🔄 SINCRONIZACIÓN ---
-async function sincronizarDrive() {
-    console.log('🔄 Sincronizando Drive...');
-    try {
-        const listaAlias = await obtenerMapaDeAlias();
-        
-        const drive = google.drive({ version: 'v3', auth });
-        // Si no hay variable, usa el ID hardcodeado por seguridad
-        const driveFolderId = FOLDER_ID || '1mLxXbJ9s6HYYjE6G4ruy6JZGEmCsIxwT';
+// === 🔄 SINCRONIZACIÓN OPTIMIZADA ===
+let sincronizando = false;
 
+async function sincronizarDrive() {
+    if (sincronizando) {
+        console.log('⏭️  Sync en progreso, saltando...');
+        return;
+    }
+    
+    sincronizando = true;
+    console.log(`🔄 Sync [${new Date().toLocaleTimeString('es-AR')}]`);
+    
+    try {
+        const listaAlias = await cargarAlias();
+        const drive = google.drive({ version: 'v3', auth });
+        const driveFolderId = FOLDER_ID || '1mLxXbJ9s6HYYjE6G4ruy6JZGEmCsIxwT';
+        
+        // Traer archivos de Drive
         const res = await drive.files.list({
             q: `'${driveFolderId}' in parents and trashed = false and mimeType contains 'audio'`,
             fields: 'files(id, name, webViewLink, createdTime)',
+            orderBy: 'createdTime desc',
+            pageSize: 1000 // Limitar por si hay muchos archivos
         });
-
-        const archivos = res.data.files;
+        
+        const archivos = res.data.files || [];
+        let nuevos = 0;
+        let actualizados = 0;
         
         for (const archivo of archivos) {
             const nombreLower = archivo.name.toLowerCase();
-            // Filtro Anti-Ruido
+            
+            // Filtro mejorado
             if (!nombreLower.includes('predica') || 
                 nombreLower.includes('adoracion') || 
+                nombreLower.includes('adoración') ||
                 nombreLower.includes('reunion') || 
-                nombreLower.endsWith('.wav')) {
-                continue; 
+                nombreLower.includes('reunión') ||
+                nombreLower.includes('alabanza') ||
+                nombreLower.endsWith('.wav') ||
+                nombreLower.endsWith('.m4a')) {
+                continue;
             }
-
+            
             const datos = procesarNombreConAlias(archivo.name, listaAlias);
-
-            // Verificamos existencia
-            const [rows] = await pool.query('SELECT id FROM predicas WHERE drive_id = ?', [archivo.id]);
-
+            
+            // Buscar si existe
+            const [rows] = await pool.query(
+                'SELECT id, titulo, predicador FROM predicas WHERE drive_id = ?', 
+                [archivo.id]
+            );
+            
             if (rows.length === 0) {
+                // Insertar nuevo
                 await pool.query(
-                    `INSERT INTO predicas (titulo, predicador, fecha, url_audio, drive_id) VALUES (?, ?, ?, ?, ?)`,
+                    `INSERT INTO predicas (titulo, predicador, fecha, url_audio, drive_id) 
+                     VALUES (?, ?, ?, ?, ?)`,
                     [datos.titulo, datos.predicador, datos.fecha, archivo.webViewLink, archivo.id]
                 );
-                console.log(`✅ Nuevo: ${datos.titulo}`);
+                nuevos++;
             } else {
-                await pool.query(
-                    `UPDATE predicas SET titulo = ?, predicador = ?, fecha = ?, url_audio = ? WHERE drive_id = ?`,
-                    [datos.titulo, datos.predicador, datos.fecha, archivo.webViewLink, archivo.id]
-                );
+                // Actualizar solo si cambió algo
+                const existente = rows[0];
+                if (existente.titulo !== datos.titulo || existente.predicador !== datos.predicador) {
+                    await pool.query(
+                        `UPDATE predicas 
+                         SET titulo = ?, predicador = ?, fecha = ?, url_audio = ? 
+                         WHERE drive_id = ?`,
+                        [datos.titulo, datos.predicador, datos.fecha, archivo.webViewLink, archivo.id]
+                    );
+                    actualizados++;
+                }
             }
         }
+        
+        // Invalidar cache
+        cachePredicas = null;
+        ultimaActualizacion = new Date();
+        
+        console.log(`✅ Sync OK - Nuevos: ${nuevos}, Actualizados: ${actualizados}`);
+        
     } catch (error) {
-        console.error('❌ Error en Sync:', error.message);
+        console.error('❌ Error Sync:', error.message);
+    } finally {
+        sincronizando = false;
     }
 }
 
-// --- ⏲️ CRON (Cada 30 min) ---
+// === ⏲️ CRON MANTIENE SERVICIOS DESPIERTOS ===
 cron.schedule('*/30 * * * *', () => {
     sincronizarDrive();
 });
 
-// --- 💓 HEALTH CHECK (Para que no se duerma) ---
+// === 💓 HEALTH CHECK ===
 app.get('/ping', async (req, res) => {
     try {
-        await pool.query('SELECT 1'); 
-        res.send('Pong! DB Alive 🦅');
+        await pool.query('SELECT 1');
+        res.json({ 
+            status: 'ok', 
+            timestamp: new Date(),
+            ultimaSync: ultimaActualizacion 
+        });
     } catch (error) {
-        res.status(500).send('DB Error');
+        res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
-// --- 🚀 API PÚBLICA ---
+// === 🚀 API CON CACHE ===
 app.get('/api/predicas', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM predicas ORDER BY fecha DESC');
+        // Usar cache si existe (válido por 5 min)
+        const ahora = Date.now();
+        if (cachePredicas && (ahora - cachePredicas.timestamp < 5 * 60 * 1000)) {
+            return res.json(cachePredicas.data);
+        }
+        
+        // Consultar DB
+        const [rows] = await pool.query(
+            'SELECT id, titulo, predicador, fecha, url_audio FROM predicas ORDER BY fecha DESC'
+        );
+        
+        // Actualizar cache
+        cachePredicas = {
+            data: rows,
+            timestamp: ahora
+        };
+        
         res.json(rows);
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error de servidor');
+        console.error('❌ API Error:', error.message);
+        res.status(500).json({ error: 'Error del servidor' });
     }
 });
 
+// === 🎯 ENDPOINT EXTRA: Forzar sincronización manual ===
+app.post('/api/sync', async (req, res) => {
+    if (sincronizando) {
+        return res.json({ message: 'Sincronización en progreso' });
+    }
+    
+    sincronizarDrive();
+    res.json({ message: 'Sincronización iniciada' });
+});
+
+// === 📊 ENDPOINT: Stats ===
+app.get('/api/stats', async (req, res) => {
+    try {
+        const [total] = await pool.query('SELECT COUNT(*) as total FROM predicas');
+        const [porPredicador] = await pool.query(
+            'SELECT predicador, COUNT(*) as cantidad FROM predicas GROUP BY predicador ORDER BY cantidad DESC'
+        );
+        const [porAnio] = await pool.query(
+            'SELECT YEAR(fecha) as anio, COUNT(*) as cantidad FROM predicas GROUP BY YEAR(fecha) ORDER BY anio DESC'
+        );
+        
+        res.json({
+            total: total[0].total,
+            porPredicador,
+            porAnio,
+            ultimaSync: ultimaActualizacion
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// === 🚀 INICIO ===
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor La Roca corriendo en puerto ${PORT}`);
-    sincronizarDrive(); // Primer sync al arrancar
+    console.log(`🦅 Ministerio La Roca API - Puerto ${PORT}`);
+    cargarAlias(); // Pre-cargar alias
+    sincronizarDrive(); // Sync inicial
 });

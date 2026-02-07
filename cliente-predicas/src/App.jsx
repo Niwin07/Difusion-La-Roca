@@ -1,15 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Play, Search, Sun, Moon } from 'lucide-react';
+import { Play, Search, Sun, Moon, RefreshCw, TrendingUp, Calendar } from 'lucide-react';
 import './App.css';
 
-// --- 1. ÁGUILA PRINCIPAL (Logo Detallado) ---
+// --- ÁGUILA PRINCIPAL ---
 const MainEagle = () => (
   <svg 
     version="1.1" 
     xmlns="http://www.w3.org/2000/svg" 
     viewBox="0 0 360.081 360.081" 
     className="eagle-logo"
-    fill="currentColor" // Hereda el color dorado
+    fill="currentColor"
   >
     <path d="M358.839,130.772c-0.666-0.618-1.432-0.931-2.278-0.931c-3.092,0-6.364,4.36-9.251,8.208
       c-1.091,1.454-2.527,3.368-3.262,4.005c-0.086-1.467,1.019-5.633,1.85-8.764c2.099-7.914,4.27-16.096,0.735-18
@@ -48,7 +48,7 @@ const MainEagle = () => (
   </svg>
 );
 
-// --- 2. ÁGUILA DE FONDO (Watermark) ---
+// --- ÁGUILA DE FONDO ---
 const BackgroundEagle = () => (
   <div className="eagle-background-container">
     <svg 
@@ -83,8 +83,9 @@ function App() {
   const [busqueda, setBusqueda] = useState('');
   const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
+  const [mostrarStats, setMostrarStats] = useState(false);
 
-  // LÓGICA DE TEMA
+  // === TEMA ===
   const [tema, setTema] = useState(() => {
     const guardado = localStorage.getItem('tema');
     if (guardado) return guardado;
@@ -92,48 +93,78 @@ function App() {
   });
 
   useEffect(() => {
-    if (tema === 'dark') {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
+    document.body.classList.toggle('dark', tema === 'dark');
     localStorage.setItem('tema', tema);
   }, [tema]);
 
-  const toggleTema = () => {
-    setTema(prev => prev === 'light' ? 'dark' : 'light');
+  const toggleTema = () => setTema(prev => prev === 'light' ? 'dark' : 'light');
+
+  // === CARGAR PREDICAS ===
+  const cargarPredicas = async () => {
+    setCargando(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/predicas`);
+      const data = await res.json();
+      setPredicas(data);
+    } catch (err) {
+      console.error("Error:", err);
+    } finally {
+      setCargando(false);
+    }
   };
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    fetch(`${apiUrl}/api/predicas`)
-      .then(res => res.json())
-      .then(data => {
-        setPredicas(data);
-        setCargando(false);
-      })
-      .catch(err => console.error("Error:", err));
+    cargarPredicas();
   }, []);
 
+  // === LISTAS DINÁMICAS ===
   const listas = useMemo(() => {
-    const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))].sort((a,b) => b-a);
-    const predicadores = [...new Set(predicas.map(p => p.predicador))].sort();
+    const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))]
+      .sort((a,b) => b-a);
+    const predicadores = [...new Set(predicas.map(p => p.predicador))]
+      .sort();
     return { anios, predicadores };
   }, [predicas]);
 
+  // === FILTRADO MEJORADO ===
   const predicasFiltradas = useMemo(() => {
     return predicas.filter(p => {
-      const coincideAnio = anioSeleccionado === 'Todos' || new Date(p.fecha).getFullYear() === parseInt(anioSeleccionado);
-      const coincidePredicador = predicadorSeleccionado === 'Todos' || p.predicador === predicadorSeleccionado;
-      const coincideTexto = p.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
-                            p.predicador.toLowerCase().includes(busqueda.toLowerCase());
-      return coincideAnio && coincidePredicador && coincideTexto;
+      const anioCoincide = anioSeleccionado === 'Todos' || 
+        new Date(p.fecha).getFullYear() === parseInt(anioSeleccionado);
+      
+      const predicadorCoincide = predicadorSeleccionado === 'Todos' || 
+        p.predicador === predicadorSeleccionado;
+      
+      const textoCoincide = busqueda === '' || 
+        p.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
+        p.predicador.toLowerCase().includes(busqueda.toLowerCase());
+      
+      return anioCoincide && predicadorCoincide && textoCoincide;
     });
   }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda]);
 
+  // === STATS RÁPIDAS ===
+  const stats = useMemo(() => {
+    if (!predicas.length) return null;
+    
+    const porPredicador = predicas.reduce((acc, p) => {
+      acc[p.predicador] = (acc[p.predicador] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const topPredicador = Object.entries(porPredicador)
+      .sort((a, b) => b[1] - a[1])[0];
+    
+    return {
+      total: predicas.length,
+      topPredicador: topPredicador ? `${topPredicador[0]} (${topPredicador[1]})` : 'N/A',
+      ultimoAnio: new Date(predicas[0]?.fecha).getFullYear()
+    };
+  }, [predicas]);
+
   return (
     <>
-      {/* FONDO DECORATIVO */}
       <BackgroundEagle />
 
       <div className="container">
@@ -144,11 +175,27 @@ function App() {
             {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
 
-          {/* ÁGUILA LOGO PRINCIPAL */}
           <MainEagle />
           
           <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
           <h1>Canal de Difusión</h1>
+
+          {/* STATS MINI */}
+          {stats && (
+            <div className="mini-stats">
+              <span title="Total de mensajes">{stats.total} mensajes</span>
+              <span>•</span>
+              <span title="Último año">{stats.ultimoAnio}</span>
+              {predicasFiltradas.length !== predicas.length && (
+                <>
+                  <span>•</span>
+                  <span style={{color: 'var(--accent)'}}>
+                    {predicasFiltradas.length} filtrados
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </header>
 
         {/* CONTROLES */}
@@ -157,39 +204,84 @@ function App() {
             <Search size={18} className="search-icon" />
             <input 
               type="text" 
-              placeholder="Buscar mensaje..." 
+              placeholder="Buscar por título o predicador..." 
               className="search-input"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
-          <select value={predicadorSeleccionado} onChange={(e) => setPredicadorSeleccionado(e.target.value)}>
+          
+          <select 
+            value={predicadorSeleccionado} 
+            onChange={(e) => setPredicadorSeleccionado(e.target.value)}
+          >
             <option value="Todos">Todos los Predicadores</option>
-            {listas.predicadores.map(pred => (<option key={pred} value={pred}>{pred}</option>))}
+            {listas.predicadores.map(pred => (
+              <option key={pred} value={pred}>{pred}</option>
+            ))}
           </select>
-          <select value={anioSeleccionado} onChange={(e) => setAnioSeleccionado(e.target.value)}>
+          
+          <select 
+            value={anioSeleccionado} 
+            onChange={(e) => setAnioSeleccionado(e.target.value)}
+          >
             <option value="Todos">Todos los Años</option>
-            {listas.anios.map(anio => (<option key={anio} value={anio}>{anio}</option>))}
+            {listas.anios.map(anio => (
+              <option key={anio} value={anio}>{anio}</option>
+            ))}
           </select>
+
+          <button 
+            onClick={cargarPredicas} 
+            className="refresh-btn"
+            title="Recargar"
+            disabled={cargando}
+          >
+            <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
+          </button>
         </div>
 
         {/* LISTA DE MENSAJES */}
         {cargando ? (
-          <p className="loading">Cargando biblioteca...</p>
+          <div className="loading">
+            <RefreshCw size={32} className="spinning" />
+            <p>Cargando biblioteca...</p>
+          </div>
+        ) : predicasFiltradas.length === 0 ? (
+          <div className="empty-state">
+            <p>No se encontraron mensajes con esos filtros</p>
+            <button 
+              onClick={() => {
+                setBusqueda('');
+                setAnioSeleccionado('Todos');
+                setPredicadorSeleccionado('Todos');
+              }}
+              className="reset-btn"
+            >
+              Limpiar filtros
+            </button>
+          </div>
         ) : (
           <div className="grid">
             {predicasFiltradas.map((predica) => (
               <div key={predica.id} className="card">
                 <div className="card-content">
                   <div className="card-meta">
-                    <span>{new Date(predica.fecha).toLocaleDateString()}</span>
+                    <Calendar size={14} />
+                    <span>{new Date(predica.fecha).toLocaleDateString('es-AR')}</span>
                     <span>•</span>
                     <span style={{color: 'var(--accent)'}}>Audio</span>
                   </div>
                   <h3>{predica.titulo}</h3>
                   <div className="predicador">{predica.predicador}</div>
                 </div>
-                <a href={predica.url_audio} target="_blank" rel="noreferrer" className="play-btn-round" title="Reproducir">
+                <a 
+                  href={predica.url_audio} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="play-btn-round" 
+                  title="Reproducir"
+                >
                   <Play size={20} fill="currentColor" />
                 </a>
               </div>
