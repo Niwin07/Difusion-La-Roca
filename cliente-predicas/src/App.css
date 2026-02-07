@@ -650,17 +650,19 @@ select:hover, select:focus {
 }
 
 .close-player-btn {
-  background: transparent;
+  background: var(--card-bg);
   border: 2px solid var(--border);
-  color: var(--text-secondary);
-  width: 36px;
-  height: 36px;
+  color: var(--text-body);
+  width: 40px;
+  height: 40px;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .close-player-btn:hover {
-  background: var(--error-bg);
+  background: #ef4444;
   border-color: #ef4444;
-  color: #ef4444;
+  color: white;
+  transform: scale(1.1) rotate(90deg);
 }
 
 /* === RESPONSIVE === */

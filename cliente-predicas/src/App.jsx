@@ -92,26 +92,81 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO ===
+// === REPRODUCTOR DE AUDIO CORREGIDO ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [error, setError] = useState(false);
+
+  // Extraer el ID del archivo de Drive de la URL
+  const extractDriveFileId = (url) => {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : null;
+  };
+
+  const driveFileId = extractDriveFileId(predica.url_audio);
+  
+  // URL directa para streaming de Drive
+  const audioUrl = driveFileId 
+    ? `https://drive.google.com/uc?export=download&id=${driveFileId}`
+    : predica.url_audio;
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.play();
+    if (audioRef.current && !error) {
+      audioRef.current.play().catch(err => {
+        console.error("Error reproduciendo:", err);
+        setError(true);
+      });
       setIsPlaying(true);
     }
-  }, [predica]);
+  }, [error]);
 
   const togglePlay = () => {
+    if (!audioRef.current) return;
+    
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(err => {
+        console.error("Error:", err);
+        setError(true);
+      });
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
+
+  // Si hay error, mostrar solo opción de abrir en Drive
+  if (error) {
+    return (
+      <div className="audio-player">
+        <div className="player-container">
+          <div className="player-info">
+            <div className="player-title">{predica.titulo}</div>
+            <div className="player-artist" style={{color: '#ef4444'}}>
+              No se puede reproducir aquí. Abre en Drive →
+            </div>
+          </div>
+          
+          <div className="player-controls">
+            <a 
+              href={predica.url_audio} 
+              target="_blank" 
+              rel="noreferrer"
+              className="player-btn"
+              title="Abrir en Drive"
+            >
+              <ExternalLink size={18} />
+            </a>
+            
+            <button onClick={onClose} className="player-btn close-player-btn">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="audio-player">
@@ -123,8 +178,9 @@ const AudioPlayer = ({ predica, onClose }) => {
         
         <audio 
           ref={audioRef} 
-          src={predica.url_audio}
+          src={audioUrl}
           onEnded={() => setIsPlaying(false)}
+          onError={() => setError(true)}
         />
         
         <div className="player-controls">
@@ -158,7 +214,7 @@ function App() {
   const [busqueda, setBusqueda] = useState('');
   const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
-  const [filtroFecha, setFiltroFecha] = useState('Todos'); // 'Todos', 'ultimos30', 'ultimoAño'
+  const [filtroFecha, setFiltroFecha] = useState('Todos');
   const [favoritos, setFavoritos] = useState(() => {
     const saved = localStorage.getItem('favoritos');
     return saved ? JSON.parse(saved) : [];
@@ -243,18 +299,20 @@ function App() {
     return { anios, predicadores };
   }, [predicas]);
 
-  // === FILTRADO CON FECHAS ===
+  // === FILTRADO CON FECHAS CORREGIDO ===
   const predicasFiltradas = useMemo(() => {
     const ahora = new Date();
     const hace30Dias = new Date(ahora.getTime() - (30 * 24 * 60 * 60 * 1000));
-    const hace1Anio = new Date(ahora.getTime() - (365 * 24 * 60 * 60 * 1000));
+    
+    // CORREGIDO: Desde el 1 de enero del año actual
+    const inicioAnioActual = new Date(ahora.getFullYear(), 0, 1); // 1 de enero
 
     return predicas.filter(p => {
       const fechaPredica = new Date(p.fecha);
       
       // Filtro por rango de fechas
       if (filtroFecha === 'ultimos30' && fechaPredica < hace30Dias) return false;
-      if (filtroFecha === 'ultimoAnio' && fechaPredica < hace1Anio) return false;
+      if (filtroFecha === 'esteAnio' && fechaPredica < inicioAnioActual) return false;
       
       // Filtros existentes
       const anioCoincide = anioSeleccionado === 'Todos' || 
@@ -370,7 +428,7 @@ function App() {
             <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
           </button>
 
-          {/* FILTROS RÁPIDOS DE FECHA */}
+          {/* FILTROS RÁPIDOS DE FECHA CORREGIDOS */}
           <div className="quick-filters">
             <button 
               className={`filter-chip ${filtroFecha === 'Todos' ? 'active' : ''}`}
@@ -387,11 +445,11 @@ function App() {
               Últimos 30 días
             </button>
             <button 
-              className={`filter-chip ${filtroFecha === 'ultimoAnio' ? 'active' : ''}`}
-              onClick={() => setFiltroFecha('ultimoAnio')}
+              className={`filter-chip ${filtroFecha === 'esteAnio' ? 'active' : ''}`}
+              onClick={() => setFiltroFecha('esteAnio')}
             >
               <Calendar size={14} />
-              Último año
+              Este año ({new Date().getFullYear()})
             </button>
           </div>
         </div>
