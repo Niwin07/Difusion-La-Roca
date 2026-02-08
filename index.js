@@ -338,6 +338,30 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// --- 📥 ENDPOINT DE DESCARGA DIRECTA ---
+app.get('/api/download/:id', async (req, res) => {
+    try {
+        const fileId = req.params.id;
+        const customName = req.query.name || 'mensaje-la-roca';
+        const drive = google.drive({ version: 'v3', auth });
+
+        // Obtenemos el stream de Google
+        const response = await drive.files.get(
+            { fileId: fileId, alt: 'media' },
+            { responseType: 'stream' }
+        );
+
+        // Forzamos la descarga con el nombre del mensaje
+        res.setHeader('Content-Disposition', `attachment; filename="${customName}.mp3"`);
+        res.setHeader('Content-Type', 'audio/mpeg');
+
+        response.data.pipe(res);
+    } catch (error) {
+        console.error("❌ Error en descarga:", error.message);
+        res.status(500).send("No se pudo procesar la descarga");
+    }
+});
+
 // === 🚀 INICIO ===
 app.listen(PORT, () => {
     console.log(`🦅 Ministerio La Roca API - Puerto ${PORT}`);
