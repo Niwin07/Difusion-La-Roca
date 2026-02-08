@@ -230,18 +230,16 @@ const AudioPlayer = ({ predica, onClose }) => {
             ) : (
               <button onClick={togglePlay} className="play-btn-floating">
                 {isPlaying ? (
-                  /* PAUSA: Relleno sólido, sin borde */
                   <Pause 
                     size={20} 
-                    fill="currentColor" 
-                    stroke="none" 
+                    fill="currentColor"
+                    strokeWidth={0}
                   />
                 ) : (
-                  /* PLAY: Relleno sólido, sin borde y el ajustecito del margen */
                   <Play 
                     size={20} 
-                    fill="currentColor" 
-                    stroke="none" 
+                    fill="currentColor"
+                    strokeWidth={0}
                     style={{ marginLeft: '2px' }} 
                   />
                 )}
