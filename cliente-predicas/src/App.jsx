@@ -164,7 +164,14 @@ const AudioPlayer = ({ predica, onClose }) => {
       audioRef.current.load();
       audioRef.current.volume = volume;
     }
-  }, [audioUrl, volume]);
+  }, [audioUrl]);
+
+  // Actualizar volumen sin recargar el audio
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   const onLoadedMetadata = () => {
     setLoading(false);
