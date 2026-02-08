@@ -230,18 +230,16 @@ const AudioPlayer = ({ predica, onClose }) => {
             ) : (
               <button onClick={togglePlay} className="play-btn-floating">
                 {isPlaying ? (
-                  <Pause 
-                    size={20} 
-                    fill="currentColor"
-                    strokeWidth={0}
-                  />
+                  // Ícono de PAUSA (dos barras verticales)
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
                 ) : (
-                  <Play 
-                    size={20} 
-                    fill="currentColor"
-                    strokeWidth={0}
-                    style={{ marginLeft: '2px' }} 
-                  />
+                  // Ícono de PLAY (triángulo)
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
                 )}
               </button>
             )}
