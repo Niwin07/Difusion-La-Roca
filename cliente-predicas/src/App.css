@@ -689,9 +689,9 @@ select:hover, select:focus {
 }
 
 .play-btn-floating {
-  background: var(--accent);
-  color: var(--button-text);
-  border: none;
+  background: var(--card-bg);
+  color: var(--accent);
+  border: 2px solid var(--accent);
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -701,12 +701,13 @@ select:hover, select:focus {
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
 .play-btn-floating:hover {
-  transform: scale(1.06);
-  background: var(--accent-hover);
+  transform: scale(1.08);
+  background: var(--accent);
+  color: var(--button-text);
   box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
 }
 
