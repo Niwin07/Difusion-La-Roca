@@ -908,8 +908,9 @@ select:hover, select:focus {
   display: flex;
 }
 
-/* === RESPONSIVE MOBILE === */
+/* === RESPONSIVE MOBILE MEJORADO === */
 @media (max-width: 768px) {
+  /* --- Ajustes del Reproductor --- */
   .audio-player {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -975,38 +976,50 @@ select:hover, select:focus {
     display: none;
   }
 
+  /* --- Ajustes de las Tarjetas (Grid Simétrico) --- */
   .card-actions {
     width: 100%;
     margin-top: 16px;
-    /* Cambiamos a grid para mejor control */
-    display: grid; 
-    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas para los iconos */
+    display: grid;
+    /* 3 columnas iguales para los botones de acción */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 12px;
+    justify-items: center; /* Centra los botones en sus celdas */
   }
 
-  /* Los botones pequeños ocupan la primera fila */
+  /* Botones pequeños (Like, Share, Download) */
   .share-btn, .favorite-btn, .download-btn {
-    width: 100%; /* Que ocupen su celda */
-    height: 48px;
-    border-radius: 12px;
+    width: 100%; 
+    height: auto; /* Dejamos que el ratio defina la altura */
+    aspect-ratio: 1 / 1; /* <--- ESTO LOS HACE CUADRADOS PERFECTOS */
+    max-width: 56px; /* Tope para que no sean gigantes en tablets */
+    border-radius: 14px;
+    
+    /* Centrado absoluto del icono (clave para el <a> de descarga) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
   }
 
-  /* El botón de escuchar ocupa TODA la segunda fila */
+  /* El botón de escuchar ocupa TODA la fila de abajo */
   .play-btn-round {
-    grid-column: 1 / -1; /* Ocupa de la col 1 a la última */
+    grid-column: 1 / -1; /* Ocupa todo el ancho */
     width: 100%;
-    border-radius: 12px;
-    height: 54px; /* Un poco más alto para destacar */
+    border-radius: 14px;
+    height: 54px;
     max-width: none;
-    order: 2; /* Aseguramos que vaya visualmente al final si usamos flex, aunque en grid esto es redundante pero seguro */
+    margin-top: 5px;
+    order: 10; /* Aseguramos que vaya al final */
   }
 
   .play-btn-round::after {
-    content: "ESCUCHAR MENSAJE"; /* Texto más claro */
+    content: "ESCUCHAR";
     font-weight: 800;
     margin-left: 10px;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
+    font-size: 0.95rem;
+    letter-spacing: 1.5px;
   }
 }
 
