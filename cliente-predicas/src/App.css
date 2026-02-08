@@ -612,19 +612,20 @@ select:hover, select:focus {
   }
 }
 
-/* === REPRODUCTOR 2.0 (ESTILO SPOTIFY PURO) === */
+/* ========================================= */
+/* === REPRODUCTOR ESTILO SPOTIFY (CON COLORES ORIGINALES) === */
+/* ========================================= */
 .audio-player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(15, 23, 42, 0.98); /* Fondo bien oscuro */
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0; /* Quitamos padding global para manejarlo adentro */
+  background: var(--card-bg);
+  border-top: 2px solid var(--border);
   z-index: 2000;
   animation: slideUp 0.3s ease-out;
-  color: white;
-  backdrop-filter: blur(10px);
+  color: var(--text-body);
+  box-shadow: 0 -4px 20px var(--shadow-lg);
 }
 
 @keyframes slideUp {
@@ -632,68 +633,121 @@ select:hover, select:focus {
   to { transform: translateY(0); }
 }
 
+/* === DESKTOP === */
 .player-content {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 12px 20px;
+  padding: 12px 16px;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* Desktop: 3 columnas */
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   gap: 20px;
+  min-height: 90px;
 }
 
-/* 1. INFO */
+/* COLUMNA 1: INFO + PLAY/PAUSE */
+.player-main-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
 .player-info {
-  overflow: hidden;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .player-title {
-  color: white;
-  font-weight: 700;
+  color: var(--text-body);
+  font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
 }
 
 .player-artist {
-  color: #a7a7a7; /* Gris Spotify */
+  color: var(--text-secondary);
   font-size: 0.8rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
-/* 2. BARRA DE PROGRESO (Centro en Desktop) */
+.player-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.play-btn-floating {
+  background: var(--accent);
+  color: var(--button-text);
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+
+.play-btn-floating:hover {
+  transform: scale(1.06);
+  background: var(--accent-hover);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+}
+
+.spinner-small {
+  animation: spin 1s linear infinite;
+  color: var(--accent);
+}
+
+.close-mobile {
+  display: none;
+}
+
+/* COLUMNA 2: BARRA DE PROGRESO (CENTRO) */
 .progress-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
+  justify-self: center;
 }
 
 .time-text {
-  font-size: 0.75rem;
-  color: #a7a7a7;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  min-width: 35px;
+  min-width: 40px;
   text-align: center;
+  user-select: none;
 }
 
 .progress-slider {
   -webkit-appearance: none;
   width: 100%;
   height: 4px;
-  background: #4d4d4d; /* Gris oscuro barra fondo */
+  background: var(--border);
   border-radius: 2px;
   cursor: pointer;
-  background-image: linear-gradient(var(--accent), var(--accent)); /* Dorado */
+  background-image: linear-gradient(var(--accent), var(--accent));
   background-repeat: no-repeat;
   transition: height 0.1s;
+  position: relative;
 }
 
 .progress-slider:hover {
@@ -705,145 +759,195 @@ select:hover, select:focus {
   height: 12px;
   width: 12px;
   border-radius: 50%;
-  background: white;
+  background: var(--accent);
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  opacity: 0; /* Oculto hasta hover */
+  box-shadow: 0 2px 4px rgba(212, 175, 55, 0.5);
+  opacity: 0;
   transition: opacity 0.1s;
 }
 
-.progress-container:hover .progress-slider::-webkit-slider-thumb {
+.progress-slider:hover::-webkit-slider-thumb {
   opacity: 1;
 }
 
-/* 3. CONTROLES Y EXTRAS */
-.player-main-row {
-  display: contents; /* En desktop es parte del grid */
-}
-
-.player-controls-right {
-  display: none; /* En desktop el play está integrado diferente si quisiéramos, pero acá usaremos el diseño mobile adaptable */
-}
-
-/* Botón Play Flotante (Blanco estilo Spotify) */
-.play-btn-floating {
-  background: white;
-  color: black;
-  border: none;
-  width: 40px;
-  height: 40px;
+.progress-slider::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--accent);
   cursor: pointer;
-  transition: transform 0.2s;
+  border: none;
+  opacity: 0;
+  transition: opacity 0.1s;
 }
-.play-btn-floating:hover { transform: scale(1.05); }
 
-/* EXTRAS DESKTOP (Volumen) */
+.progress-slider:hover::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* COLUMNA 3: VOLUMEN Y EXTRAS */
 .player-extras-desktop {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 15px;
+  gap: 12px;
 }
 
 .volume-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100px;
+  width: 125px;
 }
 
 .volume-slider {
   -webkit-appearance: none;
   width: 100%;
   height: 4px;
-  background: #4d4d4d;
+  background: var(--border);
   border-radius: 2px;
-  background-image: linear-gradient(white, white);
+  cursor: pointer;
+  background-image: linear-gradient(var(--accent), var(--accent));
   background-repeat: no-repeat;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.volume-box:hover .volume-slider::-webkit-slider-thumb {
+  opacity: 1;
 }
 
 .icon-btn {
   background: transparent;
   border: none;
-  color: #a7a7a7;
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: color 0.2s;
+  flex-shrink: 0;
 }
-.icon-btn:hover { color: white; }
 
-.spinner-small { animation: spin 1s linear infinite; color: var(--accent); }
+.icon-btn:hover {
+  color: var(--accent);
+}
 
-/* ========================================= */
-/* === MODO MOBILE (ESTILO SPOTIFY REAL) === */
-/* ========================================= */
+.close-desktop {
+  display: flex;
+}
+
+/* === RESPONSIVE MOBILE === */
 @media (max-width: 768px) {
   .audio-player {
-    padding-bottom: env(safe-area-inset-bottom); /* Para iPhone X+ */
-    border-top: none;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .player-content {
     display: flex;
     flex-direction: column;
-    padding: 10px 15px;
-    gap: 8px;
+    padding: 12px 16px 16px;
+    gap: 12px;
+    min-height: auto;
   }
 
-  /* Fila Superior: Info a la izq, Botones a la der */
+  /* Fila 1: Info + Controles */
   .player-main-row {
-    display: flex;
     width: 100%;
     justify-content: space-between;
-    align-items: center;
+    gap: 12px;
   }
 
   .player-info {
-    flex: 1; /* Ocupa todo el espacio posible */
-    margin-right: 15px;
-    text-align: left;
+    flex: 1;
+    min-width: 0;
   }
 
-  .player-title { font-size: 0.9rem; }
-  
+  .player-title {
+    font-size: 0.9rem;
+  }
+
+  .player-artist {
+    font-size: 0.75rem;
+  }
+
   .player-controls-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
+    gap: 16px;
   }
 
   .play-btn-floating {
     width: 36px;
-    height: 36px; /* Un poco más chico en mobile */
+    height: 36px;
   }
 
   .close-mobile {
-    display: block;
-    color: #a7a7a7;
+    display: flex;
   }
 
-  /* Ocultamos lo que sobra en mobile */
-  .player-extras-desktop {
+  .close-desktop {
     display: none;
   }
 
-  /* Barra de Progreso Mobile: Abajo de todo, finita */
+  /* Fila 2: Progreso */
   .progress-container {
     width: 100%;
     gap: 8px;
   }
-  
+
   .time-text {
     font-size: 0.7rem;
-    min-width: 30px;
+    min-width: 35px;
+  }
+
+  /* Ocultar extras desktop */
+  .player-extras-desktop {
+    display: none;
   }
 }
+
+/* === MOBILE PEQUEÑO === */
+@media (max-width: 480px) {
+  .player-content {
+    padding: 10px 12px 14px;
+  }
+
+  .player-main-row {
+    gap: 10px;
+  }
+
+  .player-title {
+    font-size: 0.85rem;
+  }
+
+  .player-artist {
+    font-size: 0.7rem;
+  }
+
+  .player-controls-right {
+    gap: 12px;
+  }
+
+  .play-btn-floating {
+    width: 34px;
+    height: 34px;
+  }
+
+  .time-text {
+    font-size: 0.65rem;
+    min-width: 32px;
+  }
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
   .hero {
@@ -930,16 +1034,6 @@ select:hover, select:focus {
     right: 15px;
     width: 40px;
     height: 40px;
-  }
-
-  .player-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .player-info {
-    text-align: center;
-    width: 100%;
   }
 
   .toast {
