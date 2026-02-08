@@ -228,18 +228,15 @@ const AudioPlayer = ({ predica, onClose }) => {
             {loading ? (
               <div className="spinner-small"><RefreshCw size={20} /></div>
             ) : (
-              <button onClick={togglePlay} className="play-btn-floating">
+              <button 
+                onClick={togglePlay} 
+                className="play-btn-floating"
+                aria-label={isPlaying ? "Pausar" : "Reproducir"}
+              >
                 {isPlaying ? (
-                  // Ícono de PAUSA (dos barras verticales)
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="4" width="4" height="16" />
-                    <rect x="14" y="4" width="4" height="16" />
-                  </svg>
+                  <Pause size={22} fill="currentColor" />
                 ) : (
-                  // Ícono de PLAY (triángulo)
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+                  <Play size={22} fill="currentColor" style={{ marginLeft: '2px' }} />
                 )}
               </button>
             )}

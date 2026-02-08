@@ -689,25 +689,38 @@ select:hover, select:focus {
 }
 
 .play-btn-floating {
-  background: var(--card-bg);
-  color: var(--accent);
-  border: 2px solid var(--accent);
-  width: 38px;
-  height: 38px;
+  background: var(--accent); /* Fondo dorado por defecto */
+  color: var(--button-text); /* Texto/Icono oscuro o blanco según tema */
+  border: none;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-  position: relative;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  outline: none;
+  -webkit-tap-highlight-color: transparent; /* Quita el recuadro azul en móviles */
 }
 
+.play-btn-floating:hover {
+  transform: scale(1.1);
+  background: var(--accent-hover);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+}
+
+.play-btn-floating:active {
+  transform: scale(0.95);
+  background: var(--accent);
+}
+
+/* Forzar que el SVG dentro no herede colores extraños */
 .play-btn-floating svg {
-  position: relative;
-  z-index: 1;
+  fill: currentColor;
+  display: block;
 }
 
 .play-btn-floating:hover {
