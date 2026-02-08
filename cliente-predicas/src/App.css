@@ -184,7 +184,7 @@ body::before {
   transition: color 0.2s;
 }
 
-/* === BOTÓN TEMA === */
+/* === BOTÓN TEMA CORREGIDO === */
 .theme-toggle {
   position: absolute;
   top: 20px;
@@ -201,13 +201,52 @@ body::before {
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px var(--shadow);
+  z-index: 100;
+  padding: 0; /* Limpiamos padding */
+}
+
+/* Forzamos que el icono del sol/luna sea imponente */
+.theme-toggle svg {
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .theme-toggle:hover {
   background: var(--accent);
   color: var(--button-text);
-  transform: rotate(180deg) scale(1.1);
-  box-shadow: 0 6px 20px var(--shadow-lg);
+  transform: rotate(15deg) scale(1.1);
+}
+
+/* === BOTÓN DESCARGA (NUEVO) === */
+.download-btn {
+  background: var(--hover-bg);
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none; /* Por si es un <a> */
+}
+
+.download-btn:hover {
+  background: #22c55e; /* Un verde éxito para descarga */
+  color: white;
+  border-color: #22c55e;
+  transform: scale(1.1);
+}
+
+/* Ajuste responsive para el botón de descarga en móvil */
+@media (max-width: 768px) {
+  .download-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+  }
 }
 
 /* === MENÚ HAMBURGUESA === */

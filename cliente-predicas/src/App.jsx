@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu } from 'lucide-react';
+import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download } from 'lucide-react';
 import './App.css';
 
 // === ÁGUILA PRINCIPAL ===
@@ -622,6 +622,16 @@ function App() {
                     >
                       <Share2 size={18} />
                     </button>
+
+                    {/* NUEVO BOTÓN DE DESCARGA */}
+                    <a 
+                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
+                      className="download-btn"
+                      title="Descargar mensaje"
+                      download
+                    >
+                      <Download size={18} />
+                    </a>
 
                     <button
                       onClick={() => reproducir(predica)}
