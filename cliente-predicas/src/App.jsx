@@ -2,6 +2,16 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download } from 'lucide-react';
 import './App.css';
 
+// === UTILIDAD GLOBAL (Sacala de AudioPlayer y ponela acá) ===
+const getDriveId = (url) => {
+  if (!url) return null;
+  const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchD) return matchD[1];
+  const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (matchId) return matchId[1];
+  return null;
+};
+
 // === ÁGUILA PRINCIPAL ===
 const MainEagle = () => (
   <svg 
@@ -92,6 +102,8 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
+
+
 // === REPRODUCTOR DE AUDIO ESTILO SPOTIFY ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
@@ -121,7 +133,7 @@ const AudioPlayer = ({ predica, onClose }) => {
   };
 
   const audioUrl = useMemo(() => {
-    const id = getDriveId(predica.url_audio);
+    const id = getDriveId(predica.url_audio); // Ahora usa la función global
     if (!id) return predica.url_audio;
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
     return `${apiUrl}/api/audio/${id}`;
