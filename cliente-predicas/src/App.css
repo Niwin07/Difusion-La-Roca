@@ -61,11 +61,11 @@ body {
   transform: translate(-50%, -50%);
   width: 90vw;
   max-width: 800px;
-  opacity: 0.08; /* Más visible */
+  opacity: 0.08;
   z-index: 0;
   pointer-events: none;
   color: var(--accent);
-  filter: blur(0.5px); /* Suaviza los bordes */
+  filter: blur(0.5px);
 }
 
 .eagle-bg {
@@ -210,6 +210,34 @@ body::before {
   box-shadow: 0 6px 20px var(--shadow-lg);
 }
 
+/* === MENÚ HAMBURGUESA === */
+.filter-toggle-btn {
+  background: var(--accent);
+  border: none;
+  color: var(--button-text);
+  padding: 14px 24px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  margin: 0 auto 20px;
+}
+
+.filter-toggle-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+}
+
+.filter-toggle-btn.active {
+  background: var(--accent-hover);
+}
+
 /* === CONTROLES === */
 .controls {
   display: flex;
@@ -224,6 +252,16 @@ body::before {
   border-radius: 20px;
   border: 1px solid var(--border);
   box-shadow: 0 10px 30px var(--shadow);
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.controls.collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border: none;
 }
 
 .search-box {
@@ -382,7 +420,6 @@ select:hover, select:focus {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Efecto de brillo sutil al hover */
 .card::before {
   content: '';
   position: absolute;
@@ -575,13 +612,13 @@ select:hover, select:focus {
   }
 }
 
-/* === REPRODUCTOR SPOTIFY STYLE === */
+/* === REPRODUCTOR SPOTIFY STYLE MEJORADO === */
 .audio-player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(15, 23, 42, 0.95); /* Fondo oscuro elegante siempre */
+  background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(15px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 15px 20px;
@@ -608,16 +645,24 @@ select:hover, select:focus {
 }
 
 .player-container-spotify {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* 3 columnas: Info - Barra - Botones */
+  grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
   gap: 20px;
 }
 
 .player-info {
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-info-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .player-title {
@@ -634,7 +679,6 @@ select:hover, select:focus {
   font-size: 0.8rem;
 }
 
-/* 2. CENTRO (Controles + Barra) */
 .player-center {
   display: flex;
   flex-direction: column;
@@ -673,13 +717,13 @@ select:hover, select:focus {
   transform: scale(1.1);
 }
 
-/* LA BARRA DE PROGRESO (La magia) */
 .progress-bar-container {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
 }
+
 .time-display {
   font-size: 0.75rem;
   color: #94a3b8;
@@ -723,7 +767,6 @@ select:hover, select:focus {
   transform: scale(1.1) rotate(90deg);
 }
 
-/* Input Range Personalizado */
 .progress-range {
   -webkit-appearance: none;
   width: 100%;
@@ -731,12 +774,10 @@ select:hover, select:focus {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
   cursor: pointer;
-  background-image: linear-gradient(var(--accent), var(--accent)); /* Color dorado */
+  background-image: linear-gradient(var(--accent), var(--accent));
   background-repeat: no-repeat;
-  /* background-size se controla por React en línea */
 }
 
-/* El puntito (Thumb) - Webkit */
 .progress-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 12px;
@@ -746,10 +787,9 @@ select:hover, select:focus {
   cursor: pointer;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
   transition: transform 0.1s;
-  opacity: 0; /* Oculto hasta que pasas el mouse */
+  opacity: 0;
 }
 
-/* El puntito (Thumb) - Firefox */
 .progress-range::-moz-range-thumb {
   height: 12px;
   width: 12px;
@@ -763,16 +803,54 @@ select:hover, select:focus {
 .progress-bar-container:hover .progress-range::-webkit-slider-thumb {
   opacity: 1;
 }
+
 .progress-bar-container:hover .progress-range::-moz-range-thumb {
   opacity: 1;
 }
 
-/* 3. EXTRAS (Derecha) */
 .player-extras {
   display: flex;
   justify-content: flex-end;
   gap: 15px;
   align-items: center;
+}
+
+/* Control de volumen */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.volume-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  background-image: linear-gradient(#fbbf24, #fbbf24);
+  background-repeat: no-repeat;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.volume-slider::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
 }
 
 .icon-btn {
@@ -783,6 +861,7 @@ select:hover, select:focus {
   transition: color 0.2s;
   display: flex;
   align-items: center;
+  padding: 8px;
 }
 
 .icon-btn:hover {
@@ -798,35 +877,41 @@ select:hover, select:focus {
   .player-container-spotify {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+    align-items: stretch;
   }
   
   .audio-player {
-    padding: 15px;
-    padding-bottom: 25px; /* Espacio para iPhone swipe bar */
+    padding: 12px 15px;
+    padding-bottom: 25px;
   }
 
   .player-info {
     width: 100%;
-    text-align: center;
+    justify-content: space-between;
+  }
+
+  .player-info-text {
+    flex: 1;
   }
   
   .player-center {
     width: 100%;
-    flex-direction: row-reverse; /* Botón a la derecha, barra a la izquierda */
-    justify-content: space-between;
-    gap: 15px;
+    order: 3;
   }
 
   .progress-bar-container {
     flex: 1;
   }
 
-  /* En celular, ocultamos extras o los ponemos flotando */
   .player-extras {
-    position: absolute;
-    top: 15px;
-    right: 15px;
+    width: 100%;
+    justify-content: space-between;
+    order: 2;
+  }
+
+  .volume-control {
+    min-width: 100px;
   }
   
   .play-pause-btn-large {
@@ -1068,7 +1153,6 @@ select:hover, select:focus {
   font-weight: 500;
 }
 
-/* Ajuste Mobile */
 @media (max-width: 480px) {
   .page-btn {
     min-width: 36px;

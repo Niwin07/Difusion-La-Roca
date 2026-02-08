@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink } from 'lucide-react';
+import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu } from 'lucide-react';
 import './App.css';
 
 // === ÁGUILA PRINCIPAL ===
@@ -92,18 +92,20 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO TIPO SPOTIFY ===
+// === REPRODUCTOR DE AUDIO MEJORADO ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  // Nuevos estados para la barra de progreso
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('audioVolume');
+    return saved ? parseFloat(saved) : 1;
+  });
 
-  // Formatear tiempo: de segundos a MM:SS
+  // Formatear tiempo
   const formatTime = (time) => {
     if (time && !isNaN(time)) {
       const minutes = Math.floor(time / 60);
@@ -115,7 +117,6 @@ const AudioPlayer = ({ predica, onClose }) => {
     return '00:00';
   };
 
-  // Extraer ID (Misma lógica blindada de antes)
   const getDriveId = (url) => {
     const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (matchD) return matchD[1];
@@ -131,27 +132,47 @@ const AudioPlayer = ({ predica, onClose }) => {
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
 
+  // Cargar progreso guardado
+  useEffect(() => {
+    const savedProgress = localStorage.getItem(`progress_${predica.id}`);
+    if (savedProgress && audioRef.current) {
+      const progress = parseFloat(savedProgress);
+      audioRef.current.currentTime = progress;
+      setCurrentTime(progress);
+    }
+  }, [predica.id]);
+
+  // Guardar progreso cada 5 segundos
+  useEffect(() => {
+    if (!isPlaying) return;
+    
+    const interval = setInterval(() => {
+      if (audioRef.current && currentTime > 0) {
+        localStorage.setItem(`progress_${predica.id}`, currentTime.toString());
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTime, predica.id]);
+
   useEffect(() => {
     setError(false);
     setLoading(true);
     setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
     
     if (audioRef.current) {
       audioRef.current.load();
+      audioRef.current.volume = volume;
     }
-  }, [audioUrl]);
+  }, [audioUrl, volume]);
 
-  // Eventos de audio
   const onLoadedMetadata = () => {
     setLoading(false);
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
-      // Intentar autoplay suave
       audioRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false)); // Si falla autoplay, queda en pausa
+        .catch(() => setIsPlaying(false));
     }
   };
 
@@ -164,9 +185,9 @@ const AudioPlayer = ({ predica, onClose }) => {
   const onEnded = () => {
     setIsPlaying(false);
     setCurrentTime(0);
+    localStorage.removeItem(`progress_${predica.id}`);
   };
 
-  // Control manual de la barra
   const handleSeek = (e) => {
     const newTime = parseFloat(e.target.value);
     setCurrentTime(newTime);
@@ -186,6 +207,27 @@ const AudioPlayer = ({ predica, onClose }) => {
     }
   };
 
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+    localStorage.setItem('audioVolume', newVolume.toString());
+  };
+
+  const toggleMute = () => {
+    if (volume > 0) {
+      setVolume(0);
+      if (audioRef.current) audioRef.current.volume = 0;
+      localStorage.setItem('audioVolume', '0');
+    } else {
+      setVolume(1);
+      if (audioRef.current) audioRef.current.volume = 1;
+      localStorage.setItem('audioVolume', '1');
+    }
+  };
+
   if (error) {
     return (
       <div className="audio-player error-state">
@@ -196,7 +238,7 @@ const AudioPlayer = ({ predica, onClose }) => {
           </div>
           <div className="player-controls">
             <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn link-btn">
-              <ExternalLink size={16} /> Drive
+              <ExternalLink size={16} />
             </a>
             <button onClick={onClose} className="player-btn close-player-btn"><X size={18} /></button>
           </div>
@@ -209,18 +251,21 @@ const AudioPlayer = ({ predica, onClose }) => {
     <div className="audio-player">
       <div className="player-container-spotify">
         
-        {/* INFO (Izquierda) */}
+        {/* INFO + COMPARTIR (Izquierda) */}
         <div className="player-info">
-          <div className="player-title">{predica.titulo}</div>
-          <div className="player-artist">{predica.predicador}</div>
+          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn" title="Ver en Drive">
+            <ExternalLink size={20} />
+          </a>
+          <div className="player-info-text">
+            <div className="player-title">{predica.titulo}</div>
+            <div className="player-artist">{predica.predicador}</div>
+          </div>
         </div>
 
-        {/* CONTROLES Y BARRA (Centro/Abajo) */}
+        {/* CONTROLES Y BARRA (Centro) */}
         <div className="player-center">
-          
-          {/* Botones */}
           <div className="player-controls-main">
-             {loading ? (
+            {loading ? (
               <div className="player-btn spinning"><RefreshCw size={24} /></div>
             ) : (
               <button onClick={togglePlay} className="player-btn play-pause-btn-large">
@@ -229,7 +274,6 @@ const AudioPlayer = ({ predica, onClose }) => {
             )}
           </div>
 
-          {/* Barra de Progreso */}
           <div className="progress-bar-container">
             <span className="time-display">{formatTime(currentTime)}</span>
             <input
@@ -245,14 +289,27 @@ const AudioPlayer = ({ predica, onClose }) => {
             />
             <span className="time-display">{formatTime(duration)}</span>
           </div>
-
         </div>
 
-        {/* EXTRAS (Derecha) */}
+        {/* VOLUMEN + CERRAR (Derecha) */}
         <div className="player-extras">
-          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn" title="Ver en Drive">
-            <ExternalLink size={20} />
-          </a>
+          <div className="volume-control">
+            <button onClick={toggleMute} className="icon-btn">
+              {volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="volume-slider"
+              style={{
+                backgroundSize: `${volume * 100}% 100%`
+              }}
+            />
+          </div>
           <button onClick={onClose} className="icon-btn close-btn" title="Cerrar">
             <X size={24} />
           </button>
@@ -266,7 +323,6 @@ const AudioPlayer = ({ predica, onClose }) => {
           onEnded={onEnded}
           onError={() => setError(true)}
         />
-        
       </div>
     </div>
   );
@@ -280,12 +336,25 @@ function App() {
   const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
   const [filtroFecha, setFiltroFecha] = useState('Todos');
+  const [filtrosVisible, setFiltrosVisible] = useState(false);
   const [favoritos, setFavoritos] = useState(() => {
     const saved = localStorage.getItem('favoritos');
     return saved ? JSON.parse(saved) : [];
   });
   const [toastMessage, setToastMessage] = useState(null);
   const [predicaReproduciendo, setPredicaReproduciendo] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const itemsPorPagina = 9;
+
+  // === PREDICADORES OFICIALES (ORDEN ESPECÍFICO) ===
+  const PREDICADORES_OFICIALES = [
+    'Profeta Pablo Lay',
+    'Profeta Miqueas Lay',
+    'Pastora Karina',
+    'Pastora Cecilia',
+    'Pastora Sofia Lay',
+    'Pastora Candela Lay'
+  ];
 
   // === TEMA ===
   const [tema, setTema] = useState(() => {
@@ -293,12 +362,6 @@ function App() {
     if (guardado) return guardado;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
-
-  // === 1. NUEVO ESTADO DE PAGINACIÓN ===
-  const [paginaActual, setPaginaActual] = useState(1);
-  const itemsPorPagina = 9; // Mostramos 9 para que quede grilla de 3x3 linda
-
-  
 
   useEffect(() => {
     document.body.classList.toggle('dark', tema === 'dark');
@@ -327,8 +390,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-      setPaginaActual(1);
-    }, [busqueda, anioSeleccionado, predicadorSeleccionado, filtroFecha]);
+    setPaginaActual(1);
+  }, [busqueda, anioSeleccionado, predicadorSeleccionado, filtroFecha]);
 
   // === FAVORITOS ===
   const toggleFavorito = (id) => {
@@ -365,31 +428,30 @@ function App() {
     setToastMessage('¡Link copiado al portapapeles!');
   };
 
-  // === LISTAS DINÁMICAS ===
+  // === LISTAS DINÁMICAS (Solo predicadores oficiales) ===
   const listas = useMemo(() => {
     const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))]
       .sort((a,b) => b-a);
-    const predicadores = [...new Set(predicas.map(p => p.predicador))]
-      .sort();
+    
+    // Solo mostrar predicadores oficiales que existen en la DB
+    const predicadoresEnDB = [...new Set(predicas.map(p => p.predicador))];
+    const predicadores = PREDICADORES_OFICIALES.filter(p => predicadoresEnDB.includes(p));
+    
     return { anios, predicadores };
   }, [predicas]);
 
-  // === FILTRADO CON FECHAS CORREGIDO ===
+  // === FILTRADO ===
   const predicasFiltradas = useMemo(() => {
     const ahora = new Date();
     const hace30Dias = new Date(ahora.getTime() - (30 * 24 * 60 * 60 * 1000));
-    
-    // CORREGIDO: Desde el 1 de enero del año actual
-    const inicioAnioActual = new Date(ahora.getFullYear(), 0, 1); // 1 de enero
+    const inicioAnioActual = new Date(ahora.getFullYear(), 0, 1);
 
     return predicas.filter(p => {
       const fechaPredica = new Date(p.fecha);
       
-      // Filtro por rango de fechas
       if (filtroFecha === 'ultimos30' && fechaPredica < hace30Dias) return false;
       if (filtroFecha === 'esteAnio' && fechaPredica < inicioAnioActual) return false;
       
-      // Filtros existentes
       const anioCoincide = anioSeleccionado === 'Todos' || 
         fechaPredica.getFullYear() === parseInt(anioSeleccionado);
       
@@ -403,16 +465,15 @@ function App() {
       return anioCoincide && predicadorCoincide && textoCoincide;
     });
   }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda, filtroFecha]);
-  // === 3. LÓGICA DE CORTE (SLICING) ===
+
+  // === PAGINACIÓN ===
   const indiceUltimo = paginaActual * itemsPorPagina;
   const indicePrimero = indiceUltimo - itemsPorPagina;
   const predicasVisibles = predicasFiltradas.slice(indicePrimero, indiceUltimo);
   const totalPaginas = Math.ceil(predicasFiltradas.length / itemsPorPagina);
 
-  // Función para cambiar página y scrollear arriba
   const cambiarPagina = (numero) => {
     setPaginaActual(numero);
-    // Scroll suave al inicio de la lista
     const grid = document.querySelector('.grid');
     if (grid) {
       const y = grid.getBoundingClientRect().top + window.scrollY - 100;
@@ -453,7 +514,6 @@ function App() {
           <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
           <h1>Canal de Difusión</h1>
 
-          {/* MINI STATS */}
           {stats && (
             <div className="mini-stats">
               <span>{stats.total} mensajes</span>
@@ -469,8 +529,17 @@ function App() {
           )}
         </header>
 
+        {/* === BOTÓN MENÚ HAMBURGUESA === */}
+        <button 
+          onClick={() => setFiltrosVisible(!filtrosVisible)} 
+          className={`filter-toggle-btn ${filtrosVisible ? 'active' : ''}`}
+        >
+          <Menu size={20} />
+          {filtrosVisible ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+        </button>
+
         {/* === CONTROLES === */}
-        <div className="controls">
+        <div className={`controls ${!filtrosVisible ? 'collapsed' : ''}`}>
           <div className="search-box">
             <input 
               type="text" 
@@ -511,7 +580,6 @@ function App() {
             <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
           </button>
 
-          {/* FILTROS RÁPIDOS */}
           <div className="quick-filters">
             <button 
               className={`filter-chip ${filtroFecha === 'Todos' ? 'active' : ''}`}
@@ -534,7 +602,7 @@ function App() {
           </div>
         </div>
 
-        {/* === CONTENIDO PRINCIPAL === */}
+        {/* === CONTENIDO === */}
         {cargando ? (
           <div className="loading">
             <RefreshCw size={40} className="spinning" />
@@ -557,7 +625,6 @@ function App() {
           </div>
         ) : (
           <>
-            {/* GRILLA DE TARJETAS (Usamos predicasVisibles) */}
             <div className="grid">
               {predicasVisibles.map((predica) => (
                 <div key={predica.id} className="card">
@@ -598,7 +665,6 @@ function App() {
               ))}
             </div>
 
-            {/* === CONTROLES DE PAGINACIÓN === */}
             {totalPaginas > 1 && (
               <>
                 <div className="pagination">
@@ -610,10 +676,8 @@ function App() {
                     Anterior
                   </button>
                   
-                  {/* GENERACIÓN INTELIGENTE DE NÚMEROS */}
                   {[...Array(totalPaginas)].map((_, index) => {
                     const num = index + 1;
-                    // Mostrar: Primera, Última, y vecinas a la actual
                     if (
                       num === 1 || 
                       num === totalPaginas || 
@@ -655,7 +719,6 @@ function App() {
         )}
       </div>
 
-      {/* COMPONENTES FLOTANTES */}
       {predicaReproduciendo && (
         <AudioPlayer 
           predica={predicaReproduciendo} 
