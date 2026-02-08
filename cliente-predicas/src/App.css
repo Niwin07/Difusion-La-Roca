@@ -704,6 +704,11 @@ select:hover, select:focus {
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
 }
 
+.play-btn-floating svg {
+  width: 20px;
+  height: 20px;
+}
+
 .play-btn-floating:hover {
   transform: scale(1.08);
   background: var(--accent);
