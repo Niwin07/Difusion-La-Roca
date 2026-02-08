@@ -707,11 +707,16 @@ select:hover, select:focus {
 .play-btn-floating svg {
   width: 18px;
   height: 18px;
-  fill: currentColor;
+  fill: none;           /* Sin relleno */
+  stroke: currentColor; /* Pintamos la línea */
+  stroke-width: 2px;    /* Grosor de la línea */
 }
 
 .play-btn-floating:hover svg {
-  fill: currentColor;
+  /* No hace falta poner nada acá si usas currentColor, 
+     porque hereda el color del texto del botón, 
+     pero asegurate de NO poner fill */
+  stroke: currentColor; 
 }
 
 .play-btn-floating:hover {
