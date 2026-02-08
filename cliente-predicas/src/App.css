@@ -612,314 +612,238 @@ select:hover, select:focus {
   }
 }
 
-/* === REPRODUCTOR SPOTIFY STYLE MEJORADO === */
+/* === REPRODUCTOR 2.0 (ESTILO SPOTIFY PURO) === */
 .audio-player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(15px);
+  background: rgba(15, 23, 42, 0.98); /* Fondo bien oscuro */
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 15px 20px;
-  z-index: 1000;
-  animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0; /* Quitamos padding global para manejarlo adentro */
+  z-index: 2000;
+  animation: slideUp 0.3s ease-out;
   color: white;
+  backdrop-filter: blur(10px);
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
-.player-container {
-  max-width: 900px;
+.player-content {
+  max-width: 1000px;
   margin: 0 auto;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.player-container-spotify {
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 12px 20px;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr; /* Desktop: 3 columnas */
   align-items: center;
   gap: 20px;
 }
 
+/* 1. INFO */
 .player-info {
   overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.player-info-text {
-  flex: 1;
-  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .player-title {
   color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.95rem;
   margin-bottom: 2px;
 }
 
 .player-artist {
-  color: #94a3b8;
+  color: #a7a7a7; /* Gris Spotify */
   font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.player-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.player-controls {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.player-controls-main {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.play-pause-btn-large {
-  background: white;
-  color: black;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.play-pause-btn-large:hover {
-  transform: scale(1.1);
-}
-
-.progress-bar-container {
+/* 2. BARRA DE PROGRESO (Centro en Desktop) */
+.progress-container {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
 }
 
-.time-display {
+.time-text {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: #a7a7a7;
   font-variant-numeric: tabular-nums;
   min-width: 35px;
+  text-align: center;
 }
 
-.player-btn {
-  background: var(--accent);
-  border: none;
-  color: var(--button-text);
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
-}
-
-.player-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
-}
-
-.close-player-btn {
-  background: var(--card-bg);
-  border: 2px solid var(--border);
-  color: var(--text-body);
-  width: 40px;
-  height: 40px;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.close-player-btn:hover {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: white;
-  transform: scale(1.1) rotate(90deg);
-}
-
-.progress-range {
+.progress-slider {
   -webkit-appearance: none;
   width: 100%;
   height: 4px;
-  background: rgba(255, 255, 255, 0.2);
+  background: #4d4d4d; /* Gris oscuro barra fondo */
   border-radius: 2px;
   cursor: pointer;
-  background-image: linear-gradient(var(--accent), var(--accent));
+  background-image: linear-gradient(var(--accent), var(--accent)); /* Dorado */
   background-repeat: no-repeat;
+  transition: height 0.1s;
 }
 
-.progress-range::-webkit-slider-thumb {
+.progress-slider:hover {
+  height: 6px;
+}
+
+.progress-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 12px;
   width: 12px;
   border-radius: 50%;
   background: white;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-  transition: transform 0.1s;
-  opacity: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  opacity: 0; /* Oculto hasta hover */
+  transition: opacity 0.1s;
 }
 
-.progress-range::-moz-range-thumb {
-  height: 12px;
-  width: 12px;
-  border-radius: 50%;
+.progress-container:hover .progress-slider::-webkit-slider-thumb {
+  opacity: 1;
+}
+
+/* 3. CONTROLES Y EXTRAS */
+.player-main-row {
+  display: contents; /* En desktop es parte del grid */
+}
+
+.player-controls-right {
+  display: none; /* En desktop el play está integrado diferente si quisiéramos, pero acá usaremos el diseño mobile adaptable */
+}
+
+/* Botón Play Flotante (Blanco estilo Spotify) */
+.play-btn-floating {
   background: white;
-  cursor: pointer;
+  color: black;
   border: none;
-  opacity: 0;
-}
-
-.progress-bar-container:hover .progress-range::-webkit-slider-thumb {
-  opacity: 1;
-}
-
-.progress-bar-container:hover .progress-range::-moz-range-thumb {
-  opacity: 1;
-}
-
-.player-extras {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.play-btn-floating:hover { transform: scale(1.05); }
+
+/* EXTRAS DESKTOP (Volumen) */
+.player-extras-desktop {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 15px;
-  align-items: center;
 }
 
-/* Control de volumen */
-.volume-control {
+.volume-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
+  width: 100px;
 }
 
 .volume-slider {
   -webkit-appearance: none;
   width: 100%;
   height: 4px;
-  background: rgba(255, 255, 255, 0.2);
+  background: #4d4d4d;
   border-radius: 2px;
-  cursor: pointer;
-  background-image: linear-gradient(#fbbf24, #fbbf24);
+  background-image: linear-gradient(white, white);
   background-repeat: no-repeat;
-}
-
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 12px;
-  width: 12px;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-.volume-slider::-moz-range-thumb {
-  height: 12px;
-  width: 12px;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  border: none;
 }
 
 .icon-btn {
   background: transparent;
   border: none;
-  color: #94a3b8;
+  color: #a7a7a7;
   cursor: pointer;
-  transition: color 0.2s;
   display: flex;
   align-items: center;
-  padding: 8px;
 }
+.icon-btn:hover { color: white; }
 
-.icon-btn:hover {
-  color: white;
-}
+.spinner-small { animation: spin 1s linear infinite; color: var(--accent); }
 
-.close-btn:hover {
-  color: #ef4444;
-}
-
-/* --- RESPONSIVE DEL REPRODUCTOR --- */
+/* ========================================= */
+/* === MODO MOBILE (ESTILO SPOTIFY REAL) === */
+/* ========================================= */
 @media (max-width: 768px) {
-  .player-container-spotify {
+  .audio-player {
+    padding-bottom: env(safe-area-inset-bottom); /* Para iPhone X+ */
+    border-top: none;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+  }
+
+  .player-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+    padding: 10px 15px;
+    gap: 8px;
   }
-  
-  .audio-player {
-    padding: 12px 15px;
-    padding-bottom: 25px;
+
+  /* Fila Superior: Info a la izq, Botones a la der */
+  .player-main-row {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .player-info {
-    width: 100%;
-    justify-content: space-between;
+    flex: 1; /* Ocupa todo el espacio posible */
+    margin-right: 15px;
+    text-align: left;
   }
 
-  .player-info-text {
-    flex: 1;
+  .player-title { font-size: 0.9rem; }
+  
+  .player-controls-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+  }
+
+  .play-btn-floating {
+    width: 36px;
+    height: 36px; /* Un poco más chico en mobile */
+  }
+
+  .close-mobile {
+    display: block;
+    color: #a7a7a7;
+  }
+
+  /* Ocultamos lo que sobra en mobile */
+  .player-extras-desktop {
+    display: none;
+  }
+
+  /* Barra de Progreso Mobile: Abajo de todo, finita */
+  .progress-container {
+    width: 100%;
+    gap: 8px;
   }
   
-  .player-center {
-    width: 100%;
-    order: 3;
-  }
-
-  .progress-bar-container {
-    flex: 1;
-  }
-
-  .player-extras {
-    width: 100%;
-    justify-content: space-between;
-    order: 2;
-  }
-
-  .volume-control {
-    min-width: 100px;
-  }
-  
-  .play-pause-btn-large {
-    width: 44px;
-    height: 44px;
+  .time-text {
+    font-size: 0.7rem;
+    min-width: 30px;
   }
 }
-
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
   .hero {

@@ -92,7 +92,7 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO MEJORADO ===
+// === REPRODUCTOR DE AUDIO ESTILO SPOTIFY ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -100,21 +100,16 @@ const AudioPlayer = ({ predica, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem('audioVolume');
-    return saved ? parseFloat(saved) : 1;
-  });
+  const [volume, setVolume] = useState(1);
 
   // Formatear tiempo
   const formatTime = (time) => {
     if (time && !isNaN(time)) {
       const minutes = Math.floor(time / 60);
-      const formatMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
       const seconds = Math.floor(time % 60);
-      const formatSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
-      return `${formatMinutes}:${formatSeconds}`;
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     }
-    return '00:00';
+    return '0:00';
   };
 
   const getDriveId = (url) => {
@@ -132,7 +127,7 @@ const AudioPlayer = ({ predica, onClose }) => {
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
 
-  // Cargar progreso guardado
+  // Cargar progreso
   useEffect(() => {
     const savedProgress = localStorage.getItem(`progress_${predica.id}`);
     if (savedProgress && audioRef.current) {
@@ -142,16 +137,14 @@ const AudioPlayer = ({ predica, onClose }) => {
     }
   }, [predica.id]);
 
-  // Guardar progreso cada 5 segundos
+  // Guardar progreso
   useEffect(() => {
     if (!isPlaying) return;
-    
     const interval = setInterval(() => {
       if (audioRef.current && currentTime > 0) {
         localStorage.setItem(`progress_${predica.id}`, currentTime.toString());
       }
     }, 5000);
-
     return () => clearInterval(interval);
   }, [isPlaying, currentTime, predica.id]);
 
@@ -159,34 +152,22 @@ const AudioPlayer = ({ predica, onClose }) => {
     setError(false);
     setLoading(true);
     setIsPlaying(false);
-    
     if (audioRef.current) {
       audioRef.current.load();
       audioRef.current.volume = volume;
     }
   }, [audioUrl]);
 
-  // Actualizar volumen sin recargar el audio
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
   const onLoadedMetadata = () => {
     setLoading(false);
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
   };
 
   const onTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
+    if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
   };
 
   const onEnded = () => {
@@ -198,9 +179,7 @@ const AudioPlayer = ({ predica, onClose }) => {
   const handleSeek = (e) => {
     const newTime = parseFloat(e.target.value);
     setCurrentTime(newTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-    }
+    if (audioRef.current) audioRef.current.currentTime = newTime;
   };
 
   const togglePlay = () => {
@@ -217,38 +196,15 @@ const AudioPlayer = ({ predica, onClose }) => {
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-    localStorage.setItem('audioVolume', newVolume.toString());
-  };
-
-  const toggleMute = () => {
-    if (volume > 0) {
-      setVolume(0);
-      if (audioRef.current) audioRef.current.volume = 0;
-      localStorage.setItem('audioVolume', '0');
-    } else {
-      setVolume(1);
-      if (audioRef.current) audioRef.current.volume = 1;
-      localStorage.setItem('audioVolume', '1');
-    }
+    if (audioRef.current) audioRef.current.volume = newVolume;
   };
 
   if (error) {
     return (
       <div className="audio-player error-state">
         <div className="player-container">
-          <div className="player-info">
-            <div className="player-title">{predica.titulo}</div>
-            <div className="player-artist" style={{color: '#f87171'}}>⚠️ Error de carga</div>
-          </div>
-          <div className="player-controls">
-            <a href={predica.url_audio} target="_blank" rel="noreferrer" className="player-btn link-btn">
-              <ExternalLink size={16} />
-            </a>
-            <button onClick={onClose} className="player-btn close-player-btn"><X size={18} /></button>
-          </div>
+          <div className="player-info"><div className="player-title">Error al cargar</div></div>
+          <button onClick={onClose} className="player-btn close-player-btn"><X size={18} /></button>
         </div>
       </div>
     );
@@ -256,81 +212,79 @@ const AudioPlayer = ({ predica, onClose }) => {
 
   return (
     <div className="audio-player">
-      <div className="player-container-spotify">
+      <div className="player-content">
         
-        {/* INFO + COMPARTIR (Izquierda) */}
-        <div className="player-info">
-          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn" title="Ver en Drive">
-            <ExternalLink size={20} />
-          </a>
-          <div className="player-info-text">
+        {/* FILA SUPERIOR: Info + Botones Principales */}
+        <div className="player-main-row">
+          
+          {/* INFO */}
+          <div className="player-info">
             <div className="player-title">{predica.titulo}</div>
             <div className="player-artist">{predica.predicador}</div>
           </div>
-        </div>
 
-        {/* CONTROLES Y BARRA (Centro) */}
-        <div className="player-center">
-          <div className="player-controls-main">
+          {/* CONTROLES (Play/Pause + Cerrar en Mobile) */}
+          <div className="player-controls-right">
             {loading ? (
-              <div className="player-btn spinning"><RefreshCw size={24} /></div>
+              <div className="spinner-small"><RefreshCw size={20} /></div>
             ) : (
-              <button onClick={togglePlay} className="player-btn play-pause-btn-large">
-                {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{marginLeft:'4px'}} />}
+              <button onClick={togglePlay} className="play-btn-floating">
+                {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" style={{marginLeft:'2px'}} />}
               </button>
             )}
-          </div>
-
-          <div className="progress-bar-container">
-            <span className="time-display">{formatTime(currentTime)}</span>
-            <input
-              type="range"
-              min="0"
-              max={duration || 0}
-              value={currentTime}
-              onChange={handleSeek}
-              className="progress-range"
-              style={{
-                backgroundSize: `${(currentTime * 100) / duration}% 100%`
-              }}
-            />
-            <span className="time-display">{formatTime(duration)}</span>
+            
+            {/* Botón cerrar para móvil */}
+            <button onClick={onClose} className="icon-btn close-mobile">
+              <X size={24} />
+            </button>
           </div>
         </div>
 
-        {/* VOLUMEN + CERRAR (Derecha) */}
-        <div className="player-extras">
-          <div className="volume-control">
-            <button onClick={toggleMute} className="icon-btn">
-              {volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
-            </button>
+        {/* BARRA DE PROGRESO */}
+        <div className="progress-container">
+          <span className="time-text">{formatTime(currentTime)}</span>
+          <input
+            type="range"
+            min="0"
+            max={duration || 0}
+            value={currentTime}
+            onChange={handleSeek}
+            className="progress-slider"
+            style={{backgroundSize: `${(currentTime * 100) / duration}% 100%`}}
+          />
+          <span className="time-text">{formatTime(duration)}</span>
+        </div>
+
+        {/* EXTRAS (Volumen + Link - Solo Desktop) */}
+        <div className="player-extras-desktop">
+          <div className="volume-box">
+            <Volume2 size={18} />
             <input
               type="range"
-              min="0"
-              max="1"
-              step="0.01"
+              min="0" max="1" step="0.05"
               value={volume}
               onChange={handleVolumeChange}
               className="volume-slider"
-              style={{
-                backgroundSize: `${volume * 100}% 100%`
-              }}
             />
           </div>
-          <button onClick={onClose} className="icon-btn close-btn" title="Cerrar">
+          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn">
+            <ExternalLink size={20} />
+          </a>
+          <button onClick={onClose} className="icon-btn close-desktop">
             <X size={24} />
           </button>
         </div>
 
-        <audio 
-          ref={audioRef} 
-          src={audioUrl}
-          onLoadedMetadata={onLoadedMetadata}
-          onTimeUpdate={onTimeUpdate}
-          onEnded={onEnded}
-          onError={() => setError(true)}
-        />
       </div>
+      
+      <audio 
+        ref={audioRef} 
+        src={audioUrl}
+        onLoadedMetadata={onLoadedMetadata}
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded}
+        onError={() => setError(true)}
+      />
     </div>
   );
 };
