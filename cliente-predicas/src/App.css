@@ -689,11 +689,12 @@ select:hover, select:focus {
 }
 
 .play-btn-floating {
-  background: var(--accent); /* Fondo dorado por defecto */
-  color: var(--button-text); /* Texto/Icono oscuro o blanco según tema */
+  background: var(--accent);
+  color: var(--button-text);
   border: none;
-  width: 42px;
-  height: 42px;
+  /* Aumentamos un poco el tamaño general */
+  width: 48px; 
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -701,15 +702,15 @@ select:hover, select:focus {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
   outline: none;
-  -webkit-tap-highlight-color: transparent; /* Quita el recuadro azul en móviles */
+  -webkit-tap-highlight-color: transparent;
+  padding: 0; /* Aseguramos que no haya padding interno estorbando */
 }
 
 .play-btn-floating:hover {
   transform: scale(1.1);
   background: var(--accent-hover);
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
 }
 
 .play-btn-floating:active {
@@ -717,10 +718,11 @@ select:hover, select:focus {
   background: var(--accent);
 }
 
-/* Forzar que el SVG dentro no herede colores extraños */
+/* El SVG de Lucide ahora va a mandar */
 .play-btn-floating svg {
-  fill: currentColor;
-  display: block;
+  width: 28px !important; 
+  height: 28px !important;
+  stroke-width: 2.5px; /* Lo hace un poco más grueso y visible */
 }
 
 .play-btn-floating:hover {
