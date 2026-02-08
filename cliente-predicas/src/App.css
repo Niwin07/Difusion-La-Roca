@@ -707,9 +707,9 @@ select:hover, select:focus {
 .play-btn-floating svg {
   width: 18px;
   height: 18px;
-  fill: none;           /* Sin relleno */
-  stroke: currentColor; /* Pintamos la línea */
-  stroke-width: 2px;    /* Grosor de la línea */
+  fill: none !important;       /* 1. Sacamos el relleno a la fuerza */
+  stroke: currentColor;        /* 2. Pintamos la línea (el borde) */
+  stroke-width: 2.5px;         /* 3. Le damos grosor para que se vea bien */
 }
 
 .play-btn-floating:hover svg {
