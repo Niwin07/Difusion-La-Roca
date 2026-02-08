@@ -124,14 +124,6 @@ const AudioPlayer = ({ predica, onClose }) => {
     return '0:00';
   };
 
-  const getDriveId = (url) => {
-    const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (matchD) return matchD[1];
-    const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
-    if (matchId) return matchId[1];
-    return null;
-  };
-
   const audioUrl = useMemo(() => {
     const id = getDriveId(predica.url_audio); // Ahora usa la función global
     if (!id) return predica.url_audio;

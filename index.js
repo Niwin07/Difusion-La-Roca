@@ -277,42 +277,74 @@ app.post('/api/sync', async (req, res) => {
     res.json({ message: 'Sincronización iniciada' });
 });
 
-// --- 🎧 PROXY DE AUDIO (STREAMING) ---
-// Esto soluciona el error de "Virus Scan" de Google Drive
+// --- 🎧 PROXY DE AUDIO INTELIGENTE (SOPORTA SEEKING/ADELANTAR) ---
 app.get('/api/audio/:id', async (req, res) => {
     try {
         const fileId = req.params.id;
+        const range = req.headers.range; // <--- ESTO ES LA CLAVE
         const drive = google.drive({ version: 'v3', auth });
 
-        // 1. Obtenemos info del archivo (para saber el tamaño)
-        const fileMetadata = await drive.files.get({
+        // 1. Obtener metadatos (tamaño del archivo)
+        const metadata = await drive.files.get({
             fileId: fileId,
             fields: 'size, mimeType'
         });
 
-        // 2. Preparamos los headers para que el navegador sepa que es audio
-        res.setHeader('Content-Type', fileMetadata.data.mimeType || 'audio/mpeg');
-        res.setHeader('Content-Length', fileMetadata.data.size);
-        res.setHeader('Accept-Ranges', 'bytes');
+        const fileSize = parseInt(metadata.data.size);
 
-        // 3. Pedimos el stream a Google
-        const response = await drive.files.get(
-            { fileId: fileId, alt: 'media' },
-            { responseType: 'stream' }
-        );
+        // 2. Si el navegador pide un RANGO (adelantar audio)
+        if (range) {
+            const parts = range.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunksize = (end - start) + 1;
 
-        // 4. Conectamos el tubo (Pipe): Google -> Tu Server -> Tu Web
-        response.data
-            .on('end', () => console.log(`🎵 Audio terminado: ${fileId}`))
-            .on('error', err => {
-                console.error('Error en stream:', err);
-                res.status(500).end();
-            })
-            .pipe(res);
+            // Headers para decirle al navegador "Acá tenés solo el pedacito que pediste"
+            const head = {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': metadata.data.mimeType || 'audio/mpeg',
+            };
+
+            res.writeHead(206, head); // 206 = Partial Content
+
+            // Pedir a Google solo ese rango
+            const response = await drive.files.get(
+                { 
+                    fileId: fileId, 
+                    alt: 'media' 
+                },
+                { 
+                    responseType: 'stream',
+                    headers: { 'Range': `bytes=${start}-${end}` } 
+                }
+            );
+
+            response.data.pipe(res);
+
+        } else {
+            // 3. Si no pide rango (primera carga), mandamos headers básicos
+            const head = {
+                'Content-Length': fileSize,
+                'Content-Type': metadata.data.mimeType || 'audio/mpeg',
+            };
+            res.writeHead(200, head);
+            
+            const response = await drive.files.get(
+                { fileId: fileId, alt: 'media' },
+                { responseType: 'stream' }
+            );
+            response.data.pipe(res);
+        }
 
     } catch (error) {
-        console.error("❌ Error streameando audio:", error.message);
-        res.status(500).send("Error al obtener el audio");
+        // Ignoramos error de "Broken pipe" (cuando el usuario cierra el audio antes de terminar)
+        if (error.code !== 'EPIPE' && error.code !== 'ECONNRESET') {
+            console.error("❌ Error audio stream:", error.message);
+        }
+        // No mandamos res.status(500) si ya empezamos a enviar datos porque crashea express
+        if (!res.headersSent) res.status(500).end();
     }
 });
 

@@ -974,6 +974,40 @@ select:hover, select:focus {
   .player-extras-desktop {
     display: none;
   }
+
+  .card-actions {
+    width: 100%;
+    margin-top: 16px;
+    /* Cambiamos a grid para mejor control */
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; /* 3 columnas para los iconos */
+    gap: 12px;
+  }
+
+  /* Los botones pequeños ocupan la primera fila */
+  .share-btn, .favorite-btn, .download-btn {
+    width: 100%; /* Que ocupen su celda */
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  /* El botón de escuchar ocupa TODA la segunda fila */
+  .play-btn-round {
+    grid-column: 1 / -1; /* Ocupa de la col 1 a la última */
+    width: 100%;
+    border-radius: 12px;
+    height: 54px; /* Un poco más alto para destacar */
+    max-width: none;
+    order: 2; /* Aseguramos que vaya visualmente al final si usamos flex, aunque en grid esto es redundante pero seguro */
+  }
+
+  .play-btn-round::after {
+    content: "ESCUCHAR MENSAJE"; /* Texto más claro */
+    font-weight: 800;
+    margin-left: 10px;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
 }
 
 /* === MOBILE PEQUEÑO === */
