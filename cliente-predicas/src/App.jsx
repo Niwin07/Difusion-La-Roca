@@ -229,7 +229,7 @@ const AudioPlayer = ({ predica, onClose }) => {
               <div className="spinner-small"><RefreshCw size={20} /></div>
             ) : (
               <button onClick={togglePlay} className="play-btn-floating">
-                {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" style={{marginLeft:'2px'}} />}
+                {isPlaying ? <Pause size={18} /> : <Play size={18} style={{marginLeft:'2px'}} />}
               </button>
             )}
             

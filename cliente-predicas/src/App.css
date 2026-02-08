@@ -705,8 +705,13 @@ select:hover, select:focus {
 }
 
 .play-btn-floating svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.play-btn-floating:hover svg {
+  fill: currentColor;
 }
 
 .play-btn-floating:hover {
