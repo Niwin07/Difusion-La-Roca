@@ -284,70 +284,44 @@ app.post('/api/sync', async (req, res) => {
 app.get('/api/audio/:id', async (req, res) => {
     try {
         const fileId = req.params.id;
-        const range = req.headers.range; // <--- ESTO ES LA CLAVE
         const drive = google.drive({ version: 'v3', auth });
 
-        // 1. Obtener metadatos (tamaño del archivo)
-        const metadata = await drive.files.get({
+        // 1. Obtener metadata (sin descargar el archivo)
+        const fileMetadata = await drive.files.get({
             fileId: fileId,
             fields: 'size, mimeType'
         });
 
-        const fileSize = parseInt(metadata.data.size);
+        // 2. Configurar headers
+        res.setHeader('Content-Type', fileMetadata.data.mimeType || 'audio/mpeg');
+        res.setHeader('Content-Length', fileMetadata.data.size);
+        res.setHeader('Accept-Ranges', 'bytes');
+        // Cachear en el navegador por 1 hora para que no te pidan el mismo audio a cada rato
+        res.setHeader('Cache-Control', 'public, max-age=3600'); 
 
-        // 2. Si el navegador pide un RANGO (adelantar audio)
-        if (range) {
-            const parts = range.replace(/bytes=/, "").split("-");
-            const start = parseInt(parts[0], 10);
-            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-            const chunksize = (end - start) + 1;
+        // 3. Obtener el stream
+        const response = await drive.files.get(
+            { fileId: fileId, alt: 'media' },
+            { responseType: 'stream' }
+        );
 
-            // Headers para decirle al navegador "Acá tenés solo el pedacito que pediste"
-            const head = {
-                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunksize,
-                'Content-Type': metadata.data.mimeType || 'audio/mpeg',
-            };
+        // 4. Usar PIPELINE (Maneja mejor la memoria y errores que .pipe)
+        // Si el usuario cierra el reproductor, esto mata la descarga de Google automáticamente
+        response.data.pipe(res);
 
-            res.writeHead(206, head); // 206 = Partial Content
-
-            // Pedir a Google solo ese rango
-            const response = await drive.files.get(
-                { 
-                    fileId: fileId, 
-                    alt: 'media' 
-                },
-                { 
-                    responseType: 'stream',
-                    headers: { 'Range': `bytes=${start}-${end}` } 
-                }
-            );
-
-            response.data.pipe(res);
-
-        } else {
-            // 3. Si no pide rango (primera carga), mandamos headers básicos
-            const head = {
-                'Content-Length': fileSize,
-                'Content-Type': metadata.data.mimeType || 'audio/mpeg',
-            };
-            res.writeHead(200, head);
-            
-            const response = await drive.files.get(
-                { fileId: fileId, alt: 'media' },
-                { responseType: 'stream' }
-            );
-            response.data.pipe(res);
-        }
+        // Manejo de eventos para liberar memoria si se corta
+        res.on('close', () => {
+            if (!res.writableEnded) {
+                response.data.destroy(); // Cortar el chorro de Google si el usuario se fue
+            }
+        });
 
     } catch (error) {
-        // Ignoramos error de "Broken pipe" (cuando el usuario cierra el audio antes de terminar)
-        if (error.code !== 'EPIPE' && error.code !== 'ECONNRESET') {
-            console.error("❌ Error audio stream:", error.message);
+        // Ignoramos error si es porque el cliente cortó la conexión
+        if (error.code !== 'ECONNRESET' && error.code !== 'EPIPE') {
+            console.error("❌ Error audio:", error.message);
+            if (!res.headersSent) res.status(500).send("Error streaming");
         }
-        // No mandamos res.status(500) si ya empezamos a enviar datos porque crashea express
-        if (!res.headersSent) res.status(500).end();
     }
 });
 
