@@ -1,10 +1,13 @@
 require('dotenv').config();
+const { pipeline } = require('stream'); // Agregá esto arriba con los require
+const { promisify } = require('util'); // Agregá esto arriba también
 const express = require('express');
 const mysql = require('mysql2/promise');
 const { google } = require('googleapis');
 const cron = require('node-cron');
 const cors = require('cors');
 const path = require('path');
+const pipelineAsync = promisify(pipeline);
 
 const app = express();
 app.use(cors());
