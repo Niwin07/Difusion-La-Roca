@@ -319,6 +319,16 @@ function App() {
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 9;
 
+  // Función para arreglar el bug de fecha (Usa UTC en vez de Local)
+  const formatearFecha = (fechaString) => {
+    if (!fechaString) return '';
+    const fecha = new Date(fechaString);
+    const dia = fecha.getUTCDate().toString().padStart(2, '0');
+    const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
+    const anio = fecha.getUTCFullYear();
+    return `${dia}/${mes}/${anio}`;
+  };
+
   // === PREDICADORES OFICIALES (ORDEN ESPECÍFICO) ===
   const PREDICADORES_OFICIALES = [
     'Profeta Pablo Lay',
@@ -604,7 +614,7 @@ function App() {
                   <div className="card-content">
                     <div className="card-meta">
                       <Calendar size={14} />
-                      <span>{new Date(predica.fecha).toLocaleDateString('es-AR')}</span>
+                      <span>{formatearFecha(predica.fecha)}</span>
                       <span>•</span>
                       <span style={{color: 'var(--accent)'}}>Audio</span>
                     </div>
