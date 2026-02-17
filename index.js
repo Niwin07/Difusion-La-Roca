@@ -371,6 +371,35 @@ app.get('/api/download/:id', async (req, res) => {
     }
 });
 
+// === 🛠️ RUTA DE ADMIN: EDITAR PREDICA ===
+app.put('/api/predicas/:id', async (req, res) => {
+    const { id } = req.params;
+    const { titulo, predicador, fecha, password } = req.body;
+
+    // 🔐 Seguridad simple: Validamos la contraseña acá también
+    // Podés poner esta clave en tu .env como ADMIN_PASSWORD
+    const PASSWORD_SECRET = process.env.ADMIN_PASSWORD || "roca2026";
+
+    if (password !== PASSWORD_SECRET) {
+        return res.status(401).json({ error: "Contraseña incorrecta" });
+    }
+
+    try {
+        await pool.query(
+            'UPDATE predicas SET titulo = ?, predicador = ?, fecha = ? WHERE id = ?',
+            [titulo, predicador, fecha, id]
+        );
+        
+        // Invalidar caché para que se vea el cambio al toque
+        cachePredicas = null; 
+        
+        res.json({ message: "Predica actualizada correctamente" });
+    } catch (error) {
+        console.error("❌ Error actualizando:", error);
+        res.status(500).json({ error: "No se pudo actualizar" });
+    }
+});
+
 // === 🚀 INICIO ===
 app.listen(PORT, () => {
     console.log(`🦅 Ministerio La Roca API - Puerto ${PORT}`);

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download } from 'lucide-react';
 import './App.css';
+import { AdminPanel } from './AdminPanel';
 
 // === UTILIDAD GLOBAL (Sacala de AudioPlayer y ponela acá) ===
 const getDriveId = (url) => {
@@ -301,6 +302,49 @@ const AudioPlayer = ({ predica, onClose }) => {
   );
 };
 
+const AdminSync = ({ onOpenAdmin }) => {
+  const [clickCount, setClickCount] = useState(0);
+
+  const handleSecretClick = () => {
+    // Aumentamos el contador
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    // Si llega a 5 clicks...
+    if (newCount === 5) {
+      const password = prompt("🔐 Clave de Admin:");
+      // Si la clave es correcta (cambiala por la tuya)
+      if (password === "roca2026") { 
+        onOpenAdmin(password); // Le avisamos a la App que abra el panel
+        setClickCount(0);
+      } else {
+        alert("❌ Clave incorrecta");
+        setClickCount(0);
+      }
+    }
+
+    // Si deja de clickear por 2 segundos, reseteamos a 0
+    setTimeout(() => setClickCount(0), 2000);
+  };
+
+  return (
+    <div 
+      onClick={handleSecretClick} 
+      style={{ 
+        textAlign: 'center', 
+        padding: '30px', 
+        opacity: 0.4, 
+        fontSize: '0.8rem', 
+        cursor: 'pointer',
+        userSelect: 'none',
+        marginTop: '40px'
+      }}
+    >
+      <p>© 2026 Ministerio Profético La Roca</p>
+    </div>
+  );
+};
+
 // === COMPONENTE PRINCIPAL ===
 function App() {
   const [predicas, setPredicas] = useState([]);
@@ -318,6 +362,8 @@ function App() {
   const [predicaReproduciendo, setPredicaReproduciendo] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 9;
+  const [adminAbierto, setAdminAbierto] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
 
   // Función para arreglar el bug de fecha (Usa UTC en vez de Local)
   const formatearFecha = (fechaString) => {
@@ -710,7 +756,24 @@ function App() {
             )}
           </>
         )}
+        <AdminSync onOpenAdmin={(pass) => {
+            setAdminPass(pass);
+            setAdminAbierto(true);
+        }} />
       </div>
+
+      {/* EL PANEL DE ADMIN SE MUESTRA SI LA VARIABLE ESTÁ EN TRUE */}
+      {adminAbierto && (
+        <AdminPanel 
+          predicas={predicas}
+          password={adminPass}
+          onCerrar={() => setAdminAbierto(false)}
+          onRecargar={() => {
+              cargarPredicas();
+              // Si querés forzar sync acá también podés llamar a tu función de sync
+          }}
+        />
+      )}
 
       {predicaReproduciendo && (
         <AudioPlayer 
