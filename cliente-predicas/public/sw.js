@@ -58,3 +58,35 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// === 🔔 ESCUCHAR NOTIFICACIONES PUSH ===
+self.addEventListener('push', function(event) {
+  if (event.data) {
+    const data = event.data.json();
+    
+    const options = {
+      body: data.body,
+      icon: data.icon || '/logo192.png',
+      badge: data.badge || '/logo192.png',
+      vibrate: [100, 50, 100], // Hace que el celu vibre
+      data: {
+        url: data.url || '/'
+      }
+    };
+
+    // Mostramos la notificación en el celu/PC
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  }
+});
+
+// === 🖱️ CUANDO TOCAN LA NOTIFICACIÓN ===
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close(); // Cerramos el cartelito
+  
+  // Abrimos la app
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});
