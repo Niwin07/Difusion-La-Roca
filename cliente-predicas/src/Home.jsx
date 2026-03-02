@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download } from 'lucide-react';
+import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download, BellRing } from 'lucide-react';
 import './App.css';
 import { Route, Switch, useLocation } from "wouter";
 import { AdminPanel } from './AdminPanel';
@@ -610,6 +610,64 @@ function Home() {
     setPredicaReproduciendo(predica);
   };
 
+  // === 🔔 FUNCIÓN PARA ACTIVAR NOTIFICACIONES ===
+  const activarNotificaciones = async () => {
+    // 1. Convertidor necesario para las claves criptográficas
+    const urlBase64ToUint8Array = (base64String) => {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    };
+
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        // 2. Pedimos permiso al usuario ("La Roca quiere enviarte notificaciones")
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') {
+          setToastMessage('❌ Permiso denegado para notificaciones');
+          return;
+        }
+
+        setToastMessage('⏳ Conectando...');
+        const registration = await navigator.serviceWorker.ready;
+        
+        // 🚨 REEMPLAZÁ ESTO CON TU VAPID PUBLIC KEY EXACTA DE RENDER 🚨
+        const llavePublicaVapid = 'PEGÁ_TU_CLAVE_PÚBLICA_ACÁ'; 
+
+        // 3. Generamos la suscripción en el navegador
+        const suscripcion = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(llavePublicaVapid)
+        });
+
+        // 4. Se la mandamos a tu backend para que la guarde en MySQL
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${apiUrl}/api/subscribe`, {
+          method: 'POST',
+          body: JSON.stringify(suscripcion),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.ok) {
+          setToastMessage('🔔 ¡Suscrito con éxito!');
+        } else {
+          setToastMessage('❌ Error al guardar en el servidor');
+        }
+
+      } catch (error) {
+        console.error('Error suscribiendo:', error);
+        setToastMessage('❌ Error al activar notificaciones');
+      }
+    } else {
+      setToastMessage('⚠️ Tu navegador no soporta notificaciones push');
+    }
+  };
+
   return (
     <>
       <BackgroundEagle />
@@ -705,6 +763,13 @@ function Home() {
               onClick={() => setFiltroFecha('ultimos30')}
             >
               <Calendar size={14} /> Últimos 30 días
+            </button>
+            <button 
+              className="filter-chip" 
+              onClick={activarNotificaciones}
+              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            >
+              <BellRing size={14} /> Activar Alertas
             </button>
             <button 
               className={`filter-chip ${filtroFecha === 'esteAnio' ? 'active' : ''}`}
