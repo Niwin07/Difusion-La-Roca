@@ -354,7 +354,34 @@ const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
+  
+  // === ESTADOS NUEVOS PARA EL ADMIN ===
+  const [predicasAdmin, setPredicasAdmin] = useState([]);
+  const [cargando, setCargando] = useState(false);
 
+  // === FUNCIÓN PARA CARGAR DATOS ===
+  const cargarPredicasAdmin = async () => {
+    setCargando(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/predicas`);
+      const data = await res.json();
+      setPredicasAdmin(data); // Guardamos la lista en el Admin
+    } catch (err) {
+      console.error("Error cargando en admin:", err);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  // === CUANDO PONE LA CLAVE BIEN, DESCARGAMOS LOS DATOS ===
+  useEffect(() => {
+    if (autenticado) {
+      cargarPredicasAdmin();
+    }
+  }, [autenticado]);
+
+  // === PANTALLA DE LOGIN ===
   if (!autenticado) {
     return (
       <div className="login-admin">
@@ -363,20 +390,45 @@ const RutasProtegidasAdmin = () => {
           <input 
             type="password" 
             placeholder="Contraseña" 
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (password === "roca2026") setAutenticado(true);
+                else alert("Clave incorrecta");
+              }
+            }}
           />
           <button onClick={() => {
             if (password === "roca2026") setAutenticado(true);
             else alert("Clave incorrecta");
           }}>Entrar</button>
-          <button className="volver" onClick={() => setLocation('/')}>Volver al inicio</button>
+          <button className="volver" onClick={() => setLocation('/')}>
+            Volver al inicio
+          </button>
         </div>
       </div>
     );
   }
 
-  // Si puso la clave bien, mostramos el panel posta
-  return <AdminPanel password={password} onCerrar={() => setLocation('/')} />;
+  // === PANEL DE CONTROL CARGANDO ===
+  if (cargando && predicasAdmin.length === 0) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+        <h2>Cargando base de datos... 🔄</h2>
+      </div>
+    );
+  }
+
+  // === PANEL DE CONTROL LISTO ===
+  return (
+    <AdminPanel 
+      predicas={predicasAdmin}  // ¡Acá le pasamos los datos que faltaban!
+      password={password} 
+      onCerrar={() => setLocation('/')} 
+      onRecargar={cargarPredicasAdmin} // Le pasamos la función para que pueda refrescar la tabla
+    />
+  );
 };
 
 // === COMPONENTE PRINCIPAL ===
