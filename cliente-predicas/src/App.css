@@ -1442,3 +1442,27 @@ select:hover, select:focus {
 .login-card input { padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
 .login-card button { padding: 10px; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer; }
 .login-card button.volver { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+
+/* === BOTÓN CALL TO ACTION NOTIFICACIONES === */
+.notify-cta-btn {
+  margin-top: 20px;
+  background: rgba(234, 179, 8, 0.1); /* Tono doradito transparente */
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 8px 18px;
+  border-radius: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notify-cta-btn:hover {
+  background: var(--accent);
+  color: var(--button-text);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
+}

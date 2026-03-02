@@ -92,6 +92,11 @@ const BackgroundEagle = () => (
   </div>
 );
 
+// Estado para saber si ya dimos permiso a las notificaciones
+  const [permisoNotis, setPermisoNotis] = useState(() => {
+    return 'Notification' in window ? Notification.permission : 'default';
+  });
+
 // === COMPONENTE TOAST ===
 const Toast = ({ message, onClose }) => {
   useEffect(() => {
@@ -628,6 +633,8 @@ function Home() {
       try {
         // 2. Pedimos permiso al usuario ("La Roca quiere enviarte notificaciones")
         const permiso = await Notification.requestPermission();
+        setPermisoNotis(permiso);
+
         if (permiso !== 'granted') {
           setToastMessage('❌ Permiso denegado para notificaciones');
           return;
@@ -698,6 +705,17 @@ function Home() {
               )}
             </div>
           )}
+
+          {'Notification' in window && permisoNotis === 'default' && (
+            <button 
+              onClick={activarNotificaciones}
+              className="notify-cta-btn"
+            >
+              <BellRing size={16} />
+              Recibir alertas de nuevos mensajes
+            </button>
+          )}
+
         </header>
 
         {/* === BOTÓN MENÚ HAMBURGUESA === */}
@@ -758,19 +776,14 @@ function Home() {
             >
               <Calendar size={14} /> Todos
             </button>
+
             <button 
               className={`filter-chip ${filtroFecha === 'ultimos30' ? 'active' : ''}`}
               onClick={() => setFiltroFecha('ultimos30')}
             >
               <Calendar size={14} /> Últimos 30 días
             </button>
-            <button 
-              className="filter-chip" 
-              onClick={activarNotificaciones}
-              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-            >
-              <BellRing size={14} /> Activar Alertas
-            </button>
+
             <button 
               className={`filter-chip ${filtroFecha === 'esteAnio' ? 'active' : ''}`}
               onClick={() => setFiltroFecha('esteAnio')}

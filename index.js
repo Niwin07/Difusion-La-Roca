@@ -256,8 +256,8 @@ async function notificarNuevaPredica(cantidadNuevas) {
         const payload = JSON.stringify({
             title: '¡Nuevo mensaje de La Roca! 🦅',
             body: cantidadNuevas === 1 
-                ? 'Se acaba de subir una nueva prédica. ¡Escuchala ahora!' 
-                : `Se acaban de subir ${cantidadNuevas} nuevos mensajes.`,
+                ? 'Ya está disponible una nueva prédica. Escuchala ahora.' 
+                : `Ya están disponibles ${cantidadNuevas} nuevos mensajes.`,
             icon: '/logo192.png',
             badge: '/logo192.png',
             url: '/' // A donde los lleva si tocan la notificación
@@ -301,10 +301,11 @@ async function notificarRecordatorio() {
 
         // Lista de frases para que no sea siempre la misma
         const frases = [
-            "🦅 La bendición al alcance de un click. ¡Volvé a escuchar el último mensaje!",
-            "📖 ¿Necesitás una palabra de aliento? Escuchá las prédicas de La Roca.",
-            "🎧 Tu fe crece al escuchar la Palabra. ¡Entrá y renová tus fuerzas hoy!",
-            "🔥 Dios tiene algo para decirte. ¡Ingresá a nuestro Canal de Difusión!"
+            "Hay mensajes esperándote en la app",
+            "Cuando tengas un momento, hay Palabra para vos",
+            "¿Ya escuchaste la ultima predica?",
+            "Entrá un ratito y recibi de la palabra de Dios",
+            "No te cuelgues, hay palabra para vos"
         ];
         
         // Elegimos una frase al azar
