@@ -1,6 +1,6 @@
 require('dotenv').config();
-const { pipeline } = require('stream'); // Agregá esto arriba con los require
-const { promisify } = require('util'); // Agregá esto arriba también
+const { pipeline } = require('stream'); 
+const { promisify } = require('util'); 
 const express = require('express');
 const mysql = require('mysql2/promise');
 const { google } = require('googleapis');
@@ -8,6 +8,7 @@ const cron = require('node-cron');
 const cors = require('cors');
 const path = require('path');
 const pipelineAsync = promisify(pipeline);
+const webPush = require('web-push');
 
 const app = express();
 app.use(cors());
@@ -31,6 +32,22 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0,
     idleTimeout: 60000 // Cierra conexiones ociosas
 });
+
+// === 🔔 CONFIGURACIÓN WEB PUSH ===
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+const vapidEmail = process.env.VAPID_EMAIL;
+
+if (publicVapidKey && privateVapidKey) {
+    webPush.setVapidDetails(
+        vapidEmail.includes('mailto:') ? vapidEmail : `mailto:${vapidEmail}`,
+        publicVapidKey,
+        privateVapidKey
+    );
+    console.log("🔔 Web Push configurado correctamente");
+} else {
+    console.warn("⚠️ Faltan las claves VAPID en el entorno");
+}
 
 // === 🔐 AUTENTICACIÓN GOOGLE (HÍBRIDA) ===
 let auth;
@@ -216,11 +233,61 @@ async function sincronizarDrive() {
         ultimaActualizacion = new Date();
         
         console.log(`✅ Sync OK - Nuevos: ${nuevos}, Actualizados: ${actualizados}`);
+        if (nuevos > 0) {
+            notificarNuevaPredica(nuevos);
+        }
         
     } catch (error) {
         console.error('❌ Error Sync:', error.message);
     } finally {
         sincronizando = false;
+    }
+}
+
+// === 🚀 FUNCIÓN: ENVIAR NOTIFICACIÓN MASIVA ===
+async function notificarNuevaPredica(cantidadNuevas) {
+    if (!publicVapidKey) return; // Si no hay claves, abortamos
+
+    try {
+        const [suscripciones] = await pool.query('SELECT * FROM suscripciones_push');
+        if (suscripciones.length === 0) return;
+
+        // Armamos el mensaje visual
+        const payload = JSON.stringify({
+            title: '¡Nuevo mensaje de La Roca! 🦅',
+            body: cantidadNuevas === 1 
+                ? 'Se acaba de subir una nueva prédica. ¡Escuchala ahora!' 
+                : `Se acaban de subir ${cantidadNuevas} nuevos mensajes.`,
+            icon: '/logo192.png',
+            badge: '/logo192.png',
+            url: '/' // A donde los lleva si tocan la notificación
+        });
+
+        console.log(`📢 Enviando push a ${suscripciones.length} dispositivos...`);
+
+        // Disparamos a todos al mismo tiempo
+        const promesas = suscripciones.map(async (sub) => {
+            const pushConfig = {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth }
+            };
+
+            try {
+                await webPush.sendNotification(pushConfig, payload);
+            } catch (error) {
+                // Si el usuario desinstaló la app o bloqueó los permisos, Chrome nos devuelve 410 o 404
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                    console.log('🗑️ Eliminando suscripción inactiva (Usuario desinstaló)');
+                    await pool.query('DELETE FROM suscripciones_push WHERE id = ?', [sub.id]);
+                }
+            }
+        });
+
+        await Promise.all(promesas);
+        console.log('✅ Notificaciones enviadas con éxito');
+
+    } catch (error) {
+        console.error('❌ Error en el broadcast de push:', error.message);
     }
 }
 
@@ -347,6 +414,32 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// === 🔔 ENDPOINT: SUSCRIBIR A NOTIFICACIONES ===
+app.post('/api/subscribe', async (req, res) => {
+    const suscripcion = req.body;
+    
+    if (!suscripcion || !suscripcion.endpoint) {
+        return res.status(400).json({ error: 'Suscripción inválida' });
+    }
+
+    try {
+        // Verificamos si el celular/PC ya existe para no duplicar
+        const [rows] = await pool.query('SELECT id FROM suscripciones_push WHERE endpoint = ?', [suscripcion.endpoint]);
+        
+        if (rows.length === 0) {
+            await pool.query(
+                'INSERT INTO suscripciones_push (endpoint, p256dh, auth) VALUES (?, ?, ?)',
+                [suscripcion.endpoint, suscripcion.keys.p256dh, suscripcion.keys.auth]
+            );
+            console.log('🔔 Nuevo creyente suscrito a notificaciones');
+        }
+        res.status(201).json({ message: 'Suscrito correctamente' });
+    } catch (error) {
+        console.error('❌ Error guardando suscripción:', error.message);
+        res.status(500).json({ error: 'Error interno' });
+    }
+});
+
 // --- 📥 ENDPOINT DE DESCARGA DIRECTA ---
 app.get('/api/download/:id', async (req, res) => {
     try {
@@ -399,6 +492,8 @@ app.put('/api/predicas/:id', async (req, res) => {
         res.status(500).json({ error: "No se pudo actualizar" });
     }
 });
+
+
 
 // === 🚀 INICIO ===
 app.listen(PORT, () => {
