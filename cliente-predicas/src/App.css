@@ -1402,3 +1402,43 @@ select:hover, select:focus {
 
 .save-btn { background: #10b981; color: white; margin-right: 5px; }
 .cancel-btn { background: #ef4444; color: white; }
+
+.admin-table td .action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.edit-btn svg, .save-btn svg, .cancel-btn svg, .admin-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 2.5px; /* Los hace un poquito más gruesos y legibles */
+}
+
+/* Estilos para el Login del Admin */
+.login-admin {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-card {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.login-card input { padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
+.login-card button { padding: 10px; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer; }
+.login-card button.volver { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }

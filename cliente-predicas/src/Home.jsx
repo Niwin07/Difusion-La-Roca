@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download } from 'lucide-react';
 import './App.css';
+import { Route, Switch, useLocation } from "wouter";
 import { AdminPanel } from './AdminPanel';
+
+
+
 
 // === UTILIDAD GLOBAL (Sacala de AudioPlayer y ponela acá) ===
 const getDriveId = (url) => {
@@ -345,8 +349,38 @@ const AdminSync = ({ onOpenAdmin }) => {
   );
 };
 
+// 2. Un mini-componente para proteger la ruta /admin
+const RutasProtegidasAdmin = () => {
+  const [autenticado, setAutenticado] = useState(false);
+  const [password, setPassword] = useState('');
+  const [, setLocation] = useLocation();
+
+  if (!autenticado) {
+    return (
+      <div className="login-admin">
+        <div className="login-card">
+          <h2>🔐 Acceso Restringido</h2>
+          <input 
+            type="password" 
+            placeholder="Contraseña" 
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button onClick={() => {
+            if (password === "roca2026") setAutenticado(true);
+            else alert("Clave incorrecta");
+          }}>Entrar</button>
+          <button className="volver" onClick={() => setLocation('/')}>Volver al inicio</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Si puso la clave bien, mostramos el panel posta
+  return <AdminPanel password={password} onCerrar={() => setLocation('/')} />;
+};
+
 // === COMPONENTE PRINCIPAL ===
-function App() {
+function Home() {
   const [predicas, setPredicas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
@@ -792,4 +826,19 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/admin" component={RutasProtegidasAdmin} />
+      
+      {/* Ruta 404 por si escriben cualquier cosa */}
+      <Route>
+        <div style={{color: 'white', textAlign: 'center', marginTop: '50px'}}>
+          <h2>Error 404</h2>
+          <p>Página no encontrada</p>
+        </div>
+      </Route>
+    </Switch>
+  );
+}
