@@ -636,8 +636,8 @@ function Home() {
         setToastMessage('⏳ Conectando...');
         const registration = await navigator.serviceWorker.ready;
         
-        // 🚨 REEMPLAZÁ ESTO CON TU VAPID PUBLIC KEY EXACTA DE RENDER 🚨
-        const llavePublicaVapid = 'PEGÁ_TU_CLAVE_PÚBLICA_ACÁ'; 
+
+        const llavePublicaVapid = 'BEj0bljV1CUaqUOPLuCFnOzDPS55OF0kEMm0sBuMKv-B2wMPMzFD1jlVxY_XkhcyL6ObNTDFSuy5fgaAEjUZto0'; 
 
         // 3. Generamos la suscripción en el navegador
         const suscripcion = await registration.pushManager.subscribe({
