@@ -396,8 +396,6 @@ function Home() {
   const [predicaReproduciendo, setPredicaReproduciendo] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 9;
-  const [adminAbierto, setAdminAbierto] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
 
   // Función para arreglar el bug de fecha (Usa UTC en vez de Local)
   const formatearFecha = (fechaString) => {
@@ -790,24 +788,7 @@ function Home() {
             )}
           </>
         )}
-        <AdminSync onOpenAdmin={(pass) => {
-            setAdminPass(pass);
-            setAdminAbierto(true);
-        }} />
       </div>
-
-      {/* EL PANEL DE ADMIN SE MUESTRA SI LA VARIABLE ESTÁ EN TRUE */}
-      {adminAbierto && (
-        <AdminPanel 
-          predicas={predicas}
-          password={adminPass}
-          onCerrar={() => setAdminAbierto(false)}
-          onRecargar={() => {
-              cargarPredicas();
-              // Si querés forzar sync acá también podés llamar a tu función de sync
-          }}
-        />
-      )}
 
       {predicaReproduciendo && (
         <AudioPlayer 
