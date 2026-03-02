@@ -92,10 +92,6 @@ const BackgroundEagle = () => (
   </div>
 );
 
-// Estado para saber si ya dimos permiso a las notificaciones
-  const [permisoNotis, setPermisoNotis] = useState(() => {
-    return 'Notification' in window ? Notification.permission : 'default';
-  });
 
 // === COMPONENTE TOAST ===
 const Toast = ({ message, onClose }) => {
@@ -445,6 +441,9 @@ function Home() {
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
   const [filtroFecha, setFiltroFecha] = useState('Todos');
   const [filtrosVisible, setFiltrosVisible] = useState(false);
+  const [permisoNotis, setPermisoNotis] = useState(() => {
+    return 'Notification' in window ? Notification.permission : 'default';
+  });
   const [favoritos, setFavoritos] = useState(() => {
     const saved = localStorage.getItem('favoritos');
     return saved ? JSON.parse(saved) : [];
