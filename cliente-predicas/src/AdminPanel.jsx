@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Save, X, RefreshCw, Edit2, Search, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Clock, Users, FileText } from 'lucide-react';
+import { Save, X, RefreshCw, Edit2, Search, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Clock, Users, FileText, BellRing } from 'lucide-react';
 
 // ============================================================
 // ESTILOS INTERNOS DEL PANEL (no tocan el App.css principal)
@@ -655,6 +655,25 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
       ? <ChevronUp size={10} style={{ color: '#d4af37' }} />
       : <ChevronDown size={10} style={{ color: '#d4af37' }} />;
   };
+  const probarNotificaciones = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/test-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (res.ok) {
+        alert("📢 Notificación enviada a todos los suscriptores!");
+      } else {
+        alert("❌ Error al enviar notificación");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error de conexión");
+    }
+  };
 
   return (
     <>
@@ -692,14 +711,27 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
 
             {/* Actions */}
             <div className="ap-header-actions">
+              
+              {/* 👇 NUEVO BOTÓN DE PRUEBA 👇 */}
+              <button 
+                onClick={probarNotificaciones} 
+                className="ap-btn-sync" 
+                style={{ background: '#3b82f6', borderColor: '#3b82f6', color: 'white' }}
+              >
+                <BellRing size={15} />
+                <span>Probar Alerta</span>
+              </button>
+
               <button onClick={onRecargar} className="ap-btn-sync">
                 <RefreshCw size={15} />
                 <span>Sincronizar Drive</span>
               </button>
+              
               <button onClick={onCerrar} className="ap-btn-close" title="Cerrar">
                 <X size={17} />
               </button>
             </div>
+
           </div>
 
           {/* ── SEARCH ── */}

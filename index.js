@@ -291,6 +291,79 @@ async function notificarNuevaPredica(cantidadNuevas) {
     }
 }
 
+// === 🚀 FUNCIÓN: ENVIAR RECORDATORIO (ANUNCIO AUTOMÁTICO) ===
+async function notificarRecordatorio() {
+    if (!publicVapidKey) return;
+
+    try {
+        const [suscripciones] = await pool.query('SELECT * FROM suscripciones_push');
+        if (suscripciones.length === 0) return;
+
+        // Lista de frases para que no sea siempre la misma
+        const frases = [
+            "🦅 La bendición al alcance de un click. ¡Volvé a escuchar el último mensaje!",
+            "📖 ¿Necesitás una palabra de aliento? Escuchá las prédicas de La Roca.",
+            "🎧 Tu fe crece al escuchar la Palabra. ¡Entrá y renová tus fuerzas hoy!",
+            "🔥 Dios tiene algo para decirte. ¡Ingresá a nuestro Canal de Difusión!"
+        ];
+        
+        // Elegimos una frase al azar
+        const fraseRandom = frases[Math.floor(Math.random() * frases.length)];
+
+        const payload = JSON.stringify({
+            title: 'Ministerio Profético La Roca',
+            body: fraseRandom,
+            icon: '/logo192.png',
+            badge: '/logo192.png',
+            url: '/'
+        });
+
+        console.log(`📢 Enviando recordatorio a ${suscripciones.length} dispositivos...`);
+
+        const promesas = suscripciones.map(async (sub) => {
+            const pushConfig = {
+                endpoint: sub.endpoint,
+                keys: { p256dh: sub.p256dh, auth: sub.auth }
+            };
+            try {
+                await webPush.sendNotification(pushConfig, payload);
+            } catch (error) {
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                    await pool.query('DELETE FROM suscripciones_push WHERE id = ?', [sub.id]);
+                }
+            }
+        });
+
+        await Promise.all(promesas);
+        console.log('✅ Recordatorios enviados con éxito');
+    } catch (error) {
+        console.error('❌ Error en el recordatorio:', error.message);
+    }
+}
+
+// === ⏰ CRON PARA RECORDATORIOS (Se ejecuta solo) ===
+// '0 10 */2 * *' significa: A las 10:00 AM, cada 2 días.
+cron.schedule('0 10 */2 * *', () => {
+    console.log('⏰ Disparando recordatorio automático...');
+    notificarRecordatorio();
+}, {
+    timezone: "America/Argentina/Buenos_Aires" // Usamos tu hora local
+});
+
+// === 🧪 ENDPOINT PARA PROBAR NOTIFICACIONES DESDE EL ADMIN ===
+app.post('/api/test-push', async (req, res) => {
+    const { password } = req.body;
+    const PASSWORD_SECRET = process.env.ADMIN_PASSWORD || "roca2026";
+
+    if (password !== PASSWORD_SECRET) {
+        return res.status(401).json({ error: "Contraseña incorrecta" });
+    }
+
+    // Forzamos el envío de un recordatorio para probar
+    await notificarRecordatorio();
+    res.json({ message: "Notificaciones de prueba enviadas" });
+});
+
 // === ⏲️ CRON MANTIENE SERVICIOS DESPIERTOS ===
 cron.schedule('*/30 * * * *', () => {
     sincronizarDrive();
