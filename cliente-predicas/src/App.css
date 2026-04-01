@@ -35,17 +35,21 @@
 }
 
 /* === GLOBAL === */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   background: var(--bg-gradient);
   color: var(--text-body);
-  font-family: 'Lato', sans-serif;
+  font-family: "Lato", sans-serif;
   margin: 0;
   padding: 0;
-  transition: background 0.5s ease, color 0.3s ease;
+  transition:
+    background 0.5s ease,
+    color 0.3s ease;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -75,11 +79,12 @@ body {
 }
 
 @keyframes breathe {
-  0%, 100% { 
+  0%,
+  100% {
     opacity: 0.08;
     transform: scale(1);
   }
-  50% { 
+  50% {
     opacity: 0.12;
     transform: scale(1.02);
   }
@@ -87,13 +92,13 @@ body {
 
 /* === OVERLAY SUTIL === */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 30%, var(--accent) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, var(--accent) 0%, transparent 50%);
   opacity: 0.03;
@@ -136,13 +141,22 @@ body::before {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
 }
 
 .subtitle-badge {
   display: inline-block;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    var(--accent-hover) 100%
+  );
   color: var(--button-text);
   padding: 8px 18px;
   border-radius: 50px;
@@ -155,7 +169,7 @@ body::before {
 }
 
 .hero h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-size: 3.2rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -291,7 +305,9 @@ body::before {
   border-radius: 20px;
   border: 1px solid var(--border);
   box-shadow: 0 10px 30px var(--shadow);
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .controls.collapsed {
@@ -348,7 +364,7 @@ select {
   padding: 0 18px;
   border-radius: 14px;
   color: var(--text-body);
-  font-family: 'Lato', sans-serif;
+  font-family: "Lato", sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -358,7 +374,8 @@ select {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-select:hover, select:focus {
+select:hover,
+select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
   transform: translateY(-2px);
@@ -383,8 +400,13 @@ select:hover, select:focus {
 
 .refresh-btn:hover:not(:disabled) {
   background: var(--accent-hover);
-  transform: translateY(-3px) rotate(90deg);
+  transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+}
+
+.refresh-btn:hover:not(:disabled) svg {
+  transform: rotate(90deg);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .refresh-btn:disabled {
@@ -397,8 +419,12 @@ select:hover, select:focus {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* === BOTONES DE FILTRO RÁPIDO === */
@@ -460,13 +486,18 @@ select:hover, select:focus {
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 175, 55, 0.1),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -499,7 +530,7 @@ select:hover, select:focus {
 
 .card h3 {
   margin: 0 0 10px 0;
-  font-family: 'Playfair Display', serif;
+  font-family: "Playfair Display", serif;
   font-size: 1.5rem;
   color: var(--text-primary);
   line-height: 1.3;
@@ -519,7 +550,9 @@ select:hover, select:focus {
   align-items: center;
 }
 
-.play-btn-round, .share-btn, .favorite-btn {
+.play-btn-round,
+.share-btn,
+.favorite-btn {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -545,7 +578,8 @@ select:hover, select:focus {
   box-shadow: 0 8px 20px rgba(212, 175, 55, 0.5);
 }
 
-.share-btn, .favorite-btn {
+.share-btn,
+.favorite-btn {
   background: var(--hover-bg);
   border: 2px solid var(--border);
   color: var(--text-secondary);
@@ -668,8 +702,12 @@ select:hover, select:focus {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* === DESKTOP === */
@@ -732,7 +770,7 @@ select:hover, select:focus {
   color: var(--button-text);
   border: none;
   /* Aumentamos un poco el tamaño general */
-  width: 48px; 
+  width: 48px;
   height: 48px;
   border-radius: 50%;
   display: flex;
@@ -759,7 +797,7 @@ select:hover, select:focus {
 
 /* El SVG de Lucide ahora va a mandar */
 .play-btn-floating svg {
-  width: 28px !important; 
+  width: 28px !important;
   height: 28px !important;
   stroke-width: 2.5px; /* Lo hace un poco más grueso y visible */
 }
@@ -982,19 +1020,21 @@ select:hover, select:focus {
     margin-top: 16px;
     display: grid;
     /* 3 columnas iguales para los botones de acción */
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     justify-items: center; /* Centra los botones en sus celdas */
   }
 
   /* Botones pequeños (Like, Share, Download) */
-  .share-btn, .favorite-btn, .download-btn {
-    width: 100%; 
+  .share-btn,
+  .favorite-btn,
+  .download-btn {
+    width: 100%;
     height: auto; /* Dejamos que el ratio defina la altura */
     aspect-ratio: 1 / 1; /* <--- ESTO LOS HACE CUADRADOS PERFECTOS */
     max-width: 56px; /* Tope para que no sean gigantes en tablets */
     border-radius: 14px;
-    
+
     /* Centrado absoluto del icono (clave para el <a> de descarga) */
     display: flex;
     align-items: center;
@@ -1062,25 +1102,27 @@ select:hover, select:focus {
     padding: 20px 15px;
   }
 
-  .hero h1 { 
-    font-size: 2.4rem; 
+  .hero h1 {
+    font-size: 2.4rem;
   }
-  
+
   .eagle-logo {
     width: 90px;
     height: 90px;
   }
-  
+
   .controls {
     flex-direction: column;
     padding: 15px;
   }
-  
-  .search-box, select, .refresh-btn {
+
+  .search-box,
+  select,
+  .refresh-btn {
     width: 100%;
     flex: none;
   }
-  
+
   .refresh-btn {
     height: 54px;
   }
@@ -1093,13 +1135,13 @@ select:hover, select:focus {
     flex: 1 1 auto;
     justify-content: center;
   }
-  
+
   .card {
     flex-direction: column;
     align-items: flex-start;
     padding: 20px;
   }
-  
+
   .card-content {
     padding-right: 0;
     width: 100%;
@@ -1110,14 +1152,14 @@ select:hover, select:focus {
     margin-top: 16px;
     justify-content: space-between;
   }
-  
+
   .play-btn-round {
     flex: 1;
     border-radius: 12px;
     height: 52px;
     max-width: none;
   }
-  
+
   .play-btn-round::after {
     content: "ESCUCHAR";
     font-weight: 800;
@@ -1126,7 +1168,8 @@ select:hover, select:focus {
     letter-spacing: 1px;
   }
 
-  .share-btn, .favorite-btn {
+  .share-btn,
+  .favorite-btn {
     width: 52px;
     height: 52px;
     border-radius: 12px;
@@ -1136,7 +1179,7 @@ select:hover, select:focus {
     font-size: 0.8rem;
     padding: 8px 12px;
   }
-  
+
   .theme-toggle {
     top: 15px;
     right: 15px;
@@ -1155,11 +1198,11 @@ select:hover, select:focus {
   .container {
     padding: 30px 12px;
   }
-  
+
   .hero h1 {
     font-size: 2rem;
   }
-  
+
   .card h3 {
     font-size: 1.3rem;
   }
@@ -1172,7 +1215,9 @@ select:hover, select:focus {
 
 /* === ACCESIBILIDAD === */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -1184,7 +1229,7 @@ select:hover, select:focus {
     --text-body: #000000;
     --border: #666666;
   }
-  
+
   .dark {
     --text-body: #ffffff;
     --border: #999999;
@@ -1232,7 +1277,7 @@ select:hover, select:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Lato', sans-serif;
+  font-family: "Lato", sans-serif;
 }
 
 .page-btn:hover:not(:disabled) {
@@ -1285,7 +1330,7 @@ select:hover, select:focus {
     height: 36px;
     font-size: 0.9rem;
   }
-  
+
   .page-btn.prev-next {
     padding: 0 12px;
     font-size: 0.75rem;
@@ -1295,7 +1340,10 @@ select:hover, select:focus {
 /* === PANEL ADMIN === */
 .admin-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(5px);
   z-index: 2000;
@@ -1316,7 +1364,7 @@ select:hover, select:focus {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .admin-header {
@@ -1328,9 +1376,15 @@ select:hover, select:focus {
   background: var(--hover-bg);
 }
 
-.admin-header h2 { margin: 0; color: var(--text-primary); }
+.admin-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
 
-.admin-actions { display: flex; gap: 10px; }
+.admin-actions {
+  display: flex;
+  gap: 10px;
+}
 
 .admin-btn {
   border: none;
@@ -1343,9 +1397,17 @@ select:hover, select:focus {
   font-weight: bold;
 }
 
-.admin-btn.sync { background: var(--accent); color: var(--button-text); }
-.admin-btn.close { background: transparent; color: var(--text-secondary); }
-.admin-btn.close:hover { color: #ef4444; }
+.admin-btn.sync {
+  background: var(--accent);
+  color: var(--button-text);
+}
+.admin-btn.close {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.admin-btn.close:hover {
+  color: #ef4444;
+}
 
 /* TABLA */
 .admin-table-wrapper {
@@ -1372,7 +1434,9 @@ select:hover, select:focus {
   border-bottom: 1px solid var(--border);
 }
 
-.editing-row { background: var(--hover-bg); }
+.editing-row {
+  background: var(--hover-bg);
+}
 
 /* INPUTS EN TABLA */
 .admin-input {
@@ -1384,11 +1448,17 @@ select:hover, select:focus {
   border-radius: 6px;
 }
 
-.fw-bold { font-weight: 700; color: var(--text-primary); }
+.fw-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
 
 /* BOTONES DE ACCIÓN */
-.edit-btn, .save-btn, .cancel-btn {
-  width: 36px; height: 36px;
+.edit-btn,
+.save-btn,
+.cancel-btn {
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -1397,11 +1467,24 @@ select:hover, select:focus {
   justify-content: center;
 }
 
-.edit-btn { background: var(--hover-bg); color: var(--text-secondary); }
-.edit-btn:hover { background: var(--accent); color: white; }
+.edit-btn {
+  background: var(--hover-bg);
+  color: var(--text-secondary);
+}
+.edit-btn:hover {
+  background: var(--accent);
+  color: white;
+}
 
-.save-btn { background: #10b981; color: white; margin-right: 5px; }
-.cancel-btn { background: #ef4444; color: white; }
+.save-btn {
+  background: #10b981;
+  color: white;
+  margin-right: 5px;
+}
+.cancel-btn {
+  background: #ef4444;
+  color: white;
+}
 
 .admin-table td .action-buttons {
   display: flex;
@@ -1409,14 +1492,19 @@ select:hover, select:focus {
   align-items: center;
 }
 
-.edit-btn, .save-btn, .cancel-btn {
+.edit-btn,
+.save-btn,
+.cancel-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 8px;
 }
 
-.edit-btn svg, .save-btn svg, .cancel-btn svg, .admin-btn svg {
+.edit-btn svg,
+.save-btn svg,
+.cancel-btn svg,
+.admin-btn svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
@@ -1439,9 +1527,24 @@ select:hover, select:focus {
   flex-direction: column;
   gap: 15px;
 }
-.login-card input { padding: 10px; border-radius: 8px; border: 1px solid var(--border); }
-.login-card button { padding: 10px; border-radius: 8px; background: var(--accent); color: white; border: none; cursor: pointer; }
-.login-card button.volver { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.login-card input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.login-card button {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.login-card button.volver {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
 
 /* === BOTÓN CALL TO ACTION NOTIFICACIONES === */
 .notify-cta-btn {
