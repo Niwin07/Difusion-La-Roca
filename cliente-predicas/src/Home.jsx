@@ -1,11 +1,25 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { Play, Search, Sun, Moon, RefreshCw, Calendar, Share2, Heart, X, Pause, ExternalLink, Volume2, VolumeX, Menu, Download, BellRing } from 'lucide-react';
-import './App.css';
+import { useEffect, useState, useMemo, useRef } from "react";
+import {
+  Play,
+  Search,
+  Sun,
+  Moon,
+  RefreshCw,
+  Calendar,
+  Share2,
+  Heart,
+  X,
+  Pause,
+  ExternalLink,
+  Volume2,
+  VolumeX,
+  Menu,
+  Download,
+  BellRing,
+} from "lucide-react";
+import "./App.css";
 import { Route, Switch, useLocation } from "wouter";
-import { AdminPanel } from './AdminPanel';
-
-
-
+import { AdminPanel } from "./AdminPanel";
 
 // === UTILIDAD GLOBAL (Sacala de AudioPlayer y ponela acá) ===
 const getDriveId = (url) => {
@@ -19,14 +33,15 @@ const getDriveId = (url) => {
 
 // === ÁGUILA PRINCIPAL ===
 const MainEagle = () => (
-  <svg 
-    version="1.1" 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 360.081 360.081" 
+  <svg
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 360.081 360.081"
     className="eagle-logo"
     fill="currentColor"
   >
-    <path d="M358.839,130.772c-0.666-0.618-1.432-0.931-2.278-0.931c-3.092,0-6.364,4.36-9.251,8.208
+    <path
+      d="M358.839,130.772c-0.666-0.618-1.432-0.931-2.278-0.931c-3.092,0-6.364,4.36-9.251,8.208
       c-1.091,1.454-2.527,3.368-3.262,4.005c-0.086-1.467,1.019-5.633,1.85-8.764c2.099-7.914,4.27-16.096,0.735-18
       c-0.368-0.198-0.757-0.299-1.157-0.299c-2.545,0-4.492,3.814-7.458,10.037c-2.322,4.871-5.211,10.934-7.597,10.934
       c-0.152,0-0.302-0.026-0.456-0.081c-0.42-0.75-0.383-4.184-0.355-6.71c0.072-6.618,0.153-14.118-4.047-14.678
@@ -59,22 +74,24 @@ const MainEagle = () => (
       l0.456,0.117c0.079,0.02,0.506,0.121,1.167,0.121c0,0,0,0,0,0c1.913,0,6.598-0.903,8.793-9.264c1.29-4.914-1.226-8.538-2.162-9.672
       c0.235-2.671,0.776-15.885-10.323-24.661c-6.735-5.326-13.414-7.774-17.833-9.395c-2.089-0.766-4.951-1.815-4.901-2.371
       c0.454-2.894,28.565-60.374,68.724-73.151c31.045-9.878,38.504-29.301,40.27-37.192
-      C360.485,136.389,360.254,132.086,358.839,130.772z"/>
+      C360.485,136.389,360.254,132.086,358.839,130.772z"
+    />
   </svg>
 );
 
 // === ÁGUILA DE FONDO ===
 const BackgroundEagle = () => (
   <div className="eagle-background-container">
-    <svg 
-      version="1.1" 
-      xmlns="http://www.w3.org/2000/svg" 
+    <svg
+      version="1.1"
+      xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 235.512 235.512"
       className="eagle-bg"
       fill="currentColor"
     >
       <g>
-        <path d="M233.696,131.172l-38.391-17.801c-0.729-0.307-1.567-0.383-2.316-0.104l-14.619,5.085L159.059,68.56
+        <path
+          d="M233.696,131.172l-38.391-17.801c-0.729-0.307-1.567-0.383-2.316-0.104l-14.619,5.085L159.059,68.56
           c-0.385-0.966-1.207-1.671-2.225-1.896L14.687,35.002c-1.31-0.247-2.645,0.291-3.338,1.445c-0.681,1.146-0.555,2.606,0.323,3.618
           l29.637,34.266L3.484,69.55c-1.262-0.165-2.542,0.495-3.14,1.655c-0.595,1.146-0.407,2.561,0.471,3.526l114.781,124.839
           c0.613,0.646,1.453,0.998,2.292,0.998c0.683,0,1.364-0.217,1.939-0.674l68.685-54.938l44.446-7.914
@@ -86,12 +103,12 @@ const BackgroundEagle = () => (
           c-1.291-1.15-3.246-1.026-4.391,0.276c-1.132,1.29-0.998,3.238,0.291,4.388l8.704,7.65l-53.664,11.866L53.2,122.6l56.298-6.853
           c1.16-0.145,2.142-0.922,2.541-2.016c0.403-1.116,0.143-2.331-0.651-3.178L99.268,97.648c-1.178-1.258-3.132-1.305-4.382-0.15
           c-1.246,1.154-1.31,3.132-0.148,4.382l7.937,8.443l-54.637,6.659l-36.96-40.199L137.27,92.741l19.02,37.021
-          c0.689,1.379,2.332,2.056,3.764,1.503l33.758-11.714l28.316,13.116L186.609,139.006z"/>
+          c0.689,1.379,2.332,2.056,3.764,1.503l33.758-11.714l28.316,13.116L186.609,139.006z"
+        />
       </g>
     </svg>
   </div>
 );
-
 
 // === COMPONENTE TOAST ===
 const Toast = ({ message, onClose }) => {
@@ -108,8 +125,6 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-
-
 // === REPRODUCTOR DE AUDIO ESTILO SPOTIFY ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
@@ -125,15 +140,15 @@ const AudioPlayer = ({ predica, onClose }) => {
     if (time && !isNaN(time)) {
       const minutes = Math.floor(time / 60);
       const seconds = Math.floor(time % 60);
-      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+      return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     }
-    return '0:00';
+    return "0:00";
   };
 
   const audioUrl = useMemo(() => {
     const id = getDriveId(predica.url_audio); // Ahora usa la función global
     if (!id) return predica.url_audio;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
 
@@ -172,7 +187,10 @@ const AudioPlayer = ({ predica, onClose }) => {
     setLoading(false);
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
   };
 
@@ -213,8 +231,12 @@ const AudioPlayer = ({ predica, onClose }) => {
     return (
       <div className="audio-player error-state">
         <div className="player-container">
-          <div className="player-info"><div className="player-title">Error al cargar</div></div>
-          <button onClick={onClose} className="player-btn close-player-btn"><X size={18} /></button>
+          <div className="player-info">
+            <div className="player-title">Error al cargar</div>
+          </div>
+          <button onClick={onClose} className="player-btn close-player-btn">
+            <X size={18} />
+          </button>
         </div>
       </div>
     );
@@ -223,10 +245,8 @@ const AudioPlayer = ({ predica, onClose }) => {
   return (
     <div className="audio-player">
       <div className="player-content">
-        
         {/* FILA SUPERIOR: Info + Botones Principales */}
         <div className="player-main-row">
-          
           {/* INFO */}
           <div className="player-info">
             <div className="player-title">{predica.titulo}</div>
@@ -236,21 +256,27 @@ const AudioPlayer = ({ predica, onClose }) => {
           {/* CONTROLES (Play/Pause + Cerrar en Mobile) */}
           <div className="player-controls-right">
             {loading ? (
-              <div className="spinner-small"><RefreshCw size={20} /></div>
+              <div className="spinner-small">
+                <RefreshCw size={20} />
+              </div>
             ) : (
-              <button 
-                onClick={togglePlay} 
+              <button
+                onClick={togglePlay}
                 className="play-btn-floating"
                 aria-label={isPlaying ? "Pausar" : "Reproducir"}
               >
                 {isPlaying ? (
                   <Pause size={22} fill="currentColor" />
                 ) : (
-                  <Play size={22} fill="currentColor" style={{ marginLeft: '2px' }} />
+                  <Play
+                    size={22}
+                    fill="currentColor"
+                    style={{ marginLeft: "2px" }}
+                  />
                 )}
               </button>
             )}
-            
+
             {/* Botón cerrar para móvil */}
             <button onClick={onClose} className="icon-btn close-mobile">
               <X size={24} />
@@ -268,7 +294,9 @@ const AudioPlayer = ({ predica, onClose }) => {
             value={currentTime}
             onChange={handleSeek}
             className="progress-slider"
-            style={{backgroundSize: `${(currentTime * 100) / duration}% 100%`}}
+            style={{
+              backgroundSize: `${(currentTime * 100) / duration}% 100%`,
+            }}
           />
           <span className="time-text">{formatTime(duration)}</span>
         </div>
@@ -279,24 +307,30 @@ const AudioPlayer = ({ predica, onClose }) => {
             <Volume2 size={18} />
             <input
               type="range"
-              min="0" max="1" step="0.05"
+              min="0"
+              max="1"
+              step="0.05"
               value={volume}
               onChange={handleVolumeChange}
               className="volume-slider"
             />
           </div>
-          <a href={predica.url_audio} target="_blank" rel="noreferrer" className="icon-btn">
+          <a
+            href={predica.url_audio}
+            target="_blank"
+            rel="noreferrer"
+            className="icon-btn"
+          >
             <ExternalLink size={20} />
           </a>
           <button onClick={onClose} className="icon-btn close-desktop">
             <X size={24} />
           </button>
         </div>
-
       </div>
-      
-      <audio 
-        ref={audioRef} 
+
+      <audio
+        ref={audioRef}
         src={audioUrl}
         onLoadedMetadata={onLoadedMetadata}
         onTimeUpdate={onTimeUpdate}
@@ -319,7 +353,7 @@ const AdminSync = ({ onOpenAdmin }) => {
     if (newCount === 5) {
       const password = prompt("🔐 Clave de Admin:");
       // Si la clave es correcta (cambiala por la tuya)
-      if (password === "roca2026") { 
+      if (password === "roca2026") {
         onOpenAdmin(password); // Le avisamos a la App que abra el panel
         setClickCount(0);
       } else {
@@ -333,16 +367,16 @@ const AdminSync = ({ onOpenAdmin }) => {
   };
 
   return (
-    <div 
-      onClick={handleSecretClick} 
-      style={{ 
-        textAlign: 'center', 
-        padding: '30px', 
-        opacity: 0.4, 
-        fontSize: '0.8rem', 
-        cursor: 'pointer',
-        userSelect: 'none',
-        marginTop: '40px'
+    <div
+      onClick={handleSecretClick}
+      style={{
+        textAlign: "center",
+        padding: "30px",
+        opacity: 0.4,
+        fontSize: "0.8rem",
+        cursor: "pointer",
+        userSelect: "none",
+        marginTop: "40px",
       }}
     >
       <p>© 2026 Ministerio Profético La Roca</p>
@@ -353,9 +387,9 @@ const AdminSync = ({ onOpenAdmin }) => {
 // 2. Un mini-componente para proteger la ruta /admin
 const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
   const [, setLocation] = useLocation();
-  
+
   // === ESTADOS NUEVOS PARA EL ADMIN ===
   const [predicasAdmin, setPredicasAdmin] = useState([]);
   const [cargando, setCargando] = useState(false);
@@ -364,7 +398,7 @@ const RutasProtegidasAdmin = () => {
   const cargarPredicasAdmin = async () => {
     setCargando(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
       const res = await fetch(`${apiUrl}/api/predicas`);
       const data = await res.json();
       setPredicasAdmin(data); // Guardamos la lista en el Admin
@@ -388,23 +422,27 @@ const RutasProtegidasAdmin = () => {
       <div className="login-admin">
         <div className="login-card">
           <h2>🔐 Acceso Restringido</h2>
-          <input 
-            type="password" 
-            placeholder="Contraseña" 
+          <input
+            type="password"
+            placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 if (password === "roca2026") setAutenticado(true);
                 else alert("Clave incorrecta");
               }
             }}
           />
-          <button onClick={() => {
-            if (password === "roca2026") setAutenticado(true);
-            else alert("Clave incorrecta");
-          }}>Entrar</button>
-          <button className="volver" onClick={() => setLocation('/')}>
+          <button
+            onClick={() => {
+              if (password === "roca2026") setAutenticado(true);
+              else alert("Clave incorrecta");
+            }}
+          >
+            Entrar
+          </button>
+          <button className="volver" onClick={() => setLocation("/")}>
             Volver al inicio
           </button>
         </div>
@@ -415,7 +453,15 @@ const RutasProtegidasAdmin = () => {
   // === PANEL DE CONTROL CARGANDO ===
   if (cargando && predicasAdmin.length === 0) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+        }}
+      >
         <h2>Cargando base de datos... 🔄</h2>
       </div>
     );
@@ -423,10 +469,10 @@ const RutasProtegidasAdmin = () => {
 
   // === PANEL DE CONTROL LISTO ===
   return (
-    <AdminPanel 
-      predicas={predicasAdmin}  // ¡Acá le pasamos los datos que faltaban!
-      password={password} 
-      onCerrar={() => setLocation('/')} 
+    <AdminPanel
+      predicas={predicasAdmin} // ¡Acá le pasamos los datos que faltaban!
+      password={password}
+      onCerrar={() => setLocation("/")}
       onRecargar={cargarPredicasAdmin} // Le pasamos la función para que pueda refrescar la tabla
     />
   );
@@ -436,16 +482,16 @@ const RutasProtegidasAdmin = () => {
 function Home() {
   const [predicas, setPredicas] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [busqueda, setBusqueda] = useState('');
-  const [anioSeleccionado, setAnioSeleccionado] = useState('Todos');
-  const [predicadorSeleccionado, setPredicadorSeleccionado] = useState('Todos');
-  const [filtroFecha, setFiltroFecha] = useState('Todos');
+  const [busqueda, setBusqueda] = useState("");
+  const [anioSeleccionado, setAnioSeleccionado] = useState("Todos");
+  const [predicadorSeleccionado, setPredicadorSeleccionado] = useState("Todos");
+  const [filtroFecha, setFiltroFecha] = useState("Todos");
   const [filtrosVisible, setFiltrosVisible] = useState(false);
   const [permisoNotis, setPermisoNotis] = useState(() => {
-    return 'Notification' in window ? Notification.permission : 'default';
+    return "Notification" in window ? Notification.permission : "default";
   });
   const [favoritos, setFavoritos] = useState(() => {
-    const saved = localStorage.getItem('favoritos');
+    const saved = localStorage.getItem("favoritos");
     return saved ? JSON.parse(saved) : [];
   });
   const [toastMessage, setToastMessage] = useState(null);
@@ -455,43 +501,47 @@ function Home() {
 
   // Función para arreglar el bug de fecha (Usa UTC en vez de Local)
   const formatearFecha = (fechaString) => {
-    if (!fechaString) return '';
+    if (!fechaString) return "";
     const fecha = new Date(fechaString);
-    const dia = fecha.getUTCDate().toString().padStart(2, '0');
-    const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, '0');
+    const dia = fecha.getUTCDate().toString().padStart(2, "0");
+    const mes = (fecha.getUTCMonth() + 1).toString().padStart(2, "0");
     const anio = fecha.getUTCFullYear();
     return `${dia}/${mes}/${anio}`;
   };
 
   // === PREDICADORES OFICIALES (ORDEN ESPECÍFICO) ===
   const PREDICADORES_OFICIALES = [
-    'Profeta Pablo Lay',
-    'Profeta Miqueas Lay',
-    'Pastora Karina',
-    'Pastora Cecilia',
-    'Pastora Sofia Lay',
-    'Pastora Candela Lay'
+    "Profeta Pablo Lay",
+    "Profeta Miqueas Lay",
+    "Pastora Karina",
+    "Pastora Cecilia",
+    "Pastora Sofia Lay",
+    "Pastora Candela Lay",
+    "Otros",
   ];
 
   // === TEMA ===
   const [tema, setTema] = useState(() => {
-    const guardado = localStorage.getItem('tema');
+    const guardado = localStorage.getItem("tema");
     if (guardado) return guardado;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
 
   useEffect(() => {
-    document.body.classList.toggle('dark', tema === 'dark');
-    localStorage.setItem('tema', tema);
+    document.body.classList.toggle("dark", tema === "dark");
+    localStorage.setItem("tema", tema);
   }, [tema]);
 
-  const toggleTema = () => setTema(prev => prev === 'light' ? 'dark' : 'light');
+  const toggleTema = () =>
+    setTema((prev) => (prev === "light" ? "dark" : "light"));
 
   // === CARGAR PREDICAS ===
   const cargarPredicas = async () => {
     setCargando(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
       const res = await fetch(`${apiUrl}/api/predicas`);
       const data = await res.json();
       setPredicas(data);
@@ -512,11 +562,11 @@ function Home() {
 
   // === FAVORITOS ===
   const toggleFavorito = (id) => {
-    setFavoritos(prev => {
-      const newFavs = prev.includes(id) 
-        ? prev.filter(fid => fid !== id)
+    setFavoritos((prev) => {
+      const newFavs = prev.includes(id)
+        ? prev.filter((fid) => fid !== id)
         : [...prev, id];
-      localStorage.setItem('favoritos', JSON.stringify(newFavs));
+      localStorage.setItem("favoritos", JSON.stringify(newFavs));
       return newFavs;
     });
   };
@@ -524,13 +574,13 @@ function Home() {
   // === COMPARTIR ===
   const compartirPredica = async (predica) => {
     const texto = `🦅 ${predica.titulo}\n👤 ${predica.predicador}\n🔗 ${predica.url_audio}`;
-    
+
     if (navigator.share) {
       try {
-        await navigator.share({ 
+        await navigator.share({
           title: predica.titulo,
           text: texto,
-          url: predica.url_audio
+          url: predica.url_audio,
         });
       } catch (err) {
         copiarAlPortapapeles(predica.url_audio);
@@ -542,46 +592,68 @@ function Home() {
 
   const copiarAlPortapapeles = (texto) => {
     navigator.clipboard.writeText(texto);
-    setToastMessage('¡Link copiado al portapapeles!');
+    setToastMessage("¡Link copiado al portapapeles!");
   };
 
   // === LISTAS DINÁMICAS (Solo predicadores oficiales) ===
   const listas = useMemo(() => {
-    const anios = [...new Set(predicas.map(p => new Date(p.fecha).getFullYear()))]
-      .sort((a,b) => b-a);
-    
+    const anios = [
+      ...new Set(predicas.map((p) => new Date(p.fecha).getFullYear())),
+    ].sort((a, b) => b - a);
+
     // Solo mostrar predicadores oficiales que existen en la DB
-    const predicadoresEnDB = [...new Set(predicas.map(p => p.predicador))];
-    const predicadores = PREDICADORES_OFICIALES.filter(p => predicadoresEnDB.includes(p));
-    
+    const predicadoresEnDB = [...new Set(predicas.map((p) => p.predicador))];
+    const predicadores = PREDICADORES_OFICIALES.filter(
+      (p) => predicadoresEnDB.includes(p) || p === "Otros",
+    );
+
     return { anios, predicadores };
   }, [predicas]);
 
   // === FILTRADO ===
   const predicasFiltradas = useMemo(() => {
     const ahora = new Date();
-    const hace30Dias = new Date(ahora.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
     const inicioAnioActual = new Date(ahora.getFullYear(), 0, 1);
 
-    return predicas.filter(p => {
+    return predicas.filter((p) => {
       const fechaPredica = new Date(p.fecha);
-      
-      if (filtroFecha === 'ultimos30' && fechaPredica < hace30Dias) return false;
-      if (filtroFecha === 'esteAnio' && fechaPredica < inicioAnioActual) return false;
-      
-      const anioCoincide = anioSeleccionado === 'Todos' || 
+
+      if (filtroFecha === "ultimos30" && fechaPredica < hace30Dias)
+        return false;
+      if (filtroFecha === "esteAnio" && fechaPredica < inicioAnioActual)
+        return false;
+
+      const anioCoincide =
+        anioSeleccionado === "Todos" ||
         fechaPredica.getFullYear() === parseInt(anioSeleccionado);
-      
-      const predicadorCoincide = predicadorSeleccionado === 'Todos' || 
-        p.predicador === predicadorSeleccionado;
-      
-      const textoCoincide = busqueda === '' || 
-        p.titulo.toLowerCase().includes(busqueda.toLowerCase()) || 
+
+      // Si elige Todos, pasan todos.
+      // Si elige Otros, verificamos que el nombre NO esté en la lista oficial.
+      // Si elige uno en particular, tiene que coincidir exacto.
+      const predicadorCoincide =
+        predicadorSeleccionado === "Todos"
+          ? true
+          : predicadorSeleccionado === "Otros"
+            ? !PREDICADORES_OFICIALES.filter(
+                (nombre) => nombre !== "Otros",
+              ).includes(p.predicador)
+            : p.predicador === predicadorSeleccionado;
+
+      const textoCoincide =
+        busqueda === "" ||
+        p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
         p.predicador.toLowerCase().includes(busqueda.toLowerCase());
-      
+
       return anioCoincide && predicadorCoincide && textoCoincide;
     });
-  }, [predicas, anioSeleccionado, predicadorSeleccionado, busqueda, filtroFecha]);
+  }, [
+    predicas,
+    anioSeleccionado,
+    predicadorSeleccionado,
+    busqueda,
+    filtroFecha,
+  ]);
 
   // === PAGINACIÓN ===
   const indiceUltimo = paginaActual * itemsPorPagina;
@@ -591,21 +663,21 @@ function Home() {
 
   const cambiarPagina = (numero) => {
     setPaginaActual(numero);
-    const grid = document.querySelector('.grid');
+    const grid = document.querySelector(".grid");
     if (grid) {
       const y = grid.getBoundingClientRect().top + window.scrollY - 100;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
 
   // === STATS ===
   const stats = useMemo(() => {
     if (!predicas.length) return null;
-    
+
     return {
       total: predicas.length,
       ultimoAnio: new Date(predicas[0]?.fecha).getFullYear(),
-      favoritos: favoritos.length
+      favoritos: favoritos.length,
     };
   }, [predicas, favoritos]);
 
@@ -618,8 +690,10 @@ function Home() {
   const activarNotificaciones = async () => {
     // 1. Convertidor necesario para las claves criptográficas
     const urlBase64ToUint8Array = (base64String) => {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+      const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding)
+        .replace(/\-/g, "+")
+        .replace(/_/g, "/");
       const rawData = window.atob(base64);
       const outputArray = new Uint8Array(rawData.length);
       for (let i = 0; i < rawData.length; ++i) {
@@ -628,49 +702,48 @@ function Home() {
       return outputArray;
     };
 
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    if ("serviceWorker" in navigator && "PushManager" in window) {
       try {
         // 2. Pedimos permiso al usuario ("La Roca quiere enviarte notificaciones")
         const permiso = await Notification.requestPermission();
         setPermisoNotis(permiso);
 
-        if (permiso !== 'granted') {
-          setToastMessage('❌ Permiso denegado para notificaciones');
+        if (permiso !== "granted") {
+          setToastMessage("❌ Permiso denegado para notificaciones");
           return;
         }
 
-        setToastMessage('⏳ Conectando...');
+        setToastMessage("⏳ Conectando...");
         const registration = await navigator.serviceWorker.ready;
-        
 
-        const llavePublicaVapid = 'BEj0bljV1CUaqUOPLuCFnOzDPS55OF0kEMm0sBuMKv-B2wMPMzFD1jlVxY_XkhcyL6ObNTDFSuy5fgaAEjUZto0'; 
+        const llavePublicaVapid =
+          "BEj0bljV1CUaqUOPLuCFnOzDPS55OF0kEMm0sBuMKv-B2wMPMzFD1jlVxY_XkhcyL6ObNTDFSuy5fgaAEjUZto0";
 
         // 3. Generamos la suscripción en el navegador
         const suscripcion = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(llavePublicaVapid)
+          applicationServerKey: urlBase64ToUint8Array(llavePublicaVapid),
         });
 
         // 4. Se la mandamos a tu backend para que la guarde en MySQL
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
         const res = await fetch(`${apiUrl}/api/subscribe`, {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(suscripcion),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { "Content-Type": "application/json" },
         });
 
         if (res.ok) {
-          setToastMessage('🔔 ¡Suscrito con éxito!');
+          setToastMessage("🔔 ¡Suscrito con éxito!");
         } else {
-          setToastMessage('❌ Error al guardar en el servidor');
+          setToastMessage("❌ Error al guardar en el servidor");
         }
-
       } catch (error) {
-        console.error('Error suscribiendo:', error);
-        setToastMessage('❌ Error al activar notificaciones');
+        console.error("Error suscribiendo:", error);
+        setToastMessage("❌ Error al activar notificaciones");
       }
     } else {
-      setToastMessage('⚠️ Tu navegador no soporta notificaciones push');
+      setToastMessage("⚠️ Tu navegador no soporta notificaciones push");
     }
   };
 
@@ -679,16 +752,21 @@ function Home() {
       <BackgroundEagle />
 
       <div className="container">
-        
         {/* === HEADER === */}
         <header className="hero">
-          <button onClick={toggleTema} className="theme-toggle" title="Cambiar tema">
-            {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+          <button
+            onClick={toggleTema}
+            className="theme-toggle"
+            title="Cambiar tema"
+          >
+            {tema === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
 
           <MainEagle />
-          
-          <div><span className="subtitle-badge">Ministerio Profético La Roca</span></div>
+
+          <div>
+            <span className="subtitle-badge">Ministerio Profético La Roca</span>
+          </div>
           <h1>Canal de Difusión</h1>
 
           {stats && (
@@ -699,93 +777,93 @@ function Home() {
               {stats.favoritos > 0 && (
                 <>
                   <span>•</span>
-                  <span style={{color: '#ef4444'}}>❤️ {stats.favoritos}</span>
+                  <span style={{ color: "#ef4444" }}>❤️ {stats.favoritos}</span>
                 </>
               )}
             </div>
           )}
 
-          {'Notification' in window && permisoNotis === 'default' && (
-            <button 
-              onClick={activarNotificaciones}
-              className="notify-cta-btn"
-            >
+          {"Notification" in window && permisoNotis === "default" && (
+            <button onClick={activarNotificaciones} className="notify-cta-btn">
               <BellRing size={16} />
               Recibir alertas de nuevos mensajes
             </button>
           )}
-
         </header>
 
         {/* === BOTÓN MENÚ HAMBURGUESA === */}
-        <button 
-          onClick={() => setFiltrosVisible(!filtrosVisible)} 
-          className={`filter-toggle-btn ${filtrosVisible ? 'active' : ''}`}
+        <button
+          onClick={() => setFiltrosVisible(!filtrosVisible)}
+          className={`filter-toggle-btn ${filtrosVisible ? "active" : ""}`}
         >
           <Menu size={20} />
-          {filtrosVisible ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+          {filtrosVisible ? "Ocultar Filtros" : "Mostrar Filtros"}
         </button>
 
         {/* === CONTROLES === */}
-        <div className={`controls ${!filtrosVisible ? 'collapsed' : ''}`}>
+        <div className={`controls ${!filtrosVisible ? "collapsed" : ""}`}>
           <div className="search-box">
-            <input 
-              type="text" 
-              placeholder="Buscar por título o predicador..." 
+            <input
+              type="text"
+              placeholder="Buscar por título o predicador..."
               className="search-input"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
             <Search size={18} className="search-icon" />
           </div>
-          
-          <select 
-            value={predicadorSeleccionado} 
+
+          <select
+            value={predicadorSeleccionado}
             onChange={(e) => setPredicadorSeleccionado(e.target.value)}
           >
             <option value="Todos">Todos los Predicadores</option>
-            {listas.predicadores.map(pred => (
-              <option key={pred} value={pred}>{pred}</option>
-            ))}
-          </select>
-          
-          <select 
-            value={anioSeleccionado} 
-            onChange={(e) => setAnioSeleccionado(e.target.value)}
-          >
-            <option value="Todos">Todos los Años</option>
-            {listas.anios.map(anio => (
-              <option key={anio} value={anio}>{anio}</option>
+            {listas.predicadores.map((pred) => (
+              <option key={pred} value={pred}>
+                {pred}
+              </option>
             ))}
           </select>
 
-          <button 
-            onClick={cargarPredicas} 
+          <select
+            value={anioSeleccionado}
+            onChange={(e) => setAnioSeleccionado(e.target.value)}
+          >
+            <option value="Todos">Todos los Años</option>
+            {listas.anios.map((anio) => (
+              <option key={anio} value={anio}>
+                {anio}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={cargarPredicas}
             className="refresh-btn"
             title="Recargar"
             disabled={cargando}
           >
-            <RefreshCw size={18} className={cargando ? 'spinning' : ''} />
+            <RefreshCw size={18} className={cargando ? "spinning" : ""} />
           </button>
 
           <div className="quick-filters">
-            <button 
-              className={`filter-chip ${filtroFecha === 'Todos' ? 'active' : ''}`}
-              onClick={() => setFiltroFecha('Todos')}
+            <button
+              className={`filter-chip ${filtroFecha === "Todos" ? "active" : ""}`}
+              onClick={() => setFiltroFecha("Todos")}
             >
               <Calendar size={14} /> Todos
             </button>
 
-            <button 
-              className={`filter-chip ${filtroFecha === 'ultimos30' ? 'active' : ''}`}
-              onClick={() => setFiltroFecha('ultimos30')}
+            <button
+              className={`filter-chip ${filtroFecha === "ultimos30" ? "active" : ""}`}
+              onClick={() => setFiltroFecha("ultimos30")}
             >
               <Calendar size={14} /> Últimos 30 días
             </button>
 
-            <button 
-              className={`filter-chip ${filtroFecha === 'esteAnio' ? 'active' : ''}`}
-              onClick={() => setFiltroFecha('esteAnio')}
+            <button
+              className={`filter-chip ${filtroFecha === "esteAnio" ? "active" : ""}`}
+              onClick={() => setFiltroFecha("esteAnio")}
             >
               <Calendar size={14} /> Este año
             </button>
@@ -801,12 +879,12 @@ function Home() {
         ) : predicasFiltradas.length === 0 ? (
           <div className="empty-state">
             <p>No se encontraron mensajes con esos filtros</p>
-            <button 
+            <button
               onClick={() => {
-                setBusqueda('');
-                setAnioSeleccionado('Todos');
-                setPredicadorSeleccionado('Todos');
-                setFiltroFecha('Todos');
+                setBusqueda("");
+                setAnioSeleccionado("Todos");
+                setPredicadorSeleccionado("Todos");
+                setFiltroFecha("Todos");
               }}
               className="reset-btn"
             >
@@ -823,21 +901,28 @@ function Home() {
                       <Calendar size={14} />
                       <span>{formatearFecha(predica.fecha)}</span>
                       <span>•</span>
-                      <span style={{color: 'var(--accent)'}}>Audio</span>
+                      <span style={{ color: "var(--accent)" }}>Audio</span>
                     </div>
                     <h3>{predica.titulo}</h3>
                     <div className="predicador">{predica.predicador}</div>
                   </div>
-                  
+
                   <div className="card-actions">
-                    <button 
+                    <button
                       onClick={() => toggleFavorito(predica.id)}
-                      className={`favorite-btn ${favoritos.includes(predica.id) ? 'active' : ''}`}
+                      className={`favorite-btn ${favoritos.includes(predica.id) ? "active" : ""}`}
                     >
-                      <Heart size={20} fill={favoritos.includes(predica.id) ? 'currentColor' : 'none'} />
+                      <Heart
+                        size={20}
+                        fill={
+                          favoritos.includes(predica.id)
+                            ? "currentColor"
+                            : "none"
+                        }
+                      />
                     </button>
 
-                    <button 
+                    <button
                       onClick={() => compartirPredica(predica)}
                       className="share-btn"
                     >
@@ -845,8 +930,8 @@ function Home() {
                     </button>
 
                     {/* NUEVO BOTÓN DE DESCARGA */}
-                    <a 
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
+                    <a
+                      href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
                       className="download-btn"
                       title="Descargar mensaje"
                       download
@@ -868,41 +953,45 @@ function Home() {
             {totalPaginas > 1 && (
               <>
                 <div className="pagination">
-                  <button 
-                    onClick={() => cambiarPagina(paginaActual - 1)} 
+                  <button
+                    onClick={() => cambiarPagina(paginaActual - 1)}
                     disabled={paginaActual === 1}
                     className="page-btn prev-next"
                   >
                     Anterior
                   </button>
-                  
+
                   {[...Array(totalPaginas)].map((_, index) => {
                     const num = index + 1;
                     if (
-                      num === 1 || 
-                      num === totalPaginas || 
+                      num === 1 ||
+                      num === totalPaginas ||
                       (num >= paginaActual - 1 && num <= paginaActual + 1)
                     ) {
                       return (
                         <button
                           key={num}
                           onClick={() => cambiarPagina(num)}
-                          className={`page-btn ${paginaActual === num ? 'active' : ''}`}
+                          className={`page-btn ${paginaActual === num ? "active" : ""}`}
                         >
                           {num}
                         </button>
                       );
                     } else if (
-                      num === paginaActual - 2 || 
+                      num === paginaActual - 2 ||
                       num === paginaActual + 2
                     ) {
-                      return <span key={num} className="page-dots">...</span>;
+                      return (
+                        <span key={num} className="page-dots">
+                          ...
+                        </span>
+                      );
                     }
                     return null;
                   })}
 
-                  <button 
-                    onClick={() => cambiarPagina(paginaActual + 1)} 
+                  <button
+                    onClick={() => cambiarPagina(paginaActual + 1)}
                     disabled={paginaActual === totalPaginas}
                     className="page-btn prev-next"
                   >
@@ -911,7 +1000,9 @@ function Home() {
                 </div>
 
                 <div className="page-info">
-                  Mostrando {indicePrimero + 1} - {Math.min(indiceUltimo, predicasFiltradas.length)} de {predicasFiltradas.length} mensajes
+                  Mostrando {indicePrimero + 1} -{" "}
+                  {Math.min(indiceUltimo, predicasFiltradas.length)} de{" "}
+                  {predicasFiltradas.length} mensajes
                 </div>
               </>
             )}
@@ -920,17 +1011,14 @@ function Home() {
       </div>
 
       {predicaReproduciendo && (
-        <AudioPlayer 
-          predica={predicaReproduciendo} 
-          onClose={() => setPredicaReproduciendo(null)} 
+        <AudioPlayer
+          predica={predicaReproduciendo}
+          onClose={() => setPredicaReproduciendo(null)}
         />
       )}
 
       {toastMessage && (
-        <Toast 
-          message={toastMessage} 
-          onClose={() => setToastMessage(null)} 
-        />
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
     </>
   );
@@ -941,10 +1029,10 @@ export default function App() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={RutasProtegidasAdmin} />
-      
+
       {/* Ruta 404 por si escriben cualquier cosa */}
       <Route>
-        <div style={{color: 'white', textAlign: 'center', marginTop: '50px'}}>
+        <div style={{ color: "white", textAlign: "center", marginTop: "50px" }}>
           <h2>Error 404</h2>
           <p>Página no encontrada</p>
         </div>
