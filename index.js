@@ -182,14 +182,14 @@ function parsearNombreArchivo(nombreArchivo) {
     return {
       titulo: "Mensaje",
       autorTexto: "ministerio la roca",
-      fecha: new Date().toISOString().split("T")[0],
+      fecha: null,
       esTaller: false,
     };
   }
 
   const tipo = partes[0].toLowerCase();
   const esTaller = tipo === "taller";
-  let fechaSQL = new Date().toISOString().split("T")[0];
+  let fechaSQL = null;
   let resto = [...partes.slice(1)];
 
   // Recortar fecha del final (2 o 3 tokens numéricos)
@@ -209,8 +209,16 @@ function parsearNombreArchivo(nombreArchivo) {
     }
     if (anio.length === 2) anio = "20" + anio;
     const diaN = parseInt(dia),
-      mesN = parseInt(mes);
-    if (diaN >= 1 && diaN <= 31 && mesN >= 1 && mesN <= 12) {
+      mesN = parseInt(mes),
+      anioN = parseInt(anio);
+    if (
+      diaN >= 1 &&
+      diaN <= 31 &&
+      mesN >= 1 &&
+      mesN <= 12 &&
+      anioN >= 2000 &&
+      anioN <= 2100
+    ) {
       fechaSQL = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
     }
   }
@@ -340,9 +348,15 @@ async function sincronizarDrive() {
 
       const datos = procesarNombreConAlias(archivo.name, listaAlias);
 
+      // Si el parser no encontró fecha en el nombre, usar createdTime de Drive como fallback
+      const fechaFinal =
+        datos.fecha ||
+        (archivo.createdTime ? archivo.createdTime.split("T")[0] : null) ||
+        new Date().toISOString().split("T")[0];
+
       // Buscar si existe
       const [rows] = await pool.query(
-        "SELECT id, titulo, predicador FROM predicas WHERE drive_id = ?",
+        "SELECT id, titulo, predicador, fecha FROM predicas WHERE drive_id = ?",
         [archivo.id],
       );
 
@@ -354,18 +368,29 @@ async function sincronizarDrive() {
           [
             datos.titulo,
             datos.predicador,
-            datos.fecha,
+            fechaFinal,
             archivo.webViewLink,
             archivo.id,
           ],
         );
         nuevos++;
       } else {
-        // Actualizar solo si cambió algo
+        // Actualizar si cambió título, predicador o se puede corregir la fecha
         const existente = rows[0];
+        const fechaExistente = existente.fecha
+          ? existente.fecha instanceof Date
+            ? existente.fecha.toISOString().split("T")[0]
+            : String(existente.fecha).split("T")[0]
+          : null;
+        const fechaCorregida = datos.fecha || fechaExistente || fechaFinal;
+        const hoy = new Date().toISOString().split("T")[0];
+        const fechaEstabaMal =
+          fechaExistente === hoy && datos.fecha && datos.fecha !== hoy;
         if (
           existente.titulo !== datos.titulo ||
-          existente.predicador !== datos.predicador
+          existente.predicador !== datos.predicador ||
+          (datos.fecha && fechaExistente !== datos.fecha) ||
+          fechaEstabaMal
         ) {
           await pool.query(
             `UPDATE predicas 
@@ -374,7 +399,7 @@ async function sincronizarDrive() {
             [
               datos.titulo,
               datos.predicador,
-              datos.fecha,
+              fechaCorregida,
               archivo.webViewLink,
               archivo.id,
             ],
