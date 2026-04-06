@@ -1697,47 +1697,103 @@ select:focus {
     height: 50px;
   }
 
+  /* --- TARJETAS MOBILE --- */
   .card {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 18px;
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    padding: 0;
   }
-  .card-content {
-    padding-right: 0;
-    width: 100%;
+
+  /* El número ocupa solo la primera fila, primera columna */
+  .card-num {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 1px solid var(--card-border);
+    border-bottom: none;
+    padding: 16px 8px;
+    min-height: 0;
   }
+
+  .card-num span {
+    font-size: 20px;
+  }
+
+  /* El body ocupa primera fila, segunda columna */
+  .card-body {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 14px 16px 12px;
+    border-left: none;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .card-author {
+    font-size: 0.85rem;
+  }
+
+  /* Las acciones ocupan toda la fila inferior */
   .card-actions {
-    width: 100%;
-    margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    border-left: none;
+    border-top: 1px solid var(--card-border);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: 10px;
-    justify-items: center;
+    width: 100%;
+    box-sizing: border-box;
   }
+
+  /* Botones secundarios más grandes y con etiquetas */
   .share-btn,
   .favorite-btn,
   .download-btn {
-    width: 100%;
-    max-width: 56px;
-    height: auto;
-    aspect-ratio: 1;
-    border-radius: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--card-border);
   }
+
+  .share-btn svg,
+  .favorite-btn svg,
+  .download-btn svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Play ocupa el espacio restante a la derecha */
   .play-btn-round {
-    grid-column: 1 / -1;
-    width: 100%;
-    border-radius: 12px;
-    height: 50px;
-    max-width: none;
-    order: 10;
+    margin-left: auto;
+    flex-shrink: 0;
+    width: auto;
+    height: 44px;
+    border-radius: 10px;
+    padding: 0 20px;
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+
   .play-btn-round::after {
     content: "ESCUCHAR";
     font-family: var(--font-ui);
     font-weight: 800;
-    margin-left: 10px;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     letter-spacing: 1.5px;
+    white-space: nowrap;
+  }
+
+  .play-btn-round svg {
+    width: 20px !important;
+    height: 20px !important;
+    flex-shrink: 0;
   }
 
   .audio-player {

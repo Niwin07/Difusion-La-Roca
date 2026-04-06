@@ -262,19 +262,7 @@ const styles = `
     color: #8878d8;
   }
 
-  /* Anular el texto ESCUCHAR en mobile para tarjetas del congreso */
-  @media (max-width: 768px) {
-    .cg-play-round.play-btn-round {
-      flex: none !important;
-      width: 52px !important;
-      border-radius: 50% !important;
-      height: 52px !important;
-    }
-    .cg-play-round.play-btn-round::after {
-      content: '' !important;
-      margin: 0 !important;
-    }
-  }
+  /* En congreso, el play también hereda el estilo mobile de App.css */
 `;
 
 const ArchDecor = () => (
