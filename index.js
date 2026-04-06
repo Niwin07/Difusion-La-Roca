@@ -673,6 +673,59 @@ app.post("/api/sync", async (req, res) => {
   res.json({ message: "Sincronización iniciada" });
 });
 
+// === 🛠️ ENDPOINT: Reparar fechas mal guardadas ===
+app.post("/api/repair-fechas", async (req, res) => {
+  const { password } = req.body;
+  const PASSWORD_SECRET = process.env.ADMIN_PASSWORD || "roca2026";
+  if (password !== PASSWORD_SECRET) {
+    return res.status(401).json({ error: "Contraseña incorrecta" });
+  }
+
+  try {
+    const drive = google.drive({ version: "v3", auth });
+    const driveFolderId = FOLDER_ID || "1mLxXbJ9s6HYYjE6G4ruy6JZGEmCsIxwT";
+
+    const driveRes = await drive.files.list({
+      q: `'${driveFolderId}' in parents and trashed = false and mimeType contains 'audio'`,
+      fields: "files(id, name, createdTime)",
+      pageSize: 1000,
+    });
+
+    const archivos = driveRes.data.files || [];
+    let reparados = 0;
+    let sinFecha = 0;
+
+    for (const archivo of archivos) {
+      const parsed = parsearNombreArchivo(archivo.name);
+      const fechaReparada =
+        parsed.fecha ||
+        (archivo.createdTime ? archivo.createdTime.split("T")[0] : null);
+
+      if (!fechaReparada) {
+        sinFecha++;
+        continue;
+      }
+
+      const [result] = await pool.query(
+        "UPDATE predicas SET fecha = ? WHERE drive_id = ? AND fecha != ?",
+        [fechaReparada, archivo.id, fechaReparada],
+      );
+      if (result.affectedRows > 0) reparados++;
+    }
+
+    cachePredicas = null;
+    res.json({
+      message: "Reparacion completa",
+      reparados,
+      sinFecha,
+      total: archivos.length,
+    });
+  } catch (error) {
+    console.error("Error reparando fechas:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- 🎧 PROXY DE AUDIO INTELIGENTE (SOPORTA SEEKING/ADELANTAR) ---
 app.get("/api/audio/:id", async (req, res) => {
   try {

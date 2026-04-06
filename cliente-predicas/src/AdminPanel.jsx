@@ -228,6 +228,19 @@ const styles = `
   .ap-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; animation: ap-pulse 2s ease-in-out infinite; }
   @keyframes ap-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+  /* REPAIR BUTTON */
+  .ap-btn-repair {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(201,108,40,0.1); border: 1px solid rgba(201,108,40,0.3);
+    color: #c96c28; padding: 8px 16px; border-radius: 10px;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s ease; font-family: 'Lato', sans-serif; white-space: nowrap;
+  }
+  .ap-btn-repair:hover:not(:disabled) { background: rgba(201,108,40,0.18); border-color: rgba(201,108,40,0.5); transform: translateY(-1px); }
+  .ap-btn-repair:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .ap-btn-repair.repair-ok { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #10b981; }
+  .ap-btn-repair.repair-err { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
   /* NOTIFY BUTTON */
   .ap-btn-notify {
     display: flex; align-items: center; gap: 8px;
@@ -249,7 +262,7 @@ const styles = `
     .ap-stats { display: none; }
     .ap-search-bar { padding: 10px 16px; }
     .ap-table thead th, .ap-table td { padding: 10px 12px; }
-    .ap-btn-sync span, .ap-btn-notify span { display: none; }
+    .ap-btn-sync span, .ap-btn-notify span, .ap-btn-repair span { display: none; }
     .ap-panel { border-radius: 16px; }
     .ap-sync-log { padding: 8px 16px; }
   }
@@ -289,6 +302,10 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
 
   // ─── NOTIFY STATE ───
   const [notifying, setNotifying] = useState(false);
+
+  // ─── REPAIR STATE ───
+  const [repairState, setRepairState] = useState("idle"); // idle | running | ok | error
+  const [repairResult, setRepairResult] = useState(null);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -406,6 +423,40 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
       showToast("Error de conexión", "error");
     } finally {
       setNotifying(false);
+    }
+  };
+
+  const repararFechas = async () => {
+    setRepairState("running");
+    setRepairResult(null);
+    addLog("Iniciando reparación de fechas desde Drive...", "info");
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const res = await fetch(`${apiUrl}/api/repair-fechas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error del servidor");
+      setRepairResult(data);
+      setRepairState("ok");
+      addLog(
+        `✓ Fechas reparadas: ${data.reparados} de ${data.total} archivos`,
+        "ok",
+      );
+      showToast(`${data.reparados} fechas corregidas correctamente`, "success");
+      await onRecargar();
+      setTimeout(() => {
+        setRepairState("idle");
+        setRepairResult(null);
+      }, 5000);
+    } catch (err) {
+      setRepairState("error");
+      addLog(`✗ Error al reparar: ${err.message}`, "err");
+      showToast("No se pudieron reparar las fechas", "error");
+      setTimeout(() => setRepairState("idle"), 4000);
     }
   };
 
@@ -551,6 +602,36 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
                   <BellRing size={15} />
                 )}
                 <span>Probar Alerta</span>
+              </button>
+
+              <button
+                onClick={repararFechas}
+                disabled={repairState === "running"}
+                className={`ap-btn-repair ${repairState === "ok" ? "repair-ok" : repairState === "error" ? "repair-err" : ""}`}
+                title={
+                  repairResult
+                    ? `${repairResult.reparados} corregidas de ${repairResult.total}`
+                    : "Reparar fechas leyendo los nombres de Drive"
+                }
+              >
+                {repairState === "running" ? (
+                  <Loader size={15} className="ap-spinning" />
+                ) : repairState === "ok" ? (
+                  <CheckCircle size={15} />
+                ) : repairState === "error" ? (
+                  <AlertCircle size={15} />
+                ) : (
+                  <Clock size={15} />
+                )}
+                <span>
+                  {repairState === "running"
+                    ? "Reparando..."
+                    : repairState === "ok"
+                      ? `${repairResult?.reparados ?? "✓"} corregidas`
+                      : repairState === "error"
+                        ? "Error"
+                        : "Reparar fechas"}
+                </span>
               </button>
 
               <button
