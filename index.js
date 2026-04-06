@@ -91,15 +91,18 @@ async function cargarAlias() {
 
 // === 🤖 PROCESAMIENTO MEJORADO ===
 function procesarNombreConAlias(nombreArchivo, listaAlias) {
+  // Limpieza: extensión + guiones/underscores → espacios
   let nombreLimpio = nombreArchivo
-    .replace(/\.mp3$/i, "")
-    .replace(/_/g, "-")
+    .replace(/\.(mp3|m4a|wav|ogg)$/i, "")
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 
   const nombreLower = nombreLimpio.toLowerCase();
 
-  // Regex más robusto para fechas
-  const regexFecha = /[-_](\d{1,2})[-_](\d{1,2})[-_](\d{2,4})(?=\s|$|\.)/;
+  // Regex para fecha (acepta separadores: espacios, guiones, barras)
+  const regexFecha = /\b(\d{1,2})[\s\/\-](\d{1,2})[\s\/\-](\d{2,4})\b/;
   const match = nombreLimpio.match(regexFecha);
 
   let fechaSQL = new Date().toISOString().split("T")[0];
@@ -109,8 +112,6 @@ function procesarNombreConAlias(nombreArchivo, listaAlias) {
   if (match) {
     let [_, dia, mes, anio] = match;
     if (anio.length === 2) anio = "20" + anio;
-
-    // Validación de fecha
     const diaNum = parseInt(dia);
     const mesNum = parseInt(mes);
     if (diaNum >= 1 && diaNum <= 31 && mesNum >= 1 && mesNum <= 12) {
@@ -119,13 +120,16 @@ function procesarNombreConAlias(nombreArchivo, listaAlias) {
       textoParaAnalizar = nombreLower.substring(0, match.index).trim();
     }
   } else {
-    // Si no hay fecha, usa el nombre completo como título
-    titulo = nombreLimpio.replace(/-/g, " ");
+    // Sin fecha: capitalizar el nombre completo como título
+    titulo = nombreLimpio
+      .split(" ")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ");
   }
 
   // Buscar predicador por alias
   let predicadorOficial = "Predicador Invitado";
-
   for (const item of listaAlias) {
     const aliasLower = item.alias_detectado.toLowerCase();
     if (textoParaAnalizar.includes(aliasLower)) {
@@ -134,17 +138,16 @@ function procesarNombreConAlias(nombreArchivo, listaAlias) {
     }
   }
 
-  // Si no se encontró alias, extraer del nombre
   if (predicadorOficial === "Predicador Invitado" && textoParaAnalizar) {
     let extracted = textoParaAnalizar
       .replace(/predica/gi, "")
       .replace(/mensaje/gi, "")
-      .replace(/[-]/g, " ")
+      .replace(/[-_]/g, " ")
       .trim();
-
     if (extracted.length > 2) {
       predicadorOficial = extracted
         .split(" ")
+        .filter(Boolean)
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(" ");
     }
@@ -436,7 +439,18 @@ app.get("/api/congreso", async (req, res) => {
         .replace(/\s+/g, "_");
 
       resultado[diaKey] = archivos.map((f) => {
-        const nombreLimpio = f.name.replace(/\.mp3$/i, "").replace(/_/g, " ");
+        // Limpieza completa del nombre: extensión, guiones, underscores
+        const nombreLimpio = f.name
+          .replace(/\.(mp3|m4a|wav|ogg)$/i, "")
+          .replace(/_/g, " ")
+          .replace(/-/g, " ")
+          .replace(/\s{2,}/g, " ")
+          .trim()
+          .split(" ")
+          .filter(Boolean)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+          .join(" ");
+
         const esTaller = nombreLimpio.toLowerCase().includes("taller");
         return {
           id: f.id,
