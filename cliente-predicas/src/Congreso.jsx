@@ -456,20 +456,6 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           <p className="cg-hero-sub">
             Ministerio La Roca · Ushuaia, Tierra del Fuego
           </p>
-          <div className="cg-hero-meta">
-            <div className="cg-meta-item">
-              <div className="cg-meta-dot" />
-              <span>2 al 4 de Abril</span>
-            </div>
-            <div className="cg-meta-item">
-              <div className="cg-meta-dot" />
-              <span>Los Ñires y Bahía Grande</span>
-            </div>
-            <div className="cg-meta-item">
-              <div className="cg-meta-dot" />
-              <span>Acceso libre</span>
-            </div>
-          </div>
         </div>
 
         <div className="cg-stats">
