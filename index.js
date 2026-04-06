@@ -89,71 +89,207 @@ async function cargarAlias() {
   }
 }
 
-// === 🤖 PROCESAMIENTO MEJORADO ===
-function procesarNombreConAlias(nombreArchivo, listaAlias) {
-  // Limpieza: extensión + guiones/underscores → espacios
-  let nombreLimpio = nombreArchivo
-    .replace(/\.(mp3|m4a|wav|ogg)$/i, "")
-    .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .replace(/\s{2,}/g, " ")
+const MINUSCULAS_ES = new Set([
+  "y",
+  "e",
+  "o",
+  "u",
+  "de",
+  "del",
+  "los",
+  "las",
+  "el",
+  "la",
+  "un",
+  "una",
+  "unos",
+  "unas",
+  "a",
+  "al",
+  "en",
+  "con",
+  "por",
+  "para",
+  "sin",
+  "sobre",
+  "entre",
+  "como",
+  "que",
+  "lo",
+  "su",
+  "sus",
+  "mi",
+  "mis",
+  "tu",
+  "tus",
+  "se",
+  "te",
+  "me",
+  "le",
+  "les",
+  "ni",
+  "si",
+  "ya",
+  "no",
+  "vs",
+]);
+
+// Palabras que identifican el inicio del nombre del predicador
+const PALABRAS_AUTOR = [
+  "profeta",
+  "pastora",
+  "pastor",
+  "apostol",
+  "apóstol",
+  "hermano",
+  "hermana",
+  "dr",
+  "rev",
+];
+
+function esNumero(str) {
+  return /^\d{1,4}$/.test(str);
+}
+
+function cap(word) {
+  if (!word) return "";
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+// Capitalización correcta para títulos en español
+function tituloES(str) {
+  return str
+    .split(" ")
+    .filter(Boolean)
+    .map((w, i) => {
+      const lower = w.toLowerCase();
+      if (i !== 0 && MINUSCULAS_ES.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function parsearNombreArchivo(nombreArchivo) {
+  const sinExtension = nombreArchivo
+    .replace(/\.(mp3|m4a|wav|ogg|flac)$/i, "")
     .trim();
+  const partes = sinExtension
+    .split("-")
+    .map((p) => p.trim())
+    .filter(Boolean);
 
-  const nombreLower = nombreLimpio.toLowerCase();
-
-  // Regex para fecha (acepta separadores: espacios, guiones, barras)
-  const regexFecha = /\b(\d{1,2})[\s\/\-](\d{1,2})[\s\/\-](\d{2,4})\b/;
-  const match = nombreLimpio.match(regexFecha);
-
-  let fechaSQL = new Date().toISOString().split("T")[0];
-  let titulo = "Mensaje";
-  let textoParaAnalizar = nombreLower;
-
-  if (match) {
-    let [_, dia, mes, anio] = match;
-    if (anio.length === 2) anio = "20" + anio;
-    const diaNum = parseInt(dia);
-    const mesNum = parseInt(mes);
-    if (diaNum >= 1 && diaNum <= 31 && mesNum >= 1 && mesNum <= 12) {
-      fechaSQL = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
-      titulo = `Mensaje del ${dia}/${mes}/${anio}`;
-      textoParaAnalizar = nombreLower.substring(0, match.index).trim();
-    }
-  } else {
-    // Sin fecha: capitalizar el nombre completo como título
-    titulo = nombreLimpio
-      .split(" ")
-      .filter(Boolean)
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
+  if (partes.length === 0) {
+    return {
+      titulo: "Mensaje",
+      autorTexto: "ministerio la roca",
+      fecha: new Date().toISOString().split("T")[0],
+      esTaller: false,
+    };
   }
 
-  // Buscar predicador por alias
-  let predicadorOficial = "Predicador Invitado";
+  const tipo = partes[0].toLowerCase();
+  const esTaller = tipo === "taller";
+  let fechaSQL = new Date().toISOString().split("T")[0];
+  let resto = [...partes.slice(1)];
+
+  // Recortar fecha del final (2 o 3 tokens numéricos)
+  let tokensNumericos = 0;
+  for (let i = resto.length - 1; i >= 0 && esNumero(resto[i]); i--) {
+    tokensNumericos++;
+    if (tokensNumericos === 3) break;
+  }
+  if (tokensNumericos >= 2) {
+    const fechaTokens = resto.splice(resto.length - tokensNumericos);
+    let dia, mes, anio;
+    if (fechaTokens.length === 3) {
+      [dia, mes, anio] = fechaTokens;
+    } else {
+      dia = "01";
+      [mes, anio] = fechaTokens;
+    }
+    if (anio.length === 2) anio = "20" + anio;
+    const diaN = parseInt(dia),
+      mesN = parseInt(mes);
+    if (diaN >= 1 && diaN <= 31 && mesN >= 1 && mesN <= 12) {
+      fechaSQL = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+  }
+
+  let tituloTaller = "";
+  let autorPartes = [];
+
+  if (esTaller && resto.length > 0) {
+    // Segmentos con underscore al inicio = título del taller
+    let iAutorInicio = -1;
+    let iTituloFin = 0;
+    for (let i = 0; i < resto.length; i++) {
+      if (resto[i].includes("_")) {
+        iTituloFin = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    if (iTituloFin > 0) {
+      iAutorInicio = iTituloFin;
+    } else {
+      // Sin underscores: buscar palabra clave de autor
+      for (let i = 0; i < resto.length; i++) {
+        const segLower = resto[i].toLowerCase();
+        if (
+          PALABRAS_AUTOR.some((p) => segLower === p || segLower.startsWith(p))
+        ) {
+          iAutorInicio = i;
+          break;
+        }
+      }
+      if (iAutorInicio === -1) iAutorInicio = 1;
+    }
+
+    const tituloSegs = resto.slice(0, iAutorInicio);
+    autorPartes = resto.slice(iAutorInicio);
+
+    // Limpiar underscores del título y aplicar capitalización española
+    const tituloRaw = tituloSegs
+      .map((s) => s.replace(/_/g, " ").trim())
+      .join(" ");
+    tituloTaller = tituloES(tituloRaw);
+  } else {
+    autorPartes = resto;
+  }
+
+  const autorTexto = autorPartes
+    .map((p) => p.replace(/_/g, " ").trim())
+    .join(" ")
+    .split(" ")
+    .filter(Boolean)
+    .map(cap)
+    .join(" ")
+    .toLowerCase();
+
+  const titulo = esTaller ? tituloTaller || "Taller" : "Prédica";
+  return { titulo, autorTexto, fecha: fechaSQL, esTaller };
+}
+
+// === 🤖 PROCESAMIENTO MEJORADO ===
+function procesarNombreConAlias(nombreArchivo, listaAlias) {
+  const { titulo, autorTexto, fecha } = parsearNombreArchivo(nombreArchivo);
+
+  let predicadorOficial = null;
   for (const item of listaAlias) {
-    const aliasLower = item.alias_detectado.toLowerCase();
-    if (textoParaAnalizar.includes(aliasLower)) {
+    if (autorTexto.includes(item.alias_detectado.toLowerCase())) {
       predicadorOficial = item.nombre_oficial;
       break;
     }
   }
 
-  if (predicadorOficial === "Predicador Invitado" && textoParaAnalizar) {
-    let extracted = textoParaAnalizar
-      .replace(/predica/gi, "")
-      .replace(/mensaje/gi, "")
-      .replace(/[-_]/g, " ")
-      .trim();
-    if (extracted.length > 2) {
-      predicadorOficial = extracted
-        .split(" ")
-        .filter(Boolean)
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
-    }
+  if (!predicadorOficial) {
+    predicadorOficial =
+      autorTexto.split(" ").filter(Boolean).map(cap).join(" ") ||
+      "Ministerio La Roca";
   }
 
-  return { titulo, predicador: predicadorOficial, fecha: fechaSQL };
+  return { titulo, predicador: predicadorOficial, fecha };
 }
 
 // === 🔄 SINCRONIZACIÓN OPTIMIZADA ===
@@ -439,23 +575,16 @@ app.get("/api/congreso", async (req, res) => {
         .replace(/\s+/g, "_");
 
       resultado[diaKey] = archivos.map((f) => {
-        // Limpieza completa del nombre: extensión, guiones, underscores
-        const nombreLimpio = f.name
-          .replace(/\.(mp3|m4a|wav|ogg)$/i, "")
-          .replace(/_/g, " ")
-          .replace(/-/g, " ")
-          .replace(/\s{2,}/g, " ")
-          .trim()
-          .split(" ")
-          .filter(Boolean)
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-          .join(" ");
+        const parsed = parsearNombreArchivo(f.name);
+        const autorCapitalizado =
+          parsed.autorTexto.split(" ").filter(Boolean).map(cap).join(" ") ||
+          "Ministerio La Roca";
 
-        const esTaller = nombreLimpio.toLowerCase().includes("taller");
         return {
           id: f.id,
-          nombre: nombreLimpio,
-          tipo: esTaller ? "taller" : "predica",
+          nombre: parsed.titulo,
+          predicador: autorCapitalizado,
+          tipo: parsed.esTaller ? "taller" : "predica",
           url: f.webViewLink,
         };
       });

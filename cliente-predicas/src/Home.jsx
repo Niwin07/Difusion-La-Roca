@@ -954,17 +954,24 @@ function Home() {
             ) : (
               <>
                 <div className="grid">
-                  {predicasVisibles.map((predica) => (
+                  {predicasVisibles.map((predica, index) => (
                     <div key={predica.id} className="card">
-                      <div className="card-content">
+                      <div className="card-num">
+                        <span>{index + 1}</span>
+                      </div>
+                      <div className="card-body">
                         <div className="card-meta">
-                          <Calendar size={14} />
-                          <span>{formatearFecha(predica.fecha)}</span>
-                          <span>•</span>
-                          <span style={{ color: "var(--accent)" }}>Audio</span>
+                          <span
+                            className={`pill pill-${predica.esTaller ? "taller" : "predica"}`}
+                          >
+                            {predica.esTaller ? "Taller" : "Prédica"}
+                          </span>
+                          <span className="pill-date">
+                            {formatearFecha(predica.fecha)}
+                          </span>
                         </div>
-                        <h3>{predica.titulo}</h3>
-                        <div className="predicador">{predica.predicador}</div>
+                        <div className="card-title">{predica.titulo}</div>
+                        <div className="card-author">{predica.predicador}</div>
                       </div>
 
                       <div className="card-actions">

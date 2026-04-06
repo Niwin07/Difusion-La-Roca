@@ -372,23 +372,27 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
     .flat()
     .filter((s) => s.tipo === "taller").length;
 
-  const renderCard = (sesion) => {
+  const renderCard = (sesion, index) => {
     const isPlaying = predicaReproduciendo?.id === sesion.id;
     const esFav = favoritos.includes(sesion.id);
     const diaLabel = DIAS_CONFIG.find((d) => d.key === diaActivo)?.nombre;
 
     return (
       <div key={sesion.id} className="card">
-        <div className="card-content">
+        <div className="card-num">
+          <span>{index + 1}</span>
+        </div>
+        <div className="card-body">
           <div className="card-meta">
-            <span className={`tipo-badge ${sesion.tipo}`}>
+            <span className={`pill pill-${sesion.tipo}`}>
               {sesion.tipo === "taller" ? "Taller" : "Prédica"}
             </span>
-            <span>•</span>
-            <span>{diaLabel}</span>
+            <span className="pill-date">{diaLabel}</span>
           </div>
-          <h3>{sesion.nombre}</h3>
-          <div className="predicador">Congreso 2026</div>
+          <div className="card-title">{sesion.nombre}</div>
+          <div className="card-author">
+            {sesion.predicador || "Congreso 2026"}
+          </div>
         </div>
 
         <div className="card-actions">
@@ -423,7 +427,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
               onReproducir({
                 id: sesion.id,
                 titulo: sesion.nombre,
-                predicador: "Congreso 2026",
+                predicador: sesion.predicador || "Congreso 2026",
                 url_audio: sesion.url,
               })
             }
@@ -529,7 +533,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
                   </span>
                   <div className="cg-section-line" />
                 </div>
-                {predicas.map((s) => renderCard(s))}
+                {predicas.map((s, index) => renderCard(s, index))}
               </>
             )}
             {talleres.length > 0 && (
@@ -543,7 +547,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
                   </span>
                   <div className="cg-section-line" />
                 </div>
-                {talleres.map((s) => renderCard(s))}
+                {talleres.map((s, index) => renderCard(s, index))}
               </>
             )}
           </div>
