@@ -662,9 +662,10 @@ select:focus {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
+  background: var(--accent) !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 0 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -672,11 +673,13 @@ select:focus {
   transition: all 0.2s ease;
   flex-shrink: 0;
   box-shadow: var(--shadow-copper);
+  line-height: 1;
 }
 
 .play-btn-round:hover {
-  background: var(--accent-hover);
+  background: var(--accent-hover) !important;
   transform: scale(1.08);
+  border-color: transparent !important;
 }
 
 /* Botones secundarios */
@@ -689,15 +692,31 @@ select:focus {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--card-border);
-  background: transparent;
-  color: var(--text-body);
+  border: 1.5px solid var(--card-border) !important;
+  background: transparent !important;
+  color: var(--text-body) !important;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   text-decoration: none;
-  opacity: 1;
-  visibility: visible;
+  padding: 0 !important;
+  line-height: 1;
+}
+
+.share-btn svg,
+.favorite-btn svg,
+.download-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block;
+  flex-shrink: 0;
+}
+
+.play-btn-round svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block;
+  flex-shrink: 0;
 }
 
 .share-btn:hover,
@@ -1715,42 +1734,41 @@ select:focus {
   .share-btn,
   .favorite-btn,
   .download-btn {
-    width: 46px;
-    height: 46px;
-    border-radius: 10px;
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 10px !important;
     flex-shrink: 0;
-    border: 1.5px solid var(--card-border);
+    border: 1.5px solid var(--card-border) !important;
     display: flex !important;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-body);
-    background: rgba(194, 97, 26, 0.06);
+    align-items: center !important;
+    justify-content: center !important;
+    color: var(--text-body) !important;
+    background: rgba(194, 97, 26, 0.06) !important;
+    padding: 0 !important;
   }
 
   .share-btn svg,
   .favorite-btn svg,
-  .download-btn svg,
-  .share-btn > *,
-  .favorite-btn > *,
-  .download-btn > * {
+  .download-btn svg {
     width: 20px !important;
     height: 20px !important;
     display: block !important;
     flex-shrink: 0;
   }
 
-  /* Play ocupa el espacio restante a la derecha */
+  /* Play ocupa el espacio restante a la derecha, centrado */
   .play-btn-round {
     margin-left: auto;
     flex-shrink: 0;
-    width: auto;
-    height: 44px;
-    border-radius: 10px;
-    padding: 0 20px;
+    width: auto !important;
+    height: 46px !important;
+    border-radius: 10px !important;
+    padding: 0 20px !important;
     gap: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1;
   }
 
   .play-btn-round::after {
@@ -1760,12 +1778,16 @@ select:focus {
     font-size: 0.82rem;
     letter-spacing: 1.5px;
     white-space: nowrap;
+    line-height: 1;
   }
 
   .play-btn-round svg {
     width: 20px !important;
     height: 20px !important;
+    display: block !important;
     flex-shrink: 0;
+    position: relative;
+    top: 0;
   }
 
   .audio-player {
