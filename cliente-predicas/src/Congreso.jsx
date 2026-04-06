@@ -142,10 +142,11 @@ const styles = `
     margin-bottom: 20px;
     box-sizing: border-box;
     width: 100%;
+    overflow: hidden;
   }
 
   .cg-tab {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
     padding: 10px 4px;
     border-radius: 12px;
@@ -155,6 +156,7 @@ const styles = `
     transition: all 0.2s ease;
     text-align: center;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   .cg-tab:hover { background: var(--hover-bg); }
@@ -179,6 +181,8 @@ const styles = `
     font-size: 15px;
     color: var(--text-primary);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .cg-tab.active .cg-tab-name { color: #fff; }
@@ -378,7 +382,15 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
             <span className="pill-date">{diaLabel}</span>
           </div>
           <div className="card-title">{sesion.nombre}</div>
-          <div className="card-author">
+          <div
+            className="card-author"
+            style={{
+              color: "var(--copper, #c96c28)",
+              fontWeight: 600,
+              fontStyle: "normal",
+              fontSize: "0.82rem",
+            }}
+          >
             {sesion.predicador || "Congreso 2026"}
           </div>
         </div>

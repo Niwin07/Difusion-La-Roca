@@ -639,11 +639,12 @@ select:focus {
 
 /* Autor */
 .card-author {
-  font-family: var(--font-display);
-  font-size: 0.88rem;
-  font-style: italic;
-  color: var(--text-secondary);
-  margin-top: 2px;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--copper);
+  margin-top: 3px;
 }
 
 /* Columna derecha: acciones */
@@ -682,19 +683,21 @@ select:focus {
 .share-btn,
 .favorite-btn,
 .download-btn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--card-border);
+  border: 1.5px solid var(--card-border);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-body);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   text-decoration: none;
+  opacity: 1;
+  visibility: visible;
 }
 
 .share-btn:hover,
@@ -714,48 +717,7 @@ select:focus {
   border-color: #e04040;
 }
 
-/* ───── RESPONSIVE ───── */
-@media (max-width: 768px) {
-  .card {
-    grid-template-columns: 48px 1fr auto;
-  }
-
-  .card-num {
-    padding: 0 10px;
-  }
-
-  .card-num span {
-    font-size: 20px;
-  }
-
-  .card-body {
-    padding: 14px 14px;
-  }
-
-  .card-title {
-    font-size: 1.3rem;
-  }
-
-  .card-actions {
-    gap: 6px;
-    padding: 0 12px;
-  }
-
-  /* Ocultar botones secundarios en mobile muy pequeño para no achicar el título */
-  .share-btn,
-  .download-btn {
-    display: none;
-  }
-}
-
-@media (max-width: 400px) {
-  .card {
-    grid-template-columns: 0 1fr auto;
-  }
-  .card-num {
-    display: none;
-  }
-}
+/* ───── RESPONSIVE (gestionado en el bloque global al final) ───── */
 
 /* ===================================================================
    ESTADOS
@@ -1749,22 +1711,32 @@ select:focus {
     box-sizing: border-box;
   }
 
-  /* Botones secundarios más grandes y con etiquetas */
+  /* Botones secundarios más grandes y visibles */
   .share-btn,
   .favorite-btn,
   .download-btn {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border-radius: 10px;
     flex-shrink: 0;
     border: 1.5px solid var(--card-border);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-body);
+    background: rgba(194, 97, 26, 0.06);
   }
 
   .share-btn svg,
   .favorite-btn svg,
-  .download-btn svg {
+  .download-btn svg,
+  .share-btn > *,
+  .favorite-btn > *,
+  .download-btn > * {
     width: 20px !important;
     height: 20px !important;
+    display: block !important;
+    flex-shrink: 0;
   }
 
   /* Play ocupa el espacio restante a la derecha */
