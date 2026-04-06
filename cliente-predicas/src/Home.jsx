@@ -665,33 +665,35 @@ function Home() {
     const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
     const inicioAnioActual = new Date(ahora.getFullYear(), 0, 1);
 
-    return predicas.filter((p) => {
-      const fechaPredica = new Date(p.fecha);
-      if (filtroFecha === "ultimos30" && fechaPredica < hace30Dias)
-        return false;
-      if (filtroFecha === "esteAnio" && fechaPredica < inicioAnioActual)
-        return false;
+    return predicas
+      .filter((p) => {
+        const fechaPredica = new Date(p.fecha);
+        if (filtroFecha === "ultimos30" && fechaPredica < hace30Dias)
+          return false;
+        if (filtroFecha === "esteAnio" && fechaPredica < inicioAnioActual)
+          return false;
 
-      const anioCoincide =
-        anioSeleccionado === "Todos" ||
-        fechaPredica.getFullYear() === parseInt(anioSeleccionado);
+        const anioCoincide =
+          anioSeleccionado === "Todos" ||
+          fechaPredica.getFullYear() === parseInt(anioSeleccionado);
 
-      const predicadorCoincide =
-        predicadorSeleccionado === "Todos"
-          ? true
-          : predicadorSeleccionado === "Otros"
-            ? !PREDICADORES_OFICIALES.filter(
-                (nombre) => nombre !== "Otros",
-              ).includes(p.predicador)
-            : p.predicador === predicadorSeleccionado;
+        const predicadorCoincide =
+          predicadorSeleccionado === "Todos"
+            ? true
+            : predicadorSeleccionado === "Otros"
+              ? !PREDICADORES_OFICIALES.filter(
+                  (nombre) => nombre !== "Otros",
+                ).includes(p.predicador)
+              : p.predicador === predicadorSeleccionado;
 
-      const textoCoincide =
-        busqueda === "" ||
-        p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-        p.predicador.toLowerCase().includes(busqueda.toLowerCase());
+        const textoCoincide =
+          busqueda === "" ||
+          p.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+          p.predicador.toLowerCase().includes(busqueda.toLowerCase());
 
-      return anioCoincide && predicadorCoincide && textoCoincide;
-    });
+        return anioCoincide && predicadorCoincide && textoCoincide;
+      })
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   }, [
     predicas,
     anioSeleccionado,
@@ -716,9 +718,12 @@ function Home() {
 
   const stats = useMemo(() => {
     if (!predicas.length) return null;
+    const masReciente = predicas.reduce((max, p) =>
+      new Date(p.fecha) > new Date(max.fecha) ? p : max,
+    );
     return {
       total: predicas.length,
-      ultimoAnio: new Date(predicas[0]?.fecha).getFullYear(),
+      ultimoAnio: new Date(masReciente.fecha).getFullYear(),
       favoritos: favoritos.length,
     };
   }, [predicas, favoritos]);
