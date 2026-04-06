@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { Play, Pause, RefreshCw, Share2, Download, X } from "lucide-react";
+import { Play, Pause, RefreshCw, Share2, Download, Heart } from "lucide-react";
 
-// ===================================================
-// ESTILOS DEL CONGRESO
-// Paleta inspirada en los flyers: tierra + púrpura
-// ===================================================
+const getDriveId = (url) => {
+  if (!url) return null;
+  const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (matchD) return matchD[1];
+  const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
+  if (matchId) return matchId[1];
+  return null;
+};
+
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
@@ -14,32 +19,25 @@ const styles = `
     max-width: 900px;
     margin: 0 auto;
     padding: 0 0 120px;
+    box-sizing: border-box;
   }
 
-  /* === HERO DEL CONGRESO === */
   .cg-hero {
     position: relative;
     background: linear-gradient(160deg, #2a1205 0%, #1a0a00 50%, #12102a 100%);
     border-radius: 24px;
-    padding: 40px 32px 36px;
+    padding: 36px 24px 32px;
     text-align: center;
     overflow: hidden;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     border: 1px solid rgba(201,108,40,0.2);
-  }
-
-  .dark .cg-hero {
-    background: linear-gradient(160deg, #2a1205 0%, #140800 50%, #0e0c22 100%);
-  }
-
-  .light .cg-hero {
-    background: linear-gradient(160deg, #3d1f0d 0%, #1a0a00 50%, #1a1535 100%);
+    box-sizing: border-box;
   }
 
   .cg-arch-bg {
     position: absolute;
     top: -15px;
-    right: 20px;
+    right: 16px;
     opacity: 0.12;
     pointer-events: none;
   }
@@ -52,18 +50,18 @@ const styles = `
     font-weight: 800;
     letter-spacing: 2.5px;
     text-transform: uppercase;
-    padding: 5px 16px;
+    padding: 5px 14px;
     border-radius: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .cg-hero-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.6rem;
+    font-size: clamp(1.8rem, 6vw, 2.6rem);
     font-weight: 400;
     color: #f0e8d8;
     margin: 0 0 4px;
-    line-height: 1.1;
+    line-height: 1.15;
   }
 
   .cg-hero-title em {
@@ -72,25 +70,25 @@ const styles = `
   }
 
   .cg-hero-sub {
-    font-size: 13px;
+    font-size: 12px;
     color: rgba(240,232,216,0.5);
-    letter-spacing: 1px;
-    margin: 10px 0 0;
+    letter-spacing: 0.8px;
+    margin: 8px 0 0;
   }
 
   .cg-hero-meta {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-top: 16px;
     flex-wrap: wrap;
   }
 
   .cg-meta-item {
     display: flex;
     align-items: center;
-    gap: 7px;
-    font-size: 12px;
+    gap: 6px;
+    font-size: 11px;
     color: rgba(240,232,216,0.5);
   }
 
@@ -102,62 +100,64 @@ const styles = `
     flex-shrink: 0;
   }
 
-  /* === STATS === */
   .cg-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 10px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
   }
 
   .cg-stat {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 16px;
+    padding: 14px 8px;
     text-align: center;
+    box-sizing: border-box;
   }
 
   .cg-stat-num {
     font-family: 'Playfair Display', serif;
-    font-size: 28px;
+    font-size: 26px;
     color: #c96c28;
     line-height: 1;
     margin-bottom: 4px;
   }
 
   .cg-stat-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
   }
 
-  /* === TABS DE DÍAS === */
   .cg-tabs {
     display: flex;
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 6px;
+    padding: 5px;
     gap: 4px;
     margin-bottom: 20px;
+    box-sizing: border-box;
+    width: 100%;
   }
 
   .cg-tab {
     flex: 1;
-    padding: 12px 8px;
+    min-width: 0;
+    padding: 10px 4px;
     border-radius: 12px;
     border: none;
     background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
+    box-sizing: border-box;
   }
 
-  .cg-tab:hover {
-    background: var(--hover-bg);
-  }
+  .cg-tab:hover { background: var(--hover-bg); }
 
   .cg-tab.active {
     background: linear-gradient(135deg, #c96c28, #a04e1a);
@@ -165,38 +165,33 @@ const styles = `
   }
 
   .cg-tab-day {
-    font-size: 10px;
+    font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.2px;
     color: var(--text-secondary);
     margin-bottom: 2px;
   }
 
-  .cg-tab.active .cg-tab-day {
-    color: rgba(255,255,255,0.7);
-  }
+  .cg-tab.active .cg-tab-day { color: rgba(255,255,255,0.7); }
 
   .cg-tab-name {
     font-family: 'Playfair Display', serif;
-    font-size: 17px;
+    font-size: 15px;
     color: var(--text-primary);
+    white-space: nowrap;
   }
 
-  .cg-tab.active .cg-tab-name {
-    color: #fff;
-  }
+  .cg-tab.active .cg-tab-name { color: #fff; }
 
   .cg-tab-count {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-secondary);
     margin-top: 2px;
+    white-space: nowrap;
   }
 
-  .cg-tab.active .cg-tab-count {
-    color: rgba(255,255,255,0.6);
-  }
+  .cg-tab.active .cg-tab-count { color: rgba(255,255,255,0.6); }
 
-  /* === SECCIÓN LABEL === */
   .cg-section-header {
     display: flex;
     align-items: center;
@@ -233,160 +228,6 @@ const styles = `
     background: var(--border);
   }
 
-  /* === TARJETA DE SESIÓN === */
-  .cg-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 16px 18px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .cg-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    border-radius: 3px 0 0 3px;
-    background: transparent;
-    transition: background 0.2s;
-  }
-
-  .cg-card.predica-card::before { background: #c96c28; }
-  .cg-card.taller-card::before { background: #6a5abf; }
-
-  .cg-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px var(--shadow);
-  }
-
-  .cg-card.predica-card:hover {
-    border-color: rgba(201,108,40,0.35);
-  }
-
-  .cg-card.taller-card:hover {
-    border-color: rgba(106,90,191,0.35);
-  }
-
-  .cg-card.playing {
-    border-color: rgba(201,108,40,0.5);
-    background: rgba(201,108,40,0.05);
-  }
-
-  .cg-card.playing.taller-card {
-    border-color: rgba(106,90,191,0.5);
-    background: rgba(106,90,191,0.05);
-  }
-
-  /* === ÍCONO DE TIPO === */
-  .cg-type-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .cg-type-icon.predica-icon {
-    background: rgba(201,108,40,0.1);
-    border: 1px solid rgba(201,108,40,0.2);
-  }
-
-  .cg-type-icon.taller-icon {
-    background: rgba(106,90,191,0.1);
-    border: 1px solid rgba(106,90,191,0.2);
-  }
-
-  /* === CUERPO DE TARJETA === */
-  .cg-card-body {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .cg-card-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 3px;
-    font-weight: 600;
-  }
-
-  .cg-card-meta {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
-  /* === ACCIONES === */
-  .cg-card-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  .cg-action-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--hover-bg);
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .cg-action-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .cg-play-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-shrink: 0;
-  }
-
-  .cg-play-btn.predica-play {
-    background: #c96c28;
-    box-shadow: 0 4px 12px rgba(201,108,40,0.35);
-    color: white;
-  }
-
-  .cg-play-btn.taller-play {
-    background: #6a5abf;
-    box-shadow: 0 4px 12px rgba(106,90,191,0.35);
-    color: white;
-  }
-
-  .cg-play-btn:hover {
-    transform: scale(1.1);
-  }
-
-  /* === ESTADO VACÍO/CARGANDO === */
   .cg-empty {
     text-align: center;
     padding: 48px 24px;
@@ -402,80 +243,45 @@ const styles = `
     color: var(--text-secondary);
   }
 
-  /* === MOBILE === */
-  @media (max-width: 480px) {
-    .cg-hero-title { font-size: 2rem; }
-    .cg-hero { padding: 30px 20px 28px; }
-    .cg-stats { gap: 8px; }
-    .cg-stat { padding: 12px 8px; }
-    .cg-stat-num { font-size: 22px; }
-    .cg-card { padding: 14px; gap: 10px; }
-    .cg-card-title { font-size: 0.92rem; }
+  /* Badge tipo dentro de card-meta */
+  .tipo-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    padding: 1px 7px;
+    border-radius: 6px;
+  }
+
+  .tipo-badge.predica {
+    background: rgba(201,108,40,0.12);
+    color: #c96c28;
+  }
+
+  .tipo-badge.taller {
+    background: rgba(106,90,191,0.12);
+    color: #8878d8;
+  }
+
+  /* Anular el texto ESCUCHAR en mobile para tarjetas del congreso */
+  @media (max-width: 768px) {
+    .cg-play-round.play-btn-round {
+      flex: none !important;
+      width: 52px !important;
+      border-radius: 50% !important;
+      height: 52px !important;
+    }
+    .cg-play-round.play-btn-round::after {
+      content: '' !important;
+      margin: 0 !important;
+    }
   }
 `;
 
-// === ÍCONOS INLINE ===
-const IconPredica = () => (
-  <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-    <path
-      d="M9 18V5l12-2v13"
-      stroke="#c96c28"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="6" cy="18" r="3" stroke="#c96c28" strokeWidth="2" />
-    <circle cx="18" cy="16" r="3" stroke="#c96c28" strokeWidth="2" />
-  </svg>
-);
-
-const IconTaller = () => (
-  <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-    <rect
-      x="3"
-      y="3"
-      width="7"
-      height="7"
-      rx="1.5"
-      stroke="#6a5abf"
-      strokeWidth="2"
-    />
-    <rect
-      x="14"
-      y="3"
-      width="7"
-      height="7"
-      rx="1.5"
-      stroke="#6a5abf"
-      strokeWidth="2"
-    />
-    <rect
-      x="3"
-      y="14"
-      width="7"
-      height="7"
-      rx="1.5"
-      stroke="#6a5abf"
-      strokeWidth="2"
-    />
-    <rect
-      x="14"
-      y="14"
-      width="7"
-      height="7"
-      rx="1.5"
-      stroke="#6a5abf"
-      strokeWidth="2"
-    />
-  </svg>
-);
-
-// === ARCO DECORATIVO (símbolo del congreso) ===
 const ArchDecor = () => (
   <svg
     className="cg-arch-bg"
-    width="140"
-    height="140"
+    width="130"
+    height="130"
     viewBox="0 0 100 100"
     fill="none"
   >
@@ -494,36 +300,24 @@ const ArchDecor = () => (
   </svg>
 );
 
-// === ESTRUCTURA DE DÍAS Y TIPOS (filtrado de nombre de archivo) ===
 const DIAS_CONFIG = [
-  { key: "jueves", label: "Día 1", nombre: "Jueves", sesiones: 1 },
-  { key: "viernes", label: "Día 2", nombre: "Viernes", sesiones: 5 },
-  { key: "sabado", label: "Día 3", nombre: "Sábado", sesiones: 5 },
+  { key: "jueves", label: "Día 1", nombre: "Jueves" },
+  { key: "viernes", label: "Día 2", nombre: "Viernes" },
+  { key: "sabado", label: "Día 3", nombre: "Sábado" },
 ];
 
-function detectarTipo(nombre) {
-  const n = nombre.toLowerCase();
-  if (n.includes("taller")) return "taller";
-  return "predica";
-}
-
-function limpiarNombre(nombre) {
-  return nombre
-    .replace(/\.mp3$/i, "")
-    .replace(/\.m4a$/i, "")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase())
-    .trim();
-}
-
-// ===================================================
-// COMPONENTE PRINCIPAL
-// ===================================================
 export default function Congreso({ onReproducir, predicaReproduciendo }) {
   const [sesiones, setSesiones] = useState({});
   const [diaActivo, setDiaActivo] = useState("jueves");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [favoritos, setFavoritos] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("favoritosCongreso") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   const cargarCongreso = async () => {
     setCargando(true);
@@ -548,34 +342,29 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
     cargarCongreso();
   }, []);
 
-  // Sesiones del día activo, separadas por tipo
-  const sesionesDia = sesiones[diaActivo] || [];
-  const predicas = sesionesDia.filter((s) => s.tipo === "predica");
-  const talleres = sesionesDia.filter((s) => s.tipo === "taller");
+  const toggleFavorito = (id) => {
+    setFavoritos((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((f) => f !== id)
+        : [...prev, id];
+      localStorage.setItem("favoritosCongreso", JSON.stringify(next));
+      return next;
+    });
+  };
 
   const compartir = async (sesion) => {
-    const texto = `🦅 ${sesion.nombre} — Congreso "Saliendo de la Tumba" 2026\n🔗 ${sesion.url}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: sesion.nombre, url: sesion.url });
-      } catch {
-        navigator.clipboard?.writeText(sesion.url);
-      }
-    } else {
-      navigator.clipboard?.writeText(sesion.url);
+        return;
+      } catch {}
     }
+    navigator.clipboard?.writeText(sesion.url);
   };
 
-  const getDriveId = (url) => {
-    if (!url) return null;
-    const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-    if (matchD) return matchD[1];
-    const matchId = url.match(/id=([a-zA-Z0-9_-]+)/);
-    if (matchId) return matchId[1];
-    return null;
-  };
-
-  const totalSesiones = Object.values(sesiones).flat().length;
+  const sesionesDia = sesiones[diaActivo] || [];
+  const predicas = sesionesDia.filter((s) => s.tipo === "predica");
+  const talleres = sesionesDia.filter((s) => s.tipo === "taller");
   const totalPredicas = Object.values(sesiones)
     .flat()
     .filter((s) => s.tipo === "predica").length;
@@ -583,11 +372,79 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
     .flat()
     .filter((s) => s.tipo === "taller").length;
 
+  const renderCard = (sesion) => {
+    const isPlaying = predicaReproduciendo?.id === sesion.id;
+    const esFav = favoritos.includes(sesion.id);
+    const diaLabel = DIAS_CONFIG.find((d) => d.key === diaActivo)?.nombre;
+
+    return (
+      <div key={sesion.id} className="card">
+        <div className="card-content">
+          <div className="card-meta">
+            <span className={`tipo-badge ${sesion.tipo}`}>
+              {sesion.tipo === "taller" ? "Taller" : "Prédica"}
+            </span>
+            <span>•</span>
+            <span>{diaLabel}</span>
+          </div>
+          <h3>{sesion.nombre}</h3>
+          <div className="predicador">Congreso 2026</div>
+        </div>
+
+        <div className="card-actions">
+          <button
+            onClick={() => toggleFavorito(sesion.id)}
+            className={`favorite-btn ${esFav ? "active" : ""}`}
+            title="Favorito"
+          >
+            <Heart size={20} fill={esFav ? "currentColor" : "none"} />
+          </button>
+
+          <button
+            onClick={() => compartir(sesion)}
+            className="share-btn"
+            title="Compartir"
+          >
+            <Share2 size={18} />
+          </button>
+
+          <a
+            href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
+            className="download-btn"
+            title="Descargar"
+            download
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download size={18} />
+          </a>
+
+          <button
+            onClick={() =>
+              onReproducir({
+                id: sesion.id,
+                titulo: sesion.nombre,
+                predicador: "Congreso 2026",
+                url_audio: sesion.url,
+              })
+            }
+            className="play-btn-round cg-play-round"
+            title={isPlaying ? "Reproduciendo..." : "Escuchar"}
+          >
+            {isPlaying ? (
+              <Pause size={20} fill="currentColor" />
+            ) : (
+              <Play size={20} fill="currentColor" />
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <style>{styles}</style>
       <div className="cg-root">
-        {/* === HERO === */}
         <div className="cg-hero">
           <ArchDecor />
           <div className="cg-hero-badge">Congreso Profético 2026</div>
@@ -615,7 +472,6 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           </div>
         </div>
 
-        {/* === STATS === */}
         <div className="cg-stats">
           <div className="cg-stat">
             <div className="cg-stat-num">3</div>
@@ -631,7 +487,6 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           </div>
         </div>
 
-        {/* === TABS DE DÍAS === */}
         <div className="cg-tabs">
           {DIAS_CONFIG.map((dia) => {
             const count = (sesiones[dia.key] || []).length;
@@ -655,7 +510,6 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           })}
         </div>
 
-        {/* === CONTENIDO === */}
         {cargando ? (
           <div className="cg-loading">
             <RefreshCw
@@ -680,8 +534,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
             <p>No hay sesiones cargadas para este día todavía.</p>
           </div>
         ) : (
-          <div>
-            {/* PRÉDICAS */}
+          <div className="grid">
             {predicas.length > 0 && (
               <>
                 <div className="cg-section-header">
@@ -690,140 +543,21 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
                   </span>
                   <div className="cg-section-line" />
                 </div>
-                {predicas.map((sesion) => {
-                  const isPlaying = predicaReproduciendo?.id === sesion.id;
-                  return (
-                    <div
-                      key={sesion.id}
-                      className={`cg-card predica-card ${isPlaying ? "playing" : ""}`}
-                    >
-                      <div className="cg-type-icon predica-icon">
-                        <IconPredica />
-                      </div>
-                      <div className="cg-card-body">
-                        <div className="cg-card-title">{sesion.nombre}</div>
-                        <div className="cg-card-meta">
-                          Congreso 2026 ·{" "}
-                          {DIAS_CONFIG.find((d) => d.key === diaActivo)?.nombre}
-                        </div>
-                      </div>
-                      <div className="cg-card-actions">
-                        <button
-                          className="cg-action-btn"
-                          onClick={() => compartir(sesion)}
-                          title="Compartir"
-                        >
-                          <Share2 size={14} />
-                        </button>
-                        <a
-                          href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
-                          className="cg-action-btn"
-                          title="Descargar"
-                          download
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ textDecoration: "none" }}
-                        >
-                          <Download size={14} />
-                        </a>
-                        <button
-                          className="cg-play-btn predica-play"
-                          onClick={() =>
-                            onReproducir({
-                              ...sesion,
-                              titulo: sesion.nombre,
-                              predicador: "Congreso 2026",
-                              url_audio: sesion.url,
-                            })
-                          }
-                          title={isPlaying ? "Pausar" : "Escuchar"}
-                        >
-                          {isPlaying ? (
-                            <Pause size={16} fill="white" />
-                          ) : (
-                            <Play
-                              size={16}
-                              fill="white"
-                              style={{ marginLeft: 2 }}
-                            />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {predicas.map((s) => renderCard(s))}
               </>
             )}
-
-            {/* TALLERES */}
             {talleres.length > 0 && (
               <>
-                <div className="cg-section-header">
+                <div
+                  className="cg-section-header"
+                  style={{ marginTop: predicas.length > 0 ? 8 : 0 }}
+                >
                   <span className="cg-section-pill pill-taller">
                     Talleres ({talleres.length})
                   </span>
                   <div className="cg-section-line" />
                 </div>
-                {talleres.map((sesion) => {
-                  const isPlaying = predicaReproduciendo?.id === sesion.id;
-                  return (
-                    <div
-                      key={sesion.id}
-                      className={`cg-card taller-card ${isPlaying ? "playing" : ""}`}
-                    >
-                      <div className="cg-type-icon taller-icon">
-                        <IconTaller />
-                      </div>
-                      <div className="cg-card-body">
-                        <div className="cg-card-title">{sesion.nombre}</div>
-                        <div className="cg-card-meta">
-                          Congreso 2026 ·{" "}
-                          {DIAS_CONFIG.find((d) => d.key === diaActivo)?.nombre}
-                        </div>
-                      </div>
-                      <div className="cg-card-actions">
-                        <button
-                          className="cg-action-btn"
-                          onClick={() => compartir(sesion)}
-                          title="Compartir"
-                        >
-                          <Share2 size={14} />
-                        </button>
-                        <a
-                          href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
-                          className="cg-action-btn"
-                          title="Descargar"
-                          download
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ textDecoration: "none" }}
-                        >
-                          <Download size={14} />
-                        </a>
-                        <button
-                          className="cg-play-btn taller-play"
-                          onClick={() =>
-                            onReproducir({
-                              ...sesion,
-                              titulo: sesion.nombre,
-                              predicador: "Congreso 2026",
-                              url_audio: sesion.url,
-                            })
-                          }
-                          title={isPlaying ? "Pausar" : "Escuchar"}
-                        >
-                          {isPlaying ? (
-                            <Pause size={16} fill="white" />
-                          ) : (
-                            <Play
-                              size={16}
-                              fill="white"
-                              style={{ marginLeft: 2 }}
-                            />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                {talleres.map((s) => renderCard(s))}
               </>
             )}
           </div>

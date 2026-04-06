@@ -333,44 +333,6 @@ const AudioPlayer = ({ predica, onClose }) => {
   );
 };
 
-// === ADMIN SECRET CLICK ===
-const AdminSync = ({ onOpenAdmin }) => {
-  const [clickCount, setClickCount] = useState(0);
-
-  const handleSecretClick = () => {
-    const newCount = clickCount + 1;
-    setClickCount(newCount);
-    if (newCount === 5) {
-      const password = prompt("🔐 Clave de Admin:");
-      if (password === "roca2026") {
-        onOpenAdmin(password);
-        setClickCount(0);
-      } else {
-        alert("❌ Clave incorrecta");
-        setClickCount(0);
-      }
-    }
-    setTimeout(() => setClickCount(0), 2000);
-  };
-
-  return (
-    <div
-      onClick={handleSecretClick}
-      style={{
-        textAlign: "center",
-        padding: "30px",
-        opacity: 0.4,
-        fontSize: "0.8rem",
-        cursor: "pointer",
-        userSelect: "none",
-        marginTop: "40px",
-      }}
-    >
-      <p>© 2026 Ministerio Profético La Roca</p>
-    </div>
-  );
-};
-
 // === RUTAS PROTEGIDAS ADMIN ===
 const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
@@ -457,7 +419,7 @@ const RutasProtegidasAdmin = () => {
 };
 
 // ===================================================
-// ESTILOS DE LA NAVEGACIÓN DE SECCIONES
+// ESTILOS DE LA NAVEGACIÓN DE SECCIONES + FIX MOBILE
 // ===================================================
 const navStyles = `
   .section-nav {
@@ -518,6 +480,41 @@ const navStyles = `
     flex-shrink: 0;
   }
 
+  /* FIX: botón play sin texto y ajustes de acciones en mobile */
+  @media (max-width: 768px) {
+    .play-btn-round {
+      flex: none !important;
+      width: 52px !important;
+      border-radius: 50% !important;
+      height: 52px !important;
+      max-width: none !important;
+      margin-top: 0 !important;
+      order: unset !important;
+      grid-column: unset !important;
+    }
+    .play-btn-round::after {
+      content: '' !important;
+      margin: 0 !important;
+    }
+    .card-actions {
+      display: flex !important;
+      flex-direction: row !important;
+      gap: 10px !important;
+      justify-content: flex-end !important;
+      width: 100%;
+      margin-top: 14px;
+    }
+    .share-btn,
+    .favorite-btn,
+    .download-btn {
+      width: 52px !important;
+      height: 52px !important;
+      border-radius: 50% !important;
+      max-width: none !important;
+      aspect-ratio: unset !important;
+    }
+  }
+
   @media (max-width: 480px) {
     .section-nav {
       width: calc(100% - 0px);
@@ -542,7 +539,7 @@ function Home() {
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState("Todos");
   const [filtroFecha, setFiltroFecha] = useState("Todos");
   const [filtrosVisible, setFiltrosVisible] = useState(false);
-  const [seccion, setSeccion] = useState("predicas"); // <-- NUEVO: controla qué sección mostrar
+  const [seccion, setSeccion] = useState("predicas");
   const [permisoNotis, setPermisoNotis] = useState(() => {
     return "Notification" in window ? Notification.permission : "default";
   });
@@ -611,6 +608,14 @@ function Home() {
   useEffect(() => {
     setPaginaActual(1);
   }, [busqueda, anioSeleccionado, predicadorSeleccionado, filtroFecha]);
+
+  // FIX: Función para cambiar de sección y detener el audio
+  const cambiarSeccion = (nuevaSeccion) => {
+    if (nuevaSeccion !== seccion) {
+      setPredicaReproduciendo(null);
+      setSeccion(nuevaSeccion);
+    }
+  };
 
   const toggleFavorito = (id) => {
     setFavoritos((prev) => {
@@ -814,19 +819,19 @@ function Home() {
         </header>
 
         {/* ===================================================
-            NAVEGACIÓN DE SECCIONES — NUEVO
+            NAVEGACIÓN DE SECCIONES 
         =================================================== */}
         <div className="section-nav">
           <button
             className={`section-nav-btn ${seccion === "predicas" ? "active-predicas" : ""}`}
-            onClick={() => setSeccion("predicas")}
+            onClick={() => cambiarSeccion("predicas")}
           >
             <div className="section-nav-dot" />
             Prédicas
           </button>
           <button
             className={`section-nav-btn ${seccion === "congreso" ? "active-congreso" : ""}`}
-            onClick={() => setSeccion("congreso")}
+            onClick={() => cambiarSeccion("congreso")}
           >
             <div className="section-nav-dot" />
             Congreso 2026
@@ -844,7 +849,7 @@ function Home() {
         )}
 
         {/* ===================================================
-            SECCIÓN PRÉDICAS (todo lo que ya existía)
+            SECCIÓN PRÉDICAS 
         =================================================== */}
         {seccion === "predicas" && (
           <>
@@ -1063,8 +1068,18 @@ function Home() {
               </>
             )}
 
-            {/* PIE SECRETO ADMIN */}
-            <AdminSync onOpenAdmin={() => {}} />
+            {/* Footer base */}
+            <div
+              style={{
+                textAlign: "center",
+                padding: "30px",
+                opacity: 0.4,
+                fontSize: "0.8rem",
+                marginTop: "40px",
+              }}
+            >
+              <p>© 2026 Ministerio Profético La Roca</p>
+            </div>
           </>
         )}
       </div>
