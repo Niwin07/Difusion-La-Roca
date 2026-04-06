@@ -12,7 +12,6 @@ import {
   Pause,
   ExternalLink,
   Volume2,
-  VolumeX,
   Menu,
   Download,
   BellRing,
@@ -20,8 +19,9 @@ import {
 import "./App.css";
 import { Route, Switch, useLocation } from "wouter";
 import { AdminPanel } from "./AdminPanel";
+import Congreso from "./Congreso";
 
-// === UTILIDAD GLOBAL (Sacala de AudioPlayer y ponela acá) ===
+// === UTILIDAD GLOBAL ===
 const getDriveId = (url) => {
   if (!url) return null;
   const matchD = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -71,9 +71,9 @@ const MainEagle = () => (
       c8.537,0,22.06-1.545,32.073-5.898c3.096-1.346,5.734-2.64,8.285-3.89c2.409-1.181,4.688-2.298,6.98-3.265
       c26.126,1.41,66.339,3.05,94.063,3.05c15.604,0,25.431-0.522,29.205-1.551c5.059-1.38,10.855-3.62,16.993-5.991
       c11.324-4.375,23.033-8.9,32.104-8.9c1.857,0,3.552,0.198,5.037,0.589c13.288,3.496,18.372,14.022,18.422,14.128l0.201,0.427
-      l0.456,0.117c0.079,0.02,0.506,0.121,1.167,0.121c0,0,0,0,0,0c1.913,0,6.598-0.903,8.793-9.264c1.29-4.914-1.226-8.538-2.162-9.672
-      c0.235-2.671,0.776-15.885-10.323-24.661c-6.735-5.326-13.414-7.774-17.833-9.395c-2.089-0.766-4.951-1.815-4.901-2.371
-      c0.454-2.894,28.565-60.374,68.724-73.151c31.045-9.878,38.504-29.301,40.27-37.192
+      l0.456,0.117c0.079,0.02,0.506,0.121,1.167,0.121c0,0,0,0,0,0c1.913,0,6.598-0.903,8.793-9.264
+      c1.29-4.914-1.226-8.538-2.162-9.672c0.235-2.671,0.776-15.885-10.323-24.661c-6.735-5.326-13.414-7.774-17.833-9.395
+      c-2.089-0.766-4.951-1.815-4.901-2.371c0.454-2.894,28.565-60.374,68.724-73.151c31.045-9.878,38.504-29.301,40.27-37.192
       C360.485,136.389,360.254,132.086,358.839,130.772z"
     />
   </svg>
@@ -110,13 +110,12 @@ const BackgroundEagle = () => (
   </div>
 );
 
-// === COMPONENTE TOAST ===
+// === TOAST ===
 const Toast = ({ message, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
     return () => clearTimeout(timer);
   }, [onClose]);
-
   return (
     <div className="toast">
       <Share2 size={20} />
@@ -125,7 +124,7 @@ const Toast = ({ message, onClose }) => {
   );
 };
 
-// === REPRODUCTOR DE AUDIO ESTILO SPOTIFY ===
+// === REPRODUCTOR DE AUDIO ===
 const AudioPlayer = ({ predica, onClose }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -135,7 +134,6 @@ const AudioPlayer = ({ predica, onClose }) => {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
-  // Formatear tiempo
   const formatTime = (time) => {
     if (time && !isNaN(time)) {
       const minutes = Math.floor(time / 60);
@@ -146,13 +144,12 @@ const AudioPlayer = ({ predica, onClose }) => {
   };
 
   const audioUrl = useMemo(() => {
-    const id = getDriveId(predica.url_audio); // Ahora usa la función global
+    const id = getDriveId(predica.url_audio);
     if (!id) return predica.url_audio;
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
 
-  // Cargar progreso
   useEffect(() => {
     const savedProgress = localStorage.getItem(`progress_${predica.id}`);
     if (savedProgress && audioRef.current) {
@@ -162,7 +159,6 @@ const AudioPlayer = ({ predica, onClose }) => {
     }
   }, [predica.id]);
 
-  // Guardar progreso
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
@@ -229,14 +225,18 @@ const AudioPlayer = ({ predica, onClose }) => {
 
   if (error) {
     return (
-      <div className="audio-player error-state">
-        <div className="player-container">
-          <div className="player-info">
-            <div className="player-title">Error al cargar</div>
+      <div className="audio-player">
+        <div className="player-content">
+          <div className="player-main-row">
+            <div className="player-info">
+              <div className="player-title">Error al cargar</div>
+            </div>
+            <div className="player-controls-right">
+              <button onClick={onClose} className="icon-btn close-mobile">
+                <X size={24} />
+              </button>
+            </div>
           </div>
-          <button onClick={onClose} className="player-btn close-player-btn">
-            <X size={18} />
-          </button>
         </div>
       </div>
     );
@@ -245,15 +245,11 @@ const AudioPlayer = ({ predica, onClose }) => {
   return (
     <div className="audio-player">
       <div className="player-content">
-        {/* FILA SUPERIOR: Info + Botones Principales */}
         <div className="player-main-row">
-          {/* INFO */}
           <div className="player-info">
             <div className="player-title">{predica.titulo}</div>
             <div className="player-artist">{predica.predicador}</div>
           </div>
-
-          {/* CONTROLES (Play/Pause + Cerrar en Mobile) */}
           <div className="player-controls-right">
             {loading ? (
               <div className="spinner-small">
@@ -276,15 +272,12 @@ const AudioPlayer = ({ predica, onClose }) => {
                 )}
               </button>
             )}
-
-            {/* Botón cerrar para móvil */}
             <button onClick={onClose} className="icon-btn close-mobile">
               <X size={24} />
             </button>
           </div>
         </div>
 
-        {/* BARRA DE PROGRESO */}
         <div className="progress-container">
           <span className="time-text">{formatTime(currentTime)}</span>
           <input
@@ -301,7 +294,6 @@ const AudioPlayer = ({ predica, onClose }) => {
           <span className="time-text">{formatTime(duration)}</span>
         </div>
 
-        {/* EXTRAS (Volumen + Link - Solo Desktop) */}
         <div className="player-extras-desktop">
           <div className="volume-box">
             <Volume2 size={18} />
@@ -341,28 +333,23 @@ const AudioPlayer = ({ predica, onClose }) => {
   );
 };
 
+// === ADMIN SECRET CLICK ===
 const AdminSync = ({ onOpenAdmin }) => {
   const [clickCount, setClickCount] = useState(0);
 
   const handleSecretClick = () => {
-    // Aumentamos el contador
     const newCount = clickCount + 1;
     setClickCount(newCount);
-
-    // Si llega a 5 clicks...
     if (newCount === 5) {
       const password = prompt("🔐 Clave de Admin:");
-      // Si la clave es correcta (cambiala por la tuya)
       if (password === "roca2026") {
-        onOpenAdmin(password); // Le avisamos a la App que abra el panel
+        onOpenAdmin(password);
         setClickCount(0);
       } else {
         alert("❌ Clave incorrecta");
         setClickCount(0);
       }
     }
-
-    // Si deja de clickear por 2 segundos, reseteamos a 0
     setTimeout(() => setClickCount(0), 2000);
   };
 
@@ -384,24 +371,21 @@ const AdminSync = ({ onOpenAdmin }) => {
   );
 };
 
-// 2. Un mini-componente para proteger la ruta /admin
+// === RUTAS PROTEGIDAS ADMIN ===
 const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState("");
   const [, setLocation] = useLocation();
-
-  // === ESTADOS NUEVOS PARA EL ADMIN ===
   const [predicasAdmin, setPredicasAdmin] = useState([]);
   const [cargando, setCargando] = useState(false);
 
-  // === FUNCIÓN PARA CARGAR DATOS ===
   const cargarPredicasAdmin = async () => {
     setCargando(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
       const res = await fetch(`${apiUrl}/api/predicas`);
       const data = await res.json();
-      setPredicasAdmin(data); // Guardamos la lista en el Admin
+      setPredicasAdmin(data);
     } catch (err) {
       console.error("Error cargando en admin:", err);
     } finally {
@@ -409,14 +393,10 @@ const RutasProtegidasAdmin = () => {
     }
   };
 
-  // === CUANDO PONE LA CLAVE BIEN, DESCARGAMOS LOS DATOS ===
   useEffect(() => {
-    if (autenticado) {
-      cargarPredicasAdmin();
-    }
+    if (autenticado) cargarPredicasAdmin();
   }, [autenticado]);
 
-  // === PANTALLA DE LOGIN ===
   if (!autenticado) {
     return (
       <div className="login-admin">
@@ -450,7 +430,6 @@ const RutasProtegidasAdmin = () => {
     );
   }
 
-  // === PANEL DE CONTROL CARGANDO ===
   if (cargando && predicasAdmin.length === 0) {
     return (
       <div
@@ -467,18 +446,94 @@ const RutasProtegidasAdmin = () => {
     );
   }
 
-  // === PANEL DE CONTROL LISTO ===
   return (
     <AdminPanel
-      predicas={predicasAdmin} // ¡Acá le pasamos los datos que faltaban!
+      predicas={predicasAdmin}
       password={password}
       onCerrar={() => setLocation("/")}
-      onRecargar={cargarPredicasAdmin} // Le pasamos la función para que pueda refrescar la tabla
+      onRecargar={cargarPredicasAdmin}
     />
   );
 };
 
-// === COMPONENTE PRINCIPAL ===
+// ===================================================
+// ESTILOS DE LA NAVEGACIÓN DE SECCIONES
+// ===================================================
+const navStyles = `
+  .section-nav {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+    background: var(--overlay);
+    backdrop-filter: blur(10px);
+    padding: 8px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .section-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+
+  .section-nav-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-body);
+  }
+
+  .section-nav-btn.active-predicas {
+    background: var(--accent);
+    color: var(--button-text);
+    box-shadow: 0 4px 12px rgba(212,175,55,0.3);
+  }
+
+  .section-nav-btn.active-congreso {
+    background: linear-gradient(135deg, #c96c28, #a04e1a);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(201,108,40,0.35);
+  }
+
+  .section-nav-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 480px) {
+    .section-nav {
+      width: calc(100% - 0px);
+    }
+    .section-nav-btn {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+    }
+  }
+`;
+
+// ===================================================
+// COMPONENTE PRINCIPAL HOME
+// ===================================================
 function Home() {
   const [predicas, setPredicas] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -487,6 +542,7 @@ function Home() {
   const [predicadorSeleccionado, setPredicadorSeleccionado] = useState("Todos");
   const [filtroFecha, setFiltroFecha] = useState("Todos");
   const [filtrosVisible, setFiltrosVisible] = useState(false);
+  const [seccion, setSeccion] = useState("predicas"); // <-- NUEVO: controla qué sección mostrar
   const [permisoNotis, setPermisoNotis] = useState(() => {
     return "Notification" in window ? Notification.permission : "default";
   });
@@ -499,7 +555,6 @@ function Home() {
   const [paginaActual, setPaginaActual] = useState(1);
   const itemsPorPagina = 9;
 
-  // Función para arreglar el bug de fecha (Usa UTC en vez de Local)
   const formatearFecha = (fechaString) => {
     if (!fechaString) return "";
     const fecha = new Date(fechaString);
@@ -509,7 +564,6 @@ function Home() {
     return `${dia}/${mes}/${anio}`;
   };
 
-  // === PREDICADORES OFICIALES (ORDEN ESPECÍFICO) ===
   const PREDICADORES_OFICIALES = [
     "Profeta Pablo Lay",
     "Profeta Miqueas Lay",
@@ -520,7 +574,6 @@ function Home() {
     "Otros",
   ];
 
-  // === TEMA ===
   const [tema, setTema] = useState(() => {
     const guardado = localStorage.getItem("tema");
     if (guardado) return guardado;
@@ -537,7 +590,6 @@ function Home() {
   const toggleTema = () =>
     setTema((prev) => (prev === "light" ? "dark" : "light"));
 
-  // === CARGAR PREDICAS ===
   const cargarPredicas = async () => {
     setCargando(true);
     try {
@@ -560,7 +612,6 @@ function Home() {
     setPaginaActual(1);
   }, [busqueda, anioSeleccionado, predicadorSeleccionado, filtroFecha]);
 
-  // === FAVORITOS ===
   const toggleFavorito = (id) => {
     setFavoritos((prev) => {
       const newFavs = prev.includes(id)
@@ -571,10 +622,8 @@ function Home() {
     });
   };
 
-  // === COMPARTIR ===
   const compartirPredica = async (predica) => {
     const texto = `🦅 ${predica.titulo}\n👤 ${predica.predicador}\n🔗 ${predica.url_audio}`;
-
     if (navigator.share) {
       try {
         await navigator.share({
@@ -582,7 +631,7 @@ function Home() {
           text: texto,
           url: predica.url_audio,
         });
-      } catch (err) {
+      } catch {
         copiarAlPortapapeles(predica.url_audio);
       }
     } else {
@@ -595,22 +644,17 @@ function Home() {
     setToastMessage("¡Link copiado al portapapeles!");
   };
 
-  // === LISTAS DINÁMICAS (Solo predicadores oficiales) ===
   const listas = useMemo(() => {
     const anios = [
       ...new Set(predicas.map((p) => new Date(p.fecha).getFullYear())),
     ].sort((a, b) => b - a);
-
-    // Solo mostrar predicadores oficiales que existen en la DB
     const predicadoresEnDB = [...new Set(predicas.map((p) => p.predicador))];
     const predicadores = PREDICADORES_OFICIALES.filter(
       (p) => predicadoresEnDB.includes(p) || p === "Otros",
     );
-
     return { anios, predicadores };
   }, [predicas]);
 
-  // === FILTRADO ===
   const predicasFiltradas = useMemo(() => {
     const ahora = new Date();
     const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -618,7 +662,6 @@ function Home() {
 
     return predicas.filter((p) => {
       const fechaPredica = new Date(p.fecha);
-
       if (filtroFecha === "ultimos30" && fechaPredica < hace30Dias)
         return false;
       if (filtroFecha === "esteAnio" && fechaPredica < inicioAnioActual)
@@ -628,9 +671,6 @@ function Home() {
         anioSeleccionado === "Todos" ||
         fechaPredica.getFullYear() === parseInt(anioSeleccionado);
 
-      // Si elige Todos, pasan todos.
-      // Si elige Otros, verificamos que el nombre NO esté en la lista oficial.
-      // Si elige uno en particular, tiene que coincidir exacto.
       const predicadorCoincide =
         predicadorSeleccionado === "Todos"
           ? true
@@ -655,7 +695,6 @@ function Home() {
     filtroFecha,
   ]);
 
-  // === PAGINACIÓN ===
   const indiceUltimo = paginaActual * itemsPorPagina;
   const indicePrimero = indiceUltimo - itemsPorPagina;
   const predicasVisibles = predicasFiltradas.slice(indicePrimero, indiceUltimo);
@@ -670,10 +709,8 @@ function Home() {
     }
   };
 
-  // === STATS ===
   const stats = useMemo(() => {
     if (!predicas.length) return null;
-
     return {
       total: predicas.length,
       ultimoAnio: new Date(predicas[0]?.fecha).getFullYear(),
@@ -681,14 +718,11 @@ function Home() {
     };
   }, [predicas, favoritos]);
 
-  // === REPRODUCIR ===
   const reproducir = (predica) => {
     setPredicaReproduciendo(predica);
   };
 
-  // === 🔔 FUNCIÓN PARA ACTIVAR NOTIFICACIONES ===
   const activarNotificaciones = async () => {
-    // 1. Convertidor necesario para las claves criptográficas
     const urlBase64ToUint8Array = (base64String) => {
       const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
       const base64 = (base64String + padding)
@@ -696,48 +730,35 @@ function Home() {
         .replace(/_/g, "/");
       const rawData = window.atob(base64);
       const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i) {
+      for (let i = 0; i < rawData.length; ++i)
         outputArray[i] = rawData.charCodeAt(i);
-      }
       return outputArray;
     };
 
     if ("serviceWorker" in navigator && "PushManager" in window) {
       try {
-        // 2. Pedimos permiso al usuario ("La Roca quiere enviarte notificaciones")
         const permiso = await Notification.requestPermission();
         setPermisoNotis(permiso);
-
         if (permiso !== "granted") {
           setToastMessage("❌ Permiso denegado para notificaciones");
           return;
         }
-
         setToastMessage("⏳ Conectando...");
         const registration = await navigator.serviceWorker.ready;
-
         const llavePublicaVapid =
           "BEj0bljV1CUaqUOPLuCFnOzDPS55OF0kEMm0sBuMKv-B2wMPMzFD1jlVxY_XkhcyL6ObNTDFSuy5fgaAEjUZto0";
-
-        // 3. Generamos la suscripción en el navegador
         const suscripcion = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(llavePublicaVapid),
         });
-
-        // 4. Se la mandamos a tu backend para que la guarde en MySQL
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
         const res = await fetch(`${apiUrl}/api/subscribe`, {
           method: "POST",
           body: JSON.stringify(suscripcion),
           headers: { "Content-Type": "application/json" },
         });
-
-        if (res.ok) {
-          setToastMessage("🔔 ¡Suscrito con éxito!");
-        } else {
-          setToastMessage("❌ Error al guardar en el servidor");
-        }
+        if (res.ok) setToastMessage("🔔 ¡Suscrito con éxito!");
+        else setToastMessage("❌ Error al guardar en el servidor");
       } catch (error) {
         console.error("Error suscribiendo:", error);
         setToastMessage("❌ Error al activar notificaciones");
@@ -749,6 +770,7 @@ function Home() {
 
   return (
     <>
+      <style>{navStyles}</style>
       <BackgroundEagle />
 
       <div className="container">
@@ -791,225 +813,263 @@ function Home() {
           )}
         </header>
 
-        {/* === BOTÓN MENÚ HAMBURGUESA === */}
-        <button
-          onClick={() => setFiltrosVisible(!filtrosVisible)}
-          className={`filter-toggle-btn ${filtrosVisible ? "active" : ""}`}
-        >
-          <Menu size={20} />
-          {filtrosVisible ? "Ocultar Filtros" : "Mostrar Filtros"}
-        </button>
-
-        {/* === CONTROLES === */}
-        <div className={`controls ${!filtrosVisible ? "collapsed" : ""}`}>
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Buscar por título o predicador..."
-              className="search-input"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-            <Search size={18} className="search-icon" />
-          </div>
-
-          <select
-            value={predicadorSeleccionado}
-            onChange={(e) => setPredicadorSeleccionado(e.target.value)}
-          >
-            <option value="Todos">Todos los Predicadores</option>
-            {listas.predicadores.map((pred) => (
-              <option key={pred} value={pred}>
-                {pred}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={anioSeleccionado}
-            onChange={(e) => setAnioSeleccionado(e.target.value)}
-          >
-            <option value="Todos">Todos los Años</option>
-            {listas.anios.map((anio) => (
-              <option key={anio} value={anio}>
-                {anio}
-              </option>
-            ))}
-          </select>
-
+        {/* ===================================================
+            NAVEGACIÓN DE SECCIONES — NUEVO
+        =================================================== */}
+        <div className="section-nav">
           <button
-            onClick={cargarPredicas}
-            className="refresh-btn"
-            title="Recargar"
-            disabled={cargando}
+            className={`section-nav-btn ${seccion === "predicas" ? "active-predicas" : ""}`}
+            onClick={() => setSeccion("predicas")}
           >
-            <RefreshCw size={18} className={cargando ? "spinning" : ""} />
+            <div className="section-nav-dot" />
+            Prédicas
           </button>
-
-          <div className="quick-filters">
-            <button
-              className={`filter-chip ${filtroFecha === "Todos" ? "active" : ""}`}
-              onClick={() => setFiltroFecha("Todos")}
-            >
-              <Calendar size={14} /> Todos
-            </button>
-
-            <button
-              className={`filter-chip ${filtroFecha === "ultimos30" ? "active" : ""}`}
-              onClick={() => setFiltroFecha("ultimos30")}
-            >
-              <Calendar size={14} /> Últimos 30 días
-            </button>
-
-            <button
-              className={`filter-chip ${filtroFecha === "esteAnio" ? "active" : ""}`}
-              onClick={() => setFiltroFecha("esteAnio")}
-            >
-              <Calendar size={14} /> Este año
-            </button>
-          </div>
+          <button
+            className={`section-nav-btn ${seccion === "congreso" ? "active-congreso" : ""}`}
+            onClick={() => setSeccion("congreso")}
+          >
+            <div className="section-nav-dot" />
+            Congreso 2026
+          </button>
         </div>
 
-        {/* === CONTENIDO === */}
-        {cargando ? (
-          <div className="loading">
-            <RefreshCw size={40} className="spinning" />
-            <p>Cargando biblioteca...</p>
-          </div>
-        ) : predicasFiltradas.length === 0 ? (
-          <div className="empty-state">
-            <p>No se encontraron mensajes con esos filtros</p>
-            <button
-              onClick={() => {
-                setBusqueda("");
-                setAnioSeleccionado("Todos");
-                setPredicadorSeleccionado("Todos");
-                setFiltroFecha("Todos");
-              }}
-              className="reset-btn"
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        ) : (
+        {/* ===================================================
+            SECCIÓN CONGRESO
+        =================================================== */}
+        {seccion === "congreso" && (
+          <Congreso
+            onReproducir={reproducir}
+            predicaReproduciendo={predicaReproduciendo}
+          />
+        )}
+
+        {/* ===================================================
+            SECCIÓN PRÉDICAS (todo lo que ya existía)
+        =================================================== */}
+        {seccion === "predicas" && (
           <>
-            <div className="grid">
-              {predicasVisibles.map((predica) => (
-                <div key={predica.id} className="card">
-                  <div className="card-content">
-                    <div className="card-meta">
-                      <Calendar size={14} />
-                      <span>{formatearFecha(predica.fecha)}</span>
-                      <span>•</span>
-                      <span style={{ color: "var(--accent)" }}>Audio</span>
-                    </div>
-                    <h3>{predica.titulo}</h3>
-                    <div className="predicador">{predica.predicador}</div>
-                  </div>
+            {/* BOTÓN HAMBURGUESA */}
+            <button
+              onClick={() => setFiltrosVisible(!filtrosVisible)}
+              className={`filter-toggle-btn ${filtrosVisible ? "active" : ""}`}
+            >
+              <Menu size={20} />
+              {filtrosVisible ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </button>
 
-                  <div className="card-actions">
-                    <button
-                      onClick={() => toggleFavorito(predica.id)}
-                      className={`favorite-btn ${favoritos.includes(predica.id) ? "active" : ""}`}
-                    >
-                      <Heart
-                        size={20}
-                        fill={
-                          favoritos.includes(predica.id)
-                            ? "currentColor"
-                            : "none"
-                        }
-                      />
-                    </button>
+            {/* CONTROLES */}
+            <div className={`controls ${!filtrosVisible ? "collapsed" : ""}`}>
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Buscar por título o predicador..."
+                  className="search-input"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                />
+                <Search size={18} className="search-icon" />
+              </div>
 
-                    <button
-                      onClick={() => compartirPredica(predica)}
-                      className="share-btn"
-                    >
-                      <Share2 size={18} />
-                    </button>
+              <select
+                value={predicadorSeleccionado}
+                onChange={(e) => setPredicadorSeleccionado(e.target.value)}
+              >
+                <option value="Todos">Todos los Predicadores</option>
+                {listas.predicadores.map((pred) => (
+                  <option key={pred} value={pred}>
+                    {pred}
+                  </option>
+                ))}
+              </select>
 
-                    {/* NUEVO BOTÓN DE DESCARGA */}
-                    <a
-                      href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
-                      className="download-btn"
-                      title="Descargar mensaje"
-                      download
-                    >
-                      <Download size={18} />
-                    </a>
+              <select
+                value={anioSeleccionado}
+                onChange={(e) => setAnioSeleccionado(e.target.value)}
+              >
+                <option value="Todos">Todos los Años</option>
+                {listas.anios.map((anio) => (
+                  <option key={anio} value={anio}>
+                    {anio}
+                  </option>
+                ))}
+              </select>
 
-                    <button
-                      onClick={() => reproducir(predica)}
-                      className="play-btn-round"
-                    >
-                      <Play size={20} fill="currentColor" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              <button
+                onClick={cargarPredicas}
+                className="refresh-btn"
+                title="Recargar"
+                disabled={cargando}
+              >
+                <RefreshCw size={18} className={cargando ? "spinning" : ""} />
+              </button>
+
+              <div className="quick-filters">
+                <button
+                  className={`filter-chip ${filtroFecha === "Todos" ? "active" : ""}`}
+                  onClick={() => setFiltroFecha("Todos")}
+                >
+                  <Calendar size={14} /> Todos
+                </button>
+                <button
+                  className={`filter-chip ${filtroFecha === "ultimos30" ? "active" : ""}`}
+                  onClick={() => setFiltroFecha("ultimos30")}
+                >
+                  <Calendar size={14} /> Últimos 30 días
+                </button>
+                <button
+                  className={`filter-chip ${filtroFecha === "esteAnio" ? "active" : ""}`}
+                  onClick={() => setFiltroFecha("esteAnio")}
+                >
+                  <Calendar size={14} /> Este año
+                </button>
+              </div>
             </div>
 
-            {totalPaginas > 1 && (
+            {/* CONTENIDO */}
+            {cargando ? (
+              <div className="loading">
+                <RefreshCw size={40} className="spinning" />
+                <p>Cargando biblioteca...</p>
+              </div>
+            ) : predicasFiltradas.length === 0 ? (
+              <div className="empty-state">
+                <p>No se encontraron mensajes con esos filtros</p>
+                <button
+                  onClick={() => {
+                    setBusqueda("");
+                    setAnioSeleccionado("Todos");
+                    setPredicadorSeleccionado("Todos");
+                    setFiltroFecha("Todos");
+                  }}
+                  className="reset-btn"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            ) : (
               <>
-                <div className="pagination">
-                  <button
-                    onClick={() => cambiarPagina(paginaActual - 1)}
-                    disabled={paginaActual === 1}
-                    className="page-btn prev-next"
-                  >
-                    Anterior
-                  </button>
+                <div className="grid">
+                  {predicasVisibles.map((predica) => (
+                    <div key={predica.id} className="card">
+                      <div className="card-content">
+                        <div className="card-meta">
+                          <Calendar size={14} />
+                          <span>{formatearFecha(predica.fecha)}</span>
+                          <span>•</span>
+                          <span style={{ color: "var(--accent)" }}>Audio</span>
+                        </div>
+                        <h3>{predica.titulo}</h3>
+                        <div className="predicador">{predica.predicador}</div>
+                      </div>
 
-                  {[...Array(totalPaginas)].map((_, index) => {
-                    const num = index + 1;
-                    if (
-                      num === 1 ||
-                      num === totalPaginas ||
-                      (num >= paginaActual - 1 && num <= paginaActual + 1)
-                    ) {
-                      return (
+                      <div className="card-actions">
                         <button
-                          key={num}
-                          onClick={() => cambiarPagina(num)}
-                          className={`page-btn ${paginaActual === num ? "active" : ""}`}
+                          onClick={() => toggleFavorito(predica.id)}
+                          className={`favorite-btn ${favoritos.includes(predica.id) ? "active" : ""}`}
                         >
-                          {num}
+                          <Heart
+                            size={20}
+                            fill={
+                              favoritos.includes(predica.id)
+                                ? "currentColor"
+                                : "none"
+                            }
+                          />
                         </button>
-                      );
-                    } else if (
-                      num === paginaActual - 2 ||
-                      num === paginaActual + 2
-                    ) {
-                      return (
-                        <span key={num} className="page-dots">
-                          ...
-                        </span>
-                      );
-                    }
-                    return null;
-                  })}
 
-                  <button
-                    onClick={() => cambiarPagina(paginaActual + 1)}
-                    disabled={paginaActual === totalPaginas}
-                    className="page-btn prev-next"
-                  >
-                    Siguiente
-                  </button>
+                        <button
+                          onClick={() => compartirPredica(predica)}
+                          className="share-btn"
+                        >
+                          <Share2 size={18} />
+                        </button>
+
+                        <a
+                          href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
+                          className="download-btn"
+                          title="Descargar mensaje"
+                          download
+                        >
+                          <Download size={18} />
+                        </a>
+
+                        <button
+                          onClick={() => reproducir(predica)}
+                          className="play-btn-round"
+                        >
+                          <Play size={20} fill="currentColor" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="page-info">
-                  Mostrando {indicePrimero + 1} -{" "}
-                  {Math.min(indiceUltimo, predicasFiltradas.length)} de{" "}
-                  {predicasFiltradas.length} mensajes
-                </div>
+                {totalPaginas > 1 && (
+                  <>
+                    <div className="pagination">
+                      <button
+                        onClick={() => cambiarPagina(paginaActual - 1)}
+                        disabled={paginaActual === 1}
+                        className="page-btn prev-next"
+                      >
+                        Anterior
+                      </button>
+
+                      {[...Array(totalPaginas)].map((_, index) => {
+                        const num = index + 1;
+                        if (
+                          num === 1 ||
+                          num === totalPaginas ||
+                          (num >= paginaActual - 1 && num <= paginaActual + 1)
+                        ) {
+                          return (
+                            <button
+                              key={num}
+                              onClick={() => cambiarPagina(num)}
+                              className={`page-btn ${paginaActual === num ? "active" : ""}`}
+                            >
+                              {num}
+                            </button>
+                          );
+                        } else if (
+                          num === paginaActual - 2 ||
+                          num === paginaActual + 2
+                        ) {
+                          return (
+                            <span key={num} className="page-dots">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+
+                      <button
+                        onClick={() => cambiarPagina(paginaActual + 1)}
+                        disabled={paginaActual === totalPaginas}
+                        className="page-btn prev-next"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+
+                    <div className="page-info">
+                      Mostrando {indicePrimero + 1} –{" "}
+                      {Math.min(indiceUltimo, predicasFiltradas.length)} de{" "}
+                      {predicasFiltradas.length} mensajes
+                    </div>
+                  </>
+                )}
               </>
             )}
+
+            {/* PIE SECRETO ADMIN */}
+            <AdminSync onOpenAdmin={() => {}} />
           </>
         )}
       </div>
 
+      {/* REPRODUCTOR — siempre visible en ambas secciones */}
       {predicaReproduciendo && (
         <AudioPlayer
           predica={predicaReproduciendo}
@@ -1029,8 +1089,6 @@ export default function App() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={RutasProtegidasAdmin} />
-
-      {/* Ruta 404 por si escriben cualquier cosa */}
       <Route>
         <div style={{ color: "white", textAlign: "center", marginTop: "50px" }}>
           <h2>Error 404</h2>
