@@ -266,6 +266,44 @@ const styles = `
     .ap-panel { border-radius: 16px; }
     .ap-sync-log { padding: 8px 16px; }
   }
+    .ap-notify-overlay {
+  position: fixed; inset: 0; background: rgba(5,10,20,0.85);
+  backdrop-filter: blur(8px); z-index: 4000;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.ap-notify-box {
+  background: #0d1526; border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 18px; padding: 24px; width: 100%; max-width: 440px;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+}
+.ap-notify-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.ap-notify-head h3 { margin: 0; color: #d4af37; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+.ap-notify-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(212,175,55,0.5); margin-bottom: 6px;
+}
+.ap-char-count { color: rgba(148,163,184,0.4); }
+.ap-char-count.warn { color: #f59e0b; }
+.ap-notify-history {
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.ap-notify-history-title {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
+  letter-spacing: 1px; color: rgba(212,175,55,0.5); margin-bottom: 10px;
+}
+.ap-notify-history-item {
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+}
+.ap-notify-history-top { display: flex; justify-content: space-between; gap: 8px; }
+.ap-notify-history-top strong { color: #e2e8f0; font-size: 0.85rem; }
+.ap-notify-history-item p { margin: 4px 0; color: rgba(203,213,225,0.7); font-size: 0.8rem; }
+.ap-notify-history-stat {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: rgba(148,163,184,0.5);
+}
 `;
 
 const PREDICADORES = [
@@ -302,6 +340,14 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
 
   // ─── NOTIFY STATE ───
   const [notifying, setNotifying] = useState(false);
+  const NOTIFY_TITLE_MAX = 65;
+  const NOTIFY_BODY_MAX = 150;
+
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [customNotify, setCustomNotify] = useState({ title: "", body: "", url: "" });
+  const [sendingCustom, setSendingCustom] = useState(false);
+  const [notifyHistory, setNotifyHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // ─── REPAIR STATE ───
   const [repairState, setRepairState] = useState("idle"); // idle | running | ok | error
@@ -538,6 +584,52 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     );
   };
 
+  const cargarHistorial = async () => {
+  setLoadingHistory(true);
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const res = await fetch(
+      `${apiUrl}/api/notify-history?password=${encodeURIComponent(password)}`,
+    );
+    const data = await res.json();
+    if (res.ok) setNotifyHistory(data);
+  } catch {
+    // silencioso, no es crítico
+  } finally {
+    setLoadingHistory(false);
+  }
+  };
+
+  const abrirModalNotify = () => {
+  setShowNotifyModal(true);
+  cargarHistorial();
+  };
+
+const enviarNotificacionPersonalizada = async () => {
+  if (!customNotify.title.trim() || !customNotify.body.trim()) {
+    showToast("Completá título y mensaje", "error");
+    return;
+  }
+  setSendingCustom(true);
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const res = await fetch(`${apiUrl}/api/notify-custom`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...customNotify, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error del servidor");
+    showToast(`Enviada a ${data.enviados} dispositivos`, "success");
+    setCustomNotify({ title: "", body: "", url: "" });
+    cargarHistorial();
+  } catch (err) {
+    showToast(err.message || "Error al enviar", "error");
+  } finally {
+    setSendingCustom(false);
+  }
+};
+
   // ─── ETIQUETA DEL BOTÓN SYNC según estado ───
   const syncBtnClass = `ap-btn-sync ${syncState === SYNC_STATES.SYNCING || syncState === SYNC_STATES.CONNECTING ? "syncing" : syncState === SYNC_STATES.SUCCESS ? "sync-ok" : syncState === SYNC_STATES.ERROR ? "sync-err" : ""}`;
   const syncBtnLabel = {
@@ -592,16 +684,11 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
 
             <div className="ap-header-actions">
               <button
-                onClick={probarNotificaciones}
-                disabled={notifying}
+                onClick={abrirModalNotify}
                 className="ap-btn-notify"
               >
-                {notifying ? (
-                  <Loader size={15} className="ap-spinning" />
-                ) : (
-                  <BellRing size={15} />
-                )}
-                <span>Probar Alerta</span>
+                <BellRing size={15} />
+                <span>Notificación personalizada</span>
               </button>
 
               <button
@@ -907,6 +994,117 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
           )}
         </div>
       </div>
+
+      {/* MODAL: NOTIFICACIÓN PERSONALIZADA */}
+      {showNotifyModal && (
+        <div
+          className="ap-notify-overlay"
+          onClick={(e) => e.target === e.currentTarget && setShowNotifyModal(false)}
+        >
+          <div className="ap-notify-box">
+            <div className="ap-notify-head">
+              <h3>📢 Notificación personalizada</h3>
+              <button className="ap-btn-close" onClick={() => setShowNotifyModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <label className="ap-notify-label">
+              Título
+              <span
+                className={`ap-char-count ${customNotify.title.length > NOTIFY_TITLE_MAX - 10 ? "warn" : ""}`}
+              >
+                {customNotify.title.length}/{NOTIFY_TITLE_MAX}
+              </span>
+            </label>
+            <input
+              type="text"
+              className="ap-input"
+              placeholder="Ej: Encuentro especial esta noche"
+              value={customNotify.title}
+              maxLength={NOTIFY_TITLE_MAX}
+              onChange={(e) => setCustomNotify({ ...customNotify, title: e.target.value })}
+            />
+
+            <label className="ap-notify-label" style={{ marginTop: 12 }}>
+              Mensaje
+              <span
+                className={`ap-char-count ${customNotify.body.length > NOTIFY_BODY_MAX - 20 ? "warn" : ""}`}
+              >
+                {customNotify.body.length}/{NOTIFY_BODY_MAX}
+              </span>
+            </label>
+            <textarea
+              className="ap-input"
+              rows={3}
+              placeholder="Mensaje que va a recibir la gente"
+              value={customNotify.body}
+              maxLength={NOTIFY_BODY_MAX}
+              onChange={(e) => setCustomNotify({ ...customNotify, body: e.target.value })}
+              style={{ resize: "none" }}
+            />
+
+            <input
+              type="text"
+              className="ap-input"
+              placeholder="URL al tocarla (opcional, default: /)"
+              value={customNotify.url}
+              onChange={(e) => setCustomNotify({ ...customNotify, url: e.target.value })}
+              style={{ marginTop: 12 }}
+            />
+
+            <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+              <button
+                className="ap-cancel-btn ap-icon-btn"
+                style={{ width: "auto", padding: "0 14px" }}
+                onClick={() => setShowNotifyModal(false)}
+              >
+                Cancelar
+              </button>
+              <button
+                className="ap-btn-notify"
+                onClick={enviarNotificacionPersonalizada}
+                disabled={sendingCustom}
+              >
+                {sendingCustom ? <Loader size={15} className="ap-spinning" /> : <BellRing size={15} />}
+                <span>Enviar a todos</span>
+              </button>
+            </div>
+
+            {/* HISTORIAL */}
+            <div className="ap-notify-history">
+              <div className="ap-notify-history-title">
+                Últimas enviadas {loadingHistory && <Loader size={11} className="ap-spinning" />}
+              </div>
+              {notifyHistory.length === 0 && !loadingHistory && (
+                <div className="ap-empty" style={{ padding: "16px 0" }}>
+                  Todavía no enviaste ninguna
+                </div>
+              )}
+              {notifyHistory.map((n) => (
+                <div key={n.id} className="ap-notify-history-item">
+                  <div className="ap-notify-history-top">
+                    <strong>{n.titulo}</strong>
+                    <span className="ap-date">
+                      {new Date(n.creado_en).toLocaleString("es-AR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p>{n.cuerpo}</p>
+                  <span className="ap-notify-history-stat">
+                    📤 {n.enviados} entregadas
+                    {n.eliminados > 0 ? ` · 🗑️ ${n.eliminados} bajas` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -147,6 +147,77 @@ const PALABRAS_AUTOR = [
   "rev",
 ];
 
+// Límites seguros: iOS Safari corta el título ~50 y el cuerpo ~120;
+// Android/Chrome tolera un poco más pero conviene mantenerlo corto en ambos.
+const NOTIFY_TITLE_MAX = 65;
+const NOTIFY_BODY_MAX = 150;
+
+app.post("/api/notify-custom", async (req, res) => {
+  const { password, title, body, url } = req.body;
+  const PASSWORD_SECRET = process.env.ADMIN_PASSWORD || "roca2026";
+
+  if (password !== PASSWORD_SECRET) {
+    return res.status(401).json({ error: "Contraseña incorrecta" });
+  }
+  if (!title?.trim() || !body?.trim()) {
+    return res.status(400).json({ error: "Falta título o mensaje" });
+  }
+  if (title.trim().length > NOTIFY_TITLE_MAX || body.trim().length > NOTIFY_BODY_MAX) {
+    return res.status(400).json({ error: "Título o mensaje demasiado largo" });
+  }
+  if (!publicVapidKey) {
+    return res.status(500).json({ error: "Web Push no configurado en el servidor" });
+  }
+
+  try {
+    const tituloFinal = title.trim();
+    const cuerpoFinal = body.trim();
+    const urlFinal = url?.trim() || "/";
+
+    const payload = {
+      title: tituloFinal,
+      body: cuerpoFinal,
+      icon: "/logo192.png",
+      badge: "/logo192.png",
+      url: urlFinal,
+    };
+
+    const resultado = await enviarPushATodos(payload);
+
+    await pool.query(
+      `INSERT INTO notificaciones_enviadas (titulo, cuerpo, url, enviados, eliminados)
+       VALUES (?, ?, ?, ?, ?)`,
+      [tituloFinal, cuerpoFinal, urlFinal, resultado.enviados, resultado.eliminados],
+    );
+
+    res.json({ message: "Notificación enviada", ...resultado });
+  } catch (error) {
+    console.error("❌ Error en notificación personalizada:", error.message);
+    res.status(500).json({ error: "Error enviando la notificación" });
+  }
+});
+
+// === 📜 ENDPOINT: HISTORIAL DE NOTIFICACIONES ===
+app.get("/api/notify-history", async (req, res) => {
+  const { password } = req.query;
+  const PASSWORD_SECRET = process.env.ADMIN_PASSWORD || "roca2026";
+
+  if (password !== PASSWORD_SECRET) {
+    return res.status(401).json({ error: "Contraseña incorrecta" });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, titulo, cuerpo, url, enviados, eliminados, creado_en
+       FROM notificaciones_enviadas ORDER BY creado_en DESC LIMIT 20`,
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error("❌ Error historial:", error.message);
+    res.status(500).json({ error: "Error cargando historial" });
+  }
+});
+
 function esNumero(str) {
   return /^\d{1,4}$/.test(str);
 }
@@ -873,6 +944,30 @@ app.put("/api/predicas/:id", async (req, res) => {
     res.status(500).json({ error: "No se pudo actualizar" });
   }
 });
+
+async function enviarPushATodos(payload) {
+  const [suscripciones] = await pool.query("SELECT * FROM suscripciones_push");
+  if (suscripciones.length === 0) return { enviados: 0, eliminados: 0 };
+
+  let eliminados = 0;
+  const promesas = suscripciones.map(async (sub) => {
+    const pushConfig = {
+      endpoint: sub.endpoint,
+      keys: { p256dh: sub.p256dh, auth: sub.auth },
+    };
+    try {
+      await webPush.sendNotification(pushConfig, JSON.stringify(payload));
+    } catch (error) {
+      if (error.statusCode === 410 || error.statusCode === 404) {
+        await pool.query("DELETE FROM suscripciones_push WHERE id = ?", [sub.id]);
+        eliminados++;
+      }
+    }
+  });
+
+  await Promise.all(promesas);
+  return { enviados: suscripciones.length - eliminados, eliminados };
+}
 
 // === 🚀 INICIO ===
 app.listen(PORT, () => {
