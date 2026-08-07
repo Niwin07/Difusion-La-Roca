@@ -606,16 +606,42 @@ async function notificarRecordatorio() {
 
 // === ⏰ CRON PARA RECORDATORIOS (Se ejecuta solo) ===
 // '0 10 */2 * *' significa: A las 10:00 AM, cada 2 días.
-cron.schedule(
-  "0 10 */2 * *",
-  () => {
-    console.log("⏰ Disparando recordatorio automático...");
-    notificarRecordatorio();
-  },
-  {
-    timezone: "America/Argentina/Buenos_Aires", // Usamos tu hora local
-  },
-);
+// En Vercel esto NO corre (no hay proceso vivo) — lo dispara /api/cron/recordatorio
+// desde Vercel Cron o un cron externo (cron-job.org, GitHub Actions).
+if (!process.env.VERCEL) {
+  cron.schedule(
+    "0 10 */2 * *",
+    () => {
+      console.log("⏰ Disparando recordatorio automático...");
+      notificarRecordatorio();
+    },
+    {
+      timezone: "America/Argentina/Buenos_Aires", // Usamos tu hora local
+    },
+  );
+}
+
+// === 🌐 ENDPOINTS PARA QUE UN CRON EXTERNO DISPARE LAS TAREAS (necesarios en Vercel) ===
+function tareaAutorizada(req, res) {
+  const secret = req.headers.authorization?.replace("Bearer ", "") || req.query.secret;
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+    res.status(401).json({ error: "No autorizado" });
+    return false;
+  }
+  return true;
+}
+
+app.get("/api/cron/recordatorio", async (req, res) => {
+  if (!tareaAutorizada(req, res)) return;
+  await notificarRecordatorio();
+  res.json({ ok: true, tarea: "recordatorio" });
+});
+
+app.get("/api/cron/sync-drive", async (req, res) => {
+  if (!tareaAutorizada(req, res)) return;
+  await sincronizarDrive();
+  res.json({ ok: true, tarea: "sync-drive" });
+});
 
 // === 🧪 ENDPOINT PARA PROBAR NOTIFICACIONES DESDE EL ADMIN ===
 app.post("/api/test-push", async (req, res) => {
@@ -631,10 +657,12 @@ app.post("/api/test-push", async (req, res) => {
   res.json({ message: "Notificaciones de prueba enviadas" });
 });
 
-// === ⏲️ CRON MANTIENE SERVICIOS DESPIERTOS ===
-cron.schedule("*/30 * * * *", () => {
-  sincronizarDrive();
-});
+// === ⏲️ CRON MANTIENE SERVICIOS DESPIERTOS (solo tiene sentido en local/Render) ===
+if (!process.env.VERCEL) {
+  cron.schedule("*/30 * * * *", () => {
+    sincronizarDrive();
+  });
+}
 
 // === CONGRESO: Leer subcarpeta específica ===
 app.get("/api/congreso", async (req, res) => {
@@ -970,8 +998,13 @@ async function enviarPushATodos(payload) {
 }
 
 // === 🚀 INICIO ===
-app.listen(PORT, () => {
-  console.log(`🦅 Ministerio La Roca API - Puerto ${PORT}`);
-  cargarAlias(); // Pre-cargar alias
-  sincronizarDrive(); // Sync inicial
-});
+cargarAlias(); // Pre-cargar alias (corre siempre, local o Vercel)
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🦅 Ministerio La Roca API - Puerto ${PORT}`);
+    sincronizarDrive(); // Sync inicial (en Vercel lo dispara el cron externo)
+  });
+}
+
+module.exports = app;
