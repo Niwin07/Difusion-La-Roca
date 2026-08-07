@@ -1,5 +1,8 @@
 {
   "installCommand": "npm install && npm install --prefix ..",
+  "crons": [
+    { "path": "/api/cron/recordatorio", "schedule": "0 10 */2 * *" }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
