@@ -315,7 +315,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
     setCargando(true);
     setError(null);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/congreso`);
       if (!res.ok) throw new Error("Error del servidor");
       const data = await res.json();
@@ -413,7 +413,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           </button>
 
           <a
-            href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
+            href={`${(import.meta.env.DEV ? "http://localhost:3001" : "")}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
             className="download-btn"
             title="Descargar"
             download

@@ -1,5 +1,10 @@
 {
+  "installCommand": "npm install && npm install --prefix ..",
   "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"

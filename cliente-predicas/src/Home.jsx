@@ -146,7 +146,7 @@ const AudioPlayer = ({ predica, onClose }) => {
   const audioUrl = useMemo(() => {
     const id = getDriveId(predica.url_audio);
     if (!id) return predica.url_audio;
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
     return `${apiUrl}/api/audio/${id}`;
   }, [predica.url_audio]);
 
@@ -344,7 +344,7 @@ const RutasProtegidasAdmin = () => {
   const cargarPredicasAdmin = async () => {
     setCargando(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/predicas`);
       const data = await res.json();
       setPredicasAdmin(data);
@@ -590,7 +590,7 @@ function Home() {
   const cargarPredicas = async () => {
     setCargando(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/predicas`);
       const data = await res.json();
       setPredicas(data);
@@ -761,7 +761,7 @@ function Home() {
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(llavePublicaVapid),
         });
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+        const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
         const res = await fetch(`${apiUrl}/api/subscribe`, {
           method: "POST",
           body: JSON.stringify(suscripcion),
@@ -1002,7 +1002,7 @@ function Home() {
                         </button>
 
                         <a
-                          href={`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
+                          href={`${(import.meta.env.DEV ? "http://localhost:3001" : "")}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
                           className="download-btn"
                           title="Descargar mensaje"
                           download

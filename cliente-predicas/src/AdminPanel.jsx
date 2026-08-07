@@ -383,7 +383,7 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     addLog("Iniciando conexión con el servidor...", "info");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
 
       // 1. Verificar que el servidor esté vivo
       setSyncProgress(20);
@@ -454,7 +454,7 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
   const probarNotificaciones = async () => {
     setNotifying(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/test-push`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -477,7 +477,7 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     setRepairResult(null);
     addLog("Iniciando reparación de fechas desde Drive...", "info");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/repair-fechas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -515,7 +515,7 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
   const guardarCambios = async () => {
     setGuardando(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
       const res = await fetch(`${apiUrl}/api/predicas/${editandoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -587,7 +587,7 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
   const cargarHistorial = async () => {
   setLoadingHistory(true);
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
     const res = await fetch(
       `${apiUrl}/api/notify-history?password=${encodeURIComponent(password)}`,
     );
@@ -612,7 +612,7 @@ const enviarNotificacionPersonalizada = async () => {
   }
   setSendingCustom(true);
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
     const res = await fetch(`${apiUrl}/api/notify-custom`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
