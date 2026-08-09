@@ -15,11 +15,16 @@ import {
   Menu,
   Download,
   BellRing,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
 import "./App.css";
-import { Route, Switch, useLocation } from "wouter";
+import { Route, Switch, useLocation, Link } from "wouter";
 import { AdminPanel } from "./AdminPanel";
 import Congreso from "./Congreso";
+import { PREDICADORES_OFICIALES as PREDICADORES_BASE } from "./predicadores";
+
+const PREDICADORES_OFICIALES = [...PREDICADORES_BASE, "Otros"];
 
 // === UTILIDAD GLOBAL ===
 const getDriveId = (url) => {
@@ -39,6 +44,8 @@ const MainEagle = () => (
     viewBox="0 0 360.081 360.081"
     className="eagle-logo"
     fill="currentColor"
+    aria-hidden="true"
+    focusable="false"
   >
     <path
       d="M358.839,130.772c-0.666-0.618-1.432-0.931-2.278-0.931c-3.092,0-6.364,4.36-9.251,8.208
@@ -81,13 +88,14 @@ const MainEagle = () => (
 
 // === ÁGUILA DE FONDO ===
 const BackgroundEagle = () => (
-  <div className="eagle-background-container">
+  <div className="eagle-background-container" aria-hidden="true">
     <svg
       version="1.1"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 235.512 235.512"
       className="eagle-bg"
       fill="currentColor"
+      focusable="false"
     >
       <g>
         <path
@@ -151,15 +159,6 @@ const AudioPlayer = ({ predica, onClose }) => {
   }, [predica.url_audio]);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem(`progress_${predica.id}`);
-    if (savedProgress && audioRef.current) {
-      const progress = parseFloat(savedProgress);
-      audioRef.current.currentTime = progress;
-      setCurrentTime(progress);
-    }
-  }, [predica.id]);
-
-  useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
       if (audioRef.current && currentTime > 0) {
@@ -169,25 +168,32 @@ const AudioPlayer = ({ predica, onClose }) => {
     return () => clearInterval(interval);
   }, [isPlaying, currentTime, predica.id]);
 
+  // Sincroniza el volumen del elemento <audio> con el estado del slider.
   useEffect(() => {
-    setError(false);
-    setLoading(true);
-    setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.load();
-      audioRef.current.volume = volume;
-    }
-  }, [audioUrl]);
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
 
+  // Nota: el resto del estado (error, loading, isPlaying, currentTime) no se
+  // resetea a mano acá — <AudioPlayer key={predica.id}> en Home() hace que
+  // React remonte el componente entero al cambiar de mensaje, así que cada
+  // track arranca siempre con estado limpio.
   const onLoadedMetadata = () => {
     setLoading(false);
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+    if (!audioRef.current) return;
+    setDuration(audioRef.current.duration);
+
+    const savedProgress = parseFloat(
+      localStorage.getItem(`progress_${predica.id}`),
+    );
+    if (!isNaN(savedProgress) && savedProgress > 0) {
+      audioRef.current.currentTime = savedProgress;
+      setCurrentTime(savedProgress);
     }
+
+    audioRef.current
+      .play()
+      .then(() => setIsPlaying(true))
+      .catch(() => setIsPlaying(false));
   };
 
   const onTimeUpdate = () => {
@@ -232,7 +238,11 @@ const AudioPlayer = ({ predica, onClose }) => {
               <div className="player-title">Error al cargar</div>
             </div>
             <div className="player-controls-right">
-              <button onClick={onClose} className="icon-btn close-mobile">
+              <button
+                onClick={onClose}
+                className="icon-btn close-mobile"
+                aria-label="Cerrar reproductor"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -272,7 +282,11 @@ const AudioPlayer = ({ predica, onClose }) => {
                 )}
               </button>
             )}
-            <button onClick={onClose} className="icon-btn close-mobile">
+            <button
+              onClick={onClose}
+              className="icon-btn close-mobile"
+              aria-label="Cerrar reproductor"
+            >
               <X size={24} />
             </button>
           </div>
@@ -287,6 +301,7 @@ const AudioPlayer = ({ predica, onClose }) => {
             value={currentTime}
             onChange={handleSeek}
             className="progress-slider"
+            aria-label="Progreso de la reproducción"
             style={{
               backgroundSize: `${(currentTime * 100) / duration}% 100%`,
             }}
@@ -296,7 +311,7 @@ const AudioPlayer = ({ predica, onClose }) => {
 
         <div className="player-extras-desktop">
           <div className="volume-box">
-            <Volume2 size={18} />
+            <Volume2 size={18} aria-hidden="true" />
             <input
               type="range"
               min="0"
@@ -305,6 +320,7 @@ const AudioPlayer = ({ predica, onClose }) => {
               value={volume}
               onChange={handleVolumeChange}
               className="volume-slider"
+              aria-label="Volumen"
             />
           </div>
           <a
@@ -312,10 +328,16 @@ const AudioPlayer = ({ predica, onClose }) => {
             target="_blank"
             rel="noreferrer"
             className="icon-btn"
+            aria-label="Abrir en Google Drive"
+            title="Abrir en Google Drive"
           >
             <ExternalLink size={20} />
           </a>
-          <button onClick={onClose} className="icon-btn close-desktop">
+          <button
+            onClick={onClose}
+            className="icon-btn close-desktop"
+            aria-label="Cerrar reproductor"
+          >
             <X size={24} />
           </button>
         </div>
@@ -337,6 +359,7 @@ const AudioPlayer = ({ predica, onClose }) => {
 const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState("");
+  const [errorLogin, setErrorLogin] = useState("");
   const [, setLocation] = useLocation();
   const [predicasAdmin, setPredicasAdmin] = useState([]);
   const [cargando, setCargando] = useState(false);
@@ -360,34 +383,56 @@ const RutasProtegidasAdmin = () => {
   }, [autenticado]);
 
   if (!autenticado) {
+    const intentarEntrar = (e) => {
+      e.preventDefault();
+      if (password === "roca2026") {
+        setErrorLogin("");
+        setAutenticado(true);
+      } else {
+        setErrorLogin("Contraseña incorrecta. Volvé a intentarlo.");
+      }
+    };
+
     return (
       <div className="login-admin">
-        <div className="login-card">
-          <h2>🔐 Acceso Restringido</h2>
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                if (password === "roca2026") setAutenticado(true);
-                else alert("Clave incorrecta");
-              }
-            }}
-          />
-          <button
-            onClick={() => {
-              if (password === "roca2026") setAutenticado(true);
-              else alert("Clave incorrecta");
-            }}
-          >
-            Entrar
-          </button>
-          <button className="volver" onClick={() => setLocation("/")}>
+        <form className="login-card" onSubmit={intentarEntrar} noValidate>
+          <div className="login-icon">
+            <Lock size={22} />
+          </div>
+          <h2>Acceso restringido</h2>
+          <p className="login-sub">
+            Ingresá la contraseña de administración para gestionar las prédicas.
+          </p>
+
+          <div className="login-field">
+            <label htmlFor="admin-password">Contraseña</label>
+            <input
+              id="admin-password"
+              type="password"
+              autoComplete="current-password"
+              autoFocus
+              aria-invalid={!!errorLogin}
+              aria-describedby={errorLogin ? "admin-password-error" : undefined}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errorLogin) setErrorLogin("");
+              }}
+            />
+          </div>
+
+          {errorLogin && (
+            <p className="login-error" id="admin-password-error" role="alert">
+              <AlertCircle size={15} />
+              {errorLogin}
+            </p>
+          )}
+
+          <button type="submit">Entrar</button>
+          <button type="button" className="volver" onClick={() => setLocation("/")}>
             Volver al inicio
           </button>
-        </div>
+        </form>
       </div>
     );
   }
@@ -395,15 +440,13 @@ const RutasProtegidasAdmin = () => {
   if (cargando && predicasAdmin.length === 0) {
     return (
       <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-        }}
+        className="login-admin"
+        style={{ flexDirection: "column", gap: 20 }}
       >
-        <h2>Cargando base de datos... 🔄</h2>
+        <div className="loading" role="status">
+          <RefreshCw size={40} className="spinning" />
+          <p>Cargando base de datos...</p>
+        </div>
       </div>
     );
   }
@@ -424,13 +467,13 @@ const RutasProtegidasAdmin = () => {
 const navStyles = `
   .section-nav {
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
     background: var(--overlay);
     backdrop-filter: blur(10px);
-    padding: 8px;
-    border-radius: 18px;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
     width: fit-content;
     margin-left: auto;
@@ -440,17 +483,17 @@ const navStyles = `
   .section-nav-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
     padding: 10px 22px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    font-family: 'Lato', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all var(--transition-base);
     white-space: nowrap;
   }
 
@@ -459,16 +502,13 @@ const navStyles = `
     color: var(--text-body);
   }
 
-  .section-nav-btn.active-predicas {
+  /* Ambas pestañas comparten el mismo tratamiento "activo": misma
+     intención (sección activa) = mismo patrón visual. */
+  .section-nav-btn.active-predicas,
+  .section-nav-btn.active-congreso {
     background: var(--accent);
     color: var(--button-text);
-    box-shadow: 0 4px 12px rgba(212,175,55,0.3);
-  }
-
-  .section-nav-btn.active-congreso {
-    background: linear-gradient(135deg, #c96c28, #a04e1a);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(201,108,40,0.35);
+    box-shadow: var(--shadow-copper);
   }
 
   .section-nav-dot {
@@ -560,16 +600,6 @@ function Home() {
     const anio = fecha.getUTCFullYear();
     return `${dia}/${mes}/${anio}`;
   };
-
-  const PREDICADORES_OFICIALES = [
-    "Profeta Pablo Lay",
-    "Profeta Miqueas Lay",
-    "Pastora Karina",
-    "Pastora Cecilia",
-    "Pastora Sofia Lay",
-    "Pastora Candela Lay",
-    "Otros",
-  ];
 
   const [tema, setTema] = useState(() => {
     const guardado = localStorage.getItem("tema");
@@ -736,7 +766,7 @@ function Home() {
     const urlBase64ToUint8Array = (base64String) => {
       const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
       const base64 = (base64String + padding)
-        .replace(/\-/g, "+")
+        .replace(/-/g, "+")
         .replace(/_/g, "/");
       const rawData = window.atob(base64);
       const outputArray = new Uint8Array(rawData.length);
@@ -790,6 +820,7 @@ function Home() {
             onClick={toggleTema}
             className="theme-toggle"
             title="Cambiar tema"
+            aria-label={tema === "light" ? "Activar tema oscuro" : "Activar tema claro"}
           >
             {tema === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </button>
@@ -809,7 +840,7 @@ function Home() {
               {stats.favoritos > 0 && (
                 <>
                   <span>•</span>
-                  <span style={{ color: "#ef4444" }}>❤️ {stats.favoritos}</span>
+                  <span style={{ color: "var(--danger)" }}>❤️ {stats.favoritos}</span>
                 </>
               )}
             </div>
@@ -826,19 +857,23 @@ function Home() {
         {/* ===================================================
             NAVEGACIÓN DE SECCIONES 
         =================================================== */}
-        <div className="section-nav">
+        <div className="section-nav" role="tablist" aria-label="Secciones">
           <button
+            role="tab"
+            aria-selected={seccion === "predicas"}
             className={`section-nav-btn ${seccion === "predicas" ? "active-predicas" : ""}`}
             onClick={() => cambiarSeccion("predicas")}
           >
-            <div className="section-nav-dot" />
+            <div className="section-nav-dot" aria-hidden="true" />
             Prédicas
           </button>
           <button
+            role="tab"
+            aria-selected={seccion === "congreso"}
             className={`section-nav-btn ${seccion === "congreso" ? "active-congreso" : ""}`}
             onClick={() => cambiarSeccion("congreso")}
           >
-            <div className="section-nav-dot" />
+            <div className="section-nav-dot" aria-hidden="true" />
             Congreso 2026
           </button>
         </div>
@@ -870,17 +905,25 @@ function Home() {
             {/* CONTROLES */}
             <div className={`controls ${!filtrosVisible ? "collapsed" : ""}`}>
               <div className="search-box">
+                <label htmlFor="busqueda-predicas" className="sr-only">
+                  Buscar por título o predicador
+                </label>
                 <input
+                  id="busqueda-predicas"
                   type="text"
                   placeholder="Buscar por título o predicador..."
                   className="search-input"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                 />
-                <Search size={18} className="search-icon" />
+                <Search size={18} className="search-icon" aria-hidden="true" />
               </div>
 
+              <label htmlFor="filtro-predicador" className="sr-only">
+                Filtrar por predicador
+              </label>
               <select
+                id="filtro-predicador"
                 value={predicadorSeleccionado}
                 onChange={(e) => setPredicadorSeleccionado(e.target.value)}
               >
@@ -892,7 +935,11 @@ function Home() {
                 ))}
               </select>
 
+              <label htmlFor="filtro-anio" className="sr-only">
+                Filtrar por año
+              </label>
               <select
+                id="filtro-anio"
                 value={anioSeleccionado}
                 onChange={(e) => setAnioSeleccionado(e.target.value)}
               >
@@ -908,9 +955,10 @@ function Home() {
                 onClick={cargarPredicas}
                 className="refresh-btn"
                 title="Recargar"
+                aria-label="Recargar lista de mensajes"
                 disabled={cargando}
               >
-                <RefreshCw size={18} className={cargando ? "spinning" : ""} />
+                <RefreshCw size={18} className={cargando ? "spinning" : ""} aria-hidden="true" />
               </button>
 
               <div className="quick-filters">
@@ -937,8 +985,8 @@ function Home() {
 
             {/* CONTENIDO */}
             {cargando ? (
-              <div className="loading">
-                <RefreshCw size={40} className="spinning" />
+              <div className="loading" role="status">
+                <RefreshCw size={40} className="spinning" aria-hidden="true" />
                 <p>Cargando biblioteca...</p>
               </div>
             ) : predicasFiltradas.length === 0 ? (
@@ -983,6 +1031,12 @@ function Home() {
                         <button
                           onClick={() => toggleFavorito(predica.id)}
                           className={`favorite-btn ${favoritos.includes(predica.id) ? "active" : ""}`}
+                          aria-pressed={favoritos.includes(predica.id)}
+                          aria-label={
+                            favoritos.includes(predica.id)
+                              ? `Quitar "${predica.titulo}" de favoritos`
+                              : `Agregar "${predica.titulo}" a favoritos`
+                          }
                         >
                           <Heart
                             size={20}
@@ -997,6 +1051,7 @@ function Home() {
                         <button
                           onClick={() => compartirPredica(predica)}
                           className="share-btn"
+                          aria-label={`Compartir "${predica.titulo}"`}
                         >
                           <Share2 size={18} />
                         </button>
@@ -1005,6 +1060,7 @@ function Home() {
                           href={`${(import.meta.env.DEV ? "http://localhost:3001" : "")}/api/download/${getDriveId(predica.url_audio)}?name=${encodeURIComponent(predica.titulo)}`}
                           className="download-btn"
                           title="Descargar mensaje"
+                          aria-label={`Descargar "${predica.titulo}"`}
                           download
                         >
                           <Download size={18} />
@@ -1013,6 +1069,7 @@ function Home() {
                         <button
                           onClick={() => reproducir(predica)}
                           className="play-btn-round"
+                          aria-label={`Escuchar "${predica.titulo}"`}
                         >
                           <Play size={20} fill="currentColor" />
                         </button>
@@ -1099,6 +1156,7 @@ function Home() {
       {/* REPRODUCTOR — siempre visible en ambas secciones */}
       {predicaReproduciendo && (
         <AudioPlayer
+          key={predicaReproduciendo.id}
           predica={predicaReproduciendo}
           onClose={() => setPredicaReproduciendo(null)}
         />
@@ -1117,9 +1175,16 @@ export default function App() {
       <Route path="/" component={Home} />
       <Route path="/admin" component={RutasProtegidasAdmin} />
       <Route>
-        <div style={{ color: "white", textAlign: "center", marginTop: "50px" }}>
-          <h2>Error 404</h2>
-          <p>Página no encontrada</p>
+        <div className="container" style={{ paddingTop: 80 }}>
+          <div className="empty-state">
+            <h1 style={{ font: "inherit", fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--text-heading)", margin: "0 0 12px" }}>
+              Página no encontrada
+            </h1>
+            <p>La dirección a la que intentaste entrar no existe.</p>
+            <Link href="/" className="reset-btn">
+              Volver al inicio
+            </Link>
+          </div>
         </div>
       </Route>
     </Switch>

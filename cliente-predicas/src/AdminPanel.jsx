@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Save,
   X,
@@ -16,18 +16,22 @@ import {
   Wifi,
   WifiOff,
   Loader,
+  Wrench,
 } from "lucide-react";
+import { PREDICADORES_OFICIALES as PREDICADORES } from "./predicadores";
 
+/* Panel de administración: mantiene una superficie oscura tipo "consola" a
+   propósito (distingue el contexto interno del sitio público) pero usa los
+   mismos tokens de color, tipografía, radios y sombras que App.css — mismo
+   acento cobre, mismos verdes/rojos/azules semánticos. */
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@600;700&family=Lato:wght@300;400;700&display=swap');
-
   .ap-overlay {
     position: fixed;
     inset: 0;
     background: rgba(5, 10, 20, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 3000;
+    z-index: var(--z-modal);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -41,12 +45,12 @@ const styles = `
     width: 100%;
     max-width: 1100px;
     height: 92vh;
-    border-radius: 24px;
-    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--accent-glow);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 0 0 1px rgba(212,175,55,0.08), 0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(212,175,55,0.15);
+    box-shadow: 0 0 0 1px rgba(194,97,26,0.08), 0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(194,97,26,0.15);
     animation: ap-slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   @keyframes ap-slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -58,24 +62,24 @@ const styles = `
     align-items: center;
     gap: 20px;
     padding: 18px 28px;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.12);
-    background: rgba(212, 175, 55, 0.04);
+    border-bottom: 1px solid var(--accent-glow);
+    background: rgba(194, 97, 26, 0.04);
     flex-shrink: 0;
   }
   .ap-brand { display: flex; align-items: center; gap: 12px; }
   .ap-brand-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: linear-gradient(135deg, #d4af37, #b8860b);
+    width: 38px; height: 38px; border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--accent), var(--copper-dark));
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; box-shadow: 0 4px 12px rgba(212,175,55,0.3); flex-shrink: 0;
+    color: #fff; box-shadow: var(--shadow-copper); flex-shrink: 0;
   }
   .ap-brand-text h2 {
-    margin: 0; font-family: 'Playfair Display', serif; font-size: 1.1rem;
-    color: #d4af37; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2;
+    margin: 0; font-family: var(--font-display); font-size: 1.2rem;
+    color: var(--accent-hover); font-weight: 700; letter-spacing: -0.3px; line-height: 1.2;
   }
   .ap-brand-text span {
-    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
-    color: rgba(212,175,55,0.45); text-transform: uppercase; letter-spacing: 1.5px;
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: rgba(217,125,53,0.5); text-transform: uppercase; letter-spacing: 1.5px;
   }
 
   /* STATS PILLS */
@@ -83,91 +87,91 @@ const styles = `
   .ap-stat {
     display: flex; align-items: center; gap: 6px;
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px; padding: 5px 12px;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: rgba(226, 232, 240, 0.6);
+    border-radius: var(--radius-full); padding: 5px 12px;
+    font-family: var(--font-mono); font-size: 0.72rem; color: rgba(226, 232, 240, 0.6);
   }
-  .ap-stat svg { color: #d4af37; opacity: 0.7; }
+  .ap-stat svg { color: var(--accent-hover); opacity: 0.8; }
   .ap-stat strong { color: #e2e8f0; font-weight: 600; }
 
   .ap-header-actions { display: flex; gap: 8px; align-items: center; }
 
-  /* SYNC BUTTON — estados: idle / syncing / success / error */
+  /* SYNC BUTTON (acción principal) — estados: idle / syncing / success / error */
   .ap-btn-sync {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3);
-    color: #d4af37; padding: 8px 16px; border-radius: 10px;
+    background: rgba(194, 97, 26, 0.12); border: 1px solid rgba(194, 97, 26, 0.35);
+    color: var(--accent-hover); padding: 8px 16px; border-radius: var(--radius-sm);
     font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s ease; font-family: 'Lato', sans-serif; white-space: nowrap;
+    transition: all 0.2s ease; font-family: var(--font-body); white-space: nowrap;
     position: relative; overflow: hidden;
   }
-  .ap-btn-sync:hover:not(:disabled) { background: rgba(212, 175, 55, 0.18); border-color: rgba(212, 175, 55, 0.5); transform: translateY(-1px); }
+  .ap-btn-sync:hover:not(:disabled) { background: rgba(194, 97, 26, 0.2); border-color: rgba(194, 97, 26, 0.55); transform: translateY(-1px); }
   .ap-btn-sync:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-  .ap-btn-sync.syncing { background: rgba(212,175,55,0.06); border-color: rgba(212,175,55,0.2); }
-  .ap-btn-sync.sync-ok { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #10b981; }
-  .ap-btn-sync.sync-err { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+  .ap-btn-sync.syncing { background: rgba(194,97,26,0.06); border-color: rgba(194,97,26,0.2); }
+  .ap-btn-sync.sync-ok { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+  .ap-btn-sync.sync-err { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
 
   /* SYNC PROGRESS BAR */
   .ap-sync-bar-wrap {
-    height: 2px; background: rgba(212,175,55,0.08); flex-shrink: 0;
+    height: 2px; background: rgba(194,97,26,0.08); flex-shrink: 0;
   }
   .ap-sync-bar {
-    height: 2px; background: linear-gradient(90deg, #d4af37, #b8860b);
+    height: 2px; background: linear-gradient(90deg, var(--accent), var(--copper-dark));
     transition: width 0.4s ease;
   }
-  .ap-sync-bar.error { background: #ef4444; }
-  .ap-sync-bar.success { background: #10b981; }
+  .ap-sync-bar.error { background: var(--danger); }
+  .ap-sync-bar.success { background: var(--success); }
 
   /* SYNC LOG PANEL */
   .ap-sync-log {
     background: rgba(0,0,0,0.5); border-bottom: 1px solid rgba(255,255,255,0.06);
     padding: 10px 28px; flex-shrink: 0;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    font-family: var(--font-mono); font-size: 0.72rem;
     max-height: 120px; overflow-y: auto;
-    scrollbar-width: thin; scrollbar-color: rgba(212,175,55,0.2) transparent;
+    scrollbar-width: thin; scrollbar-color: rgba(194,97,26,0.25) transparent;
     animation: ap-expandDown 0.25s ease;
   }
   @keyframes ap-expandDown { from { max-height: 0; opacity: 0; } to { max-height: 120px; opacity: 1; } }
   .ap-sync-log::-webkit-scrollbar { width: 4px; }
-  .ap-sync-log::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 2px; }
+  .ap-sync-log::-webkit-scrollbar-thumb { background: rgba(194,97,26,0.25); border-radius: 2px; }
   .ap-log-line { display: flex; align-items: flex-start; gap: 10px; padding: 2px 0; line-height: 1.5; }
-  .ap-log-time { color: rgba(212,175,55,0.4); flex-shrink: 0; }
+  .ap-log-time { color: rgba(217,125,53,0.45); flex-shrink: 0; }
   .ap-log-msg { color: rgba(226,232,240,0.7); }
-  .ap-log-msg.ok { color: #10b981; }
-  .ap-log-msg.err { color: #ef4444; }
-  .ap-log-msg.info { color: #60a5fa; }
-  .ap-log-msg.warn { color: #f59e0b; }
+  .ap-log-msg.ok { color: var(--success); }
+  .ap-log-msg.err { color: var(--danger); }
+  .ap-log-msg.info { color: var(--info); }
+  .ap-log-msg.warn { color: var(--warning); }
 
   /* SEARCH BAR */
   .ap-search-bar { padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0; }
   .ap-search-wrap { position: relative; max-width: 500px; }
-  .ap-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(212,175,55,0.4); pointer-events: none; }
+  .ap-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(217,125,53,0.45); pointer-events: none; }
   .ap-search-input {
     width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px; padding: 10px 14px 10px 42px; color: #e2e8f0; font-size: 0.88rem;
-    font-family: 'Lato', sans-serif; outline: none; transition: all 0.2s; box-sizing: border-box;
+    border-radius: var(--radius-sm); padding: 10px 14px 10px 42px; color: #e2e8f0; font-size: 0.88rem;
+    font-family: var(--font-body); outline: none; transition: all 0.2s; box-sizing: border-box;
   }
   .ap-search-input::placeholder { color: rgba(148, 163, 184, 0.4); }
-  .ap-search-input:focus { border-color: rgba(212,175,55,0.35); background: rgba(212,175,55,0.04); box-shadow: 0 0 0 3px rgba(212,175,55,0.08); }
+  .ap-search-input:focus { border-color: var(--accent-glow); background: rgba(194,97,26,0.05); box-shadow: 0 0 0 3px rgba(194,97,26,0.1); }
 
   /* TABLE AREA */
   .ap-table-wrap {
     flex: 1; overflow-y: auto; overflow-x: auto; padding: 0 8px 8px;
-    scrollbar-width: thin; scrollbar-color: rgba(212,175,55,0.2) transparent;
+    scrollbar-width: thin; scrollbar-color: rgba(194,97,26,0.25) transparent;
   }
   .ap-table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
-  .ap-table-wrap::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 3px; }
+  .ap-table-wrap::-webkit-scrollbar-thumb { background: rgba(194,97,26,0.25); border-radius: 3px; }
   .ap-table { width: 100%; border-collapse: separate; border-spacing: 0 3px; min-width: 680px; }
 
   /* THEAD */
   .ap-table thead tr { position: sticky; top: 0; z-index: 10; }
   .ap-table thead th {
-    padding: 12px 16px; text-align: left; font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.8px; color: rgba(212,175,55,0.5);
+    padding: 12px 16px; text-align: left; font-family: var(--font-mono);
+    font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.8px; color: rgba(217,125,53,0.55);
     background: #0d1526; white-space: nowrap; cursor: pointer; user-select: none;
-    transition: color 0.2s; border-bottom: 1px solid rgba(212,175,55,0.1);
+    transition: color 0.2s; border-bottom: 1px solid rgba(194,97,26,0.15);
   }
-  .ap-table thead th:hover { color: rgba(212,175,55,0.85); }
-  .ap-table thead th.sorted { color: #d4af37; }
+  .ap-table thead th:hover { color: rgba(217,125,53,0.9); }
+  .ap-table thead th.sorted { color: var(--accent-hover); }
   .ap-th-inner { display: flex; align-items: center; gap: 5px; }
 
   /* TBODY ROWS */
@@ -177,85 +181,82 @@ const styles = `
     border-bottom: 1px solid rgba(255,255,255,0.04); color: #cbd5e1; font-size: 0.88rem;
     vertical-align: middle; transition: background 0.2s;
   }
-  .ap-row td:first-child { border-radius: 10px 0 0 10px; border-left: 1px solid rgba(255,255,255,0.04); }
-  .ap-row td:last-child { border-radius: 0 10px 10px 0; border-right: 1px solid rgba(255,255,255,0.04); }
-  .ap-row:hover td { background: rgba(212,175,55,0.04); border-color: rgba(212,175,55,0.1); }
-  .ap-row.editing td { background: rgba(212,175,55,0.07); border-color: rgba(212,175,55,0.2); }
-  .ap-row.editing td:first-child { border-left: 2px solid rgba(212,175,55,0.5); }
+  .ap-row td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: 1px solid rgba(255,255,255,0.04); }
+  .ap-row td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-right: 1px solid rgba(255,255,255,0.04); }
+  .ap-row:hover td { background: rgba(194,97,26,0.05); border-color: rgba(194,97,26,0.12); }
+  .ap-row.editing td { background: rgba(194,97,26,0.08); border-color: rgba(194,97,26,0.25); }
+  .ap-row.editing td:first-child { border-left: 2px solid var(--accent-hover); }
 
-  .ap-title-cell { font-family: 'Playfair Display', serif; font-size: 0.95rem; color: #e2e8f0; font-weight: 600; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ap-badge { display: inline-flex; align-items: center; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.18); color: #d4af37; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
-  .ap-date { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: rgba(148,163,184,0.7); white-space: nowrap; }
+  .ap-title-cell { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: #e2e8f0; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ap-badge { display: inline-flex; align-items: center; background: var(--accent-glow); border: 1px solid rgba(194,97,26,0.25); color: var(--accent-hover); padding: 3px 10px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  .ap-date { font-family: var(--font-mono); font-size: 0.78rem; color: rgba(148,163,184,0.7); white-space: nowrap; }
 
   /* INPUTS EN EDICIÓN */
   .ap-input {
-    width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.35);
-    border-radius: 8px; padding: 8px 12px; color: #e2e8f0; font-family: 'Lato', sans-serif;
+    width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--accent-glow);
+    border-radius: var(--radius-sm); padding: 8px 12px; color: #e2e8f0; font-family: var(--font-body);
     font-size: 0.88rem; outline: none; transition: all 0.2s; box-sizing: border-box; min-width: 0;
   }
-  .ap-input:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212,175,55,0.12); background: rgba(212,175,55,0.05); }
-  .ap-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7) sepia(1) saturate(3) hue-rotate(5deg); cursor: pointer; }
+  .ap-input:focus { border-color: var(--accent-hover); box-shadow: 0 0 0 3px rgba(194,97,26,0.15); background: rgba(194,97,26,0.06); }
+  .ap-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6) sepia(1) saturate(3) hue-rotate(-10deg); cursor: pointer; }
 
   /* ACTION BUTTONS */
   .ap-actions { display: flex; gap: 6px; align-items: center; }
-  .ap-icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.18s ease; flex-shrink: 0; }
+  .ap-icon-btn { width: 34px; height: 34px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.18s ease; flex-shrink: 0; }
   .ap-edit-btn { background: rgba(255,255,255,0.05); color: rgba(148,163,184,0.6); border: 1px solid rgba(255,255,255,0.06); }
-  .ap-edit-btn:hover { background: rgba(212,175,55,0.12); border-color: rgba(212,175,55,0.3); color: #d4af37; transform: scale(1.05); }
-  .ap-save-btn { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; }
+  .ap-edit-btn:hover { background: var(--accent-glow); border-color: rgba(194,97,26,0.35); color: var(--accent-hover); transform: scale(1.05); }
+  .ap-save-btn { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); }
   .ap-save-btn:hover:not(:disabled) { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.45); transform: scale(1.05); }
   .ap-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ap-cancel-btn { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: rgba(239,68,68,0.7); }
-  .ap-cancel-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #ef4444; }
+  .ap-cancel-btn { background: var(--danger-bg); border: 1px solid var(--danger-border); color: rgba(239,68,68,0.75); }
+  .ap-cancel-btn:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.45); color: var(--danger); }
 
   /* TOAST */
   .ap-toast {
     position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 12px;
-    font-size: 0.85rem; font-weight: 600; font-family: 'Lato', sans-serif;
+    display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: var(--radius-sm);
+    font-size: 0.85rem; font-weight: 600; font-family: var(--font-body);
     animation: ap-toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 10; white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-lg);
   }
   @keyframes ap-toastIn { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
-  .ap-toast.success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: #10b981; }
-  .ap-toast.error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35); color: #ef4444; }
+  .ap-toast.success { background: rgba(16,185,129,0.18); border: 1px solid var(--success-border); color: var(--success); }
+  .ap-toast.error { background: rgba(239,68,68,0.18); border: 1px solid var(--danger-border); color: var(--danger); }
 
   /* EMPTY */
-  .ap-empty { text-align: center; padding: 60px 20px; color: rgba(148,163,184,0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; letter-spacing: 1px; }
+  .ap-empty { text-align: center; padding: 60px 20px; color: rgba(148,163,184,0.45); font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 1px; }
 
   /* FOOTER */
   .ap-footer { padding: 10px 28px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-  .ap-footer-count { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: rgba(148,163,184,0.35); letter-spacing: 0.5px; }
-  .ap-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; animation: ap-pulse 2s ease-in-out infinite; }
+  .ap-footer-count { font-family: var(--font-mono); font-size: 0.68rem; color: rgba(148,163,184,0.4); letter-spacing: 0.5px; }
+  .ap-footer-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); animation: ap-pulse 2s ease-in-out infinite; }
   @keyframes ap-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-  /* REPAIR BUTTON */
+  /* REPAIR BUTTON (acción de mantenimiento → tono warning, distinto de sync) */
   .ap-btn-repair {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(201,108,40,0.1); border: 1px solid rgba(201,108,40,0.3);
-    color: #c96c28; padding: 8px 16px; border-radius: 10px;
+    background: var(--warning-bg); border: 1px solid rgba(245,158,11,0.3);
+    color: var(--warning); padding: 8px 16px; border-radius: var(--radius-sm);
     font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s ease; font-family: 'Lato', sans-serif; white-space: nowrap;
+    transition: all 0.2s ease; font-family: var(--font-body); white-space: nowrap;
   }
-  .ap-btn-repair:hover:not(:disabled) { background: rgba(201,108,40,0.18); border-color: rgba(201,108,40,0.5); transform: translateY(-1px); }
+  .ap-btn-repair:hover:not(:disabled) { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.5); transform: translateY(-1px); }
   .ap-btn-repair:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .ap-btn-repair.repair-ok { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #10b981; }
-  .ap-btn-repair.repair-err { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+  .ap-btn-repair.repair-ok { background: var(--success-bg); border-color: var(--success-border); color: var(--success); }
+  .ap-btn-repair.repair-err { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
 
-  /* NOTIFY BUTTON */
+  /* NOTIFY BUTTON (acción de comunicación → tono info) */
   .ap-btn-notify {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);
-    color: #60a5fa; padding: 8px 16px; border-radius: 10px;
+    background: var(--info-bg); border: 1px solid rgba(96,165,250,0.3);
+    color: var(--info); padding: 8px 16px; border-radius: var(--radius-sm);
     font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    transition: all 0.2s ease; font-family: 'Lato', sans-serif; white-space: nowrap;
+    transition: all 0.2s ease; font-family: var(--font-body); white-space: nowrap;
   }
-  .ap-btn-notify:hover { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.5); transform: translateY(-1px); }
+  .ap-btn-notify:hover { background: rgba(96,165,250,0.18); border-color: rgba(96,165,250,0.5); transform: translateY(-1px); }
   .ap-btn-notify:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .ap-btn-close { width: 36px; height: 36px; border-radius: 10px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: rgba(239,68,68,0.7); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
-  .ap-btn-close:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #ef4444; }
-
-  @keyframes ap-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .ap-spinning { animation: ap-spin 1s linear infinite; }
+  .ap-btn-close { width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--danger-bg); border: 1px solid var(--danger-border); color: rgba(239,68,68,0.75); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+  .ap-btn-close:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.45); color: var(--danger); }
 
   @media (max-width: 680px) {
     .ap-topbar { grid-template-columns: 1fr auto; padding: 14px 16px; }
@@ -263,57 +264,49 @@ const styles = `
     .ap-search-bar { padding: 10px 16px; }
     .ap-table thead th, .ap-table td { padding: 10px 12px; }
     .ap-btn-sync span, .ap-btn-notify span, .ap-btn-repair span { display: none; }
-    .ap-panel { border-radius: 16px; }
+    .ap-panel { border-radius: var(--radius-md); }
     .ap-sync-log { padding: 8px 16px; }
   }
-    .ap-notify-overlay {
-  position: fixed; inset: 0; background: rgba(5,10,20,0.85);
-  backdrop-filter: blur(8px); z-index: 4000;
-  display: flex; align-items: center; justify-content: center; padding: 16px;
-}
-.ap-notify-box {
-  background: #0d1526; border: 1px solid rgba(212,175,55,0.25);
-  border-radius: 18px; padding: 24px; width: 100%; max-width: 440px;
-  max-height: 85vh; overflow-y: auto;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.8);
-}
-.ap-notify-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.ap-notify-head h3 { margin: 0; color: #d4af37; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
-.ap-notify-label {
-  display: flex; justify-content: space-between; align-items: center;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
-  letter-spacing: 1px; color: rgba(212,175,55,0.5); margin-bottom: 6px;
-}
-.ap-char-count { color: rgba(148,163,184,0.4); }
-.ap-char-count.warn { color: #f59e0b; }
-.ap-notify-history {
-  margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
-}
-.ap-notify-history-title {
-  display: flex; align-items: center; gap: 8px;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; text-transform: uppercase;
-  letter-spacing: 1px; color: rgba(212,175,55,0.5); margin-bottom: 10px;
-}
-.ap-notify-history-item {
-  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
-}
-.ap-notify-history-top { display: flex; justify-content: space-between; gap: 8px; }
-.ap-notify-history-top strong { color: #e2e8f0; font-size: 0.85rem; }
-.ap-notify-history-item p { margin: 4px 0; color: rgba(203,213,225,0.7); font-size: 0.8rem; }
-.ap-notify-history-stat {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: rgba(148,163,184,0.5);
-}
-`;
 
-const PREDICADORES = [
-  "Profeta Pablo Lay",
-  "Profeta Miqueas Lay",
-  "Pastora Karina",
-  "Pastora Cecilia",
-  "Pastora Sofia Lay",
-  "Pastora Candela Lay",
-];
+  .ap-notify-overlay {
+    position: fixed; inset: 0; background: rgba(5,10,20,0.85);
+    backdrop-filter: blur(8px); z-index: var(--z-modal-nested);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .ap-notify-box {
+    background: #0d1526; border: 1px solid var(--accent-glow);
+    border-radius: var(--radius-md); padding: 24px; width: 100%; max-width: 440px;
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  .ap-notify-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .ap-notify-head h3 { margin: 0; color: var(--accent-hover); font-family: var(--font-display); font-size: 1.2rem; }
+  .ap-notify-label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(217,125,53,0.55); margin-bottom: 6px;
+  }
+  .ap-char-count { color: rgba(148,163,184,0.45); }
+  .ap-char-count.warn { color: var(--warning); }
+  .ap-notify-history {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .ap-notify-history-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 1px; color: rgba(217,125,53,0.55); margin-bottom: 10px;
+  }
+  .ap-notify-history-item {
+    background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px;
+  }
+  .ap-notify-history-top { display: flex; justify-content: space-between; gap: 8px; }
+  .ap-notify-history-top strong { color: #e2e8f0; font-size: 0.85rem; }
+  .ap-notify-history-item p { margin: 4px 0; color: rgba(203,213,225,0.7); font-size: 0.8rem; }
+  .ap-notify-history-stat {
+    font-family: var(--font-mono); font-size: 0.68rem; color: rgba(148,163,184,0.5);
+  }
+`;
 
 // ─── ESTADOS DEL SYNC ───
 const SYNC_STATES = {
@@ -339,7 +332,6 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
   const [showLog, setShowLog] = useState(false);
 
   // ─── NOTIFY STATE ───
-  const [notifying, setNotifying] = useState(false);
   const NOTIFY_TITLE_MAX = 65;
   const NOTIFY_BODY_MAX = 150;
 
@@ -352,6 +344,17 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
   // ─── REPAIR STATE ───
   const [repairState, setRepairState] = useState("idle"); // idle | running | ok | error
   const [repairResult, setRepairResult] = useState(null);
+
+  // Escape cierra el modal que esté abierto (notificación primero, si no, el panel entero).
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (showNotifyModal) setShowNotifyModal(false);
+      else onCerrar();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showNotifyModal, onCerrar]);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -451,27 +454,6 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     }
   };
 
-  const probarNotificaciones = async () => {
-    setNotifying(true);
-    try {
-      const apiUrl = (import.meta.env.DEV ? "http://localhost:3001" : "");
-      const res = await fetch(`${apiUrl}/api/test-push`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        showToast("Notificación enviada a todos los suscriptores", "success");
-      } else {
-        showToast("Error al enviar notificación", "error");
-      }
-    } catch {
-      showToast("Error de conexión", "error");
-    } finally {
-      setNotifying(false);
-    }
-  };
-
   const repararFechas = async () => {
     setRepairState("running");
     setRepairResult(null);
@@ -543,6 +525,26 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     );
   };
 
+  const sortHeaderProps = (key, label) => ({
+    onClick: () => toggleSort(key),
+    onKeyDown: (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleSort(key);
+      }
+    },
+    tabIndex: 0,
+    role: "button",
+    "aria-label": `Ordenar por ${label}`,
+    "aria-sort":
+      sortConfig.key === key
+        ? sortConfig.dir === "asc"
+          ? "ascending"
+          : "descending"
+        : "none",
+    className: sortConfig.key === key ? "sorted" : "",
+  });
+
   const predicasFiltradas = useMemo(() => {
     let lista = predicas.filter((p) => {
       const q = busqueda.toLowerCase();
@@ -578,9 +580,9 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
     if (sortConfig.key !== col)
       return <ChevronDown size={10} style={{ opacity: 0.25 }} />;
     return sortConfig.dir === "asc" ? (
-      <ChevronUp size={10} style={{ color: "#d4af37" }} />
+      <ChevronUp size={10} style={{ color: "var(--accent-hover)" }} />
     ) : (
-      <ChevronDown size={10} style={{ color: "#d4af37" }} />
+      <ChevronDown size={10} style={{ color: "var(--accent-hover)" }} />
     );
   };
 
@@ -641,8 +643,8 @@ const enviarNotificacionPersonalizada = async () => {
   }[syncState];
   const syncBtnIcon = {
     [SYNC_STATES.IDLE]: <Wifi size={15} />,
-    [SYNC_STATES.CONNECTING]: <Loader size={15} className="ap-spinning" />,
-    [SYNC_STATES.SYNCING]: <RefreshCw size={15} className="ap-spinning" />,
+    [SYNC_STATES.CONNECTING]: <Loader size={15} className="spinning" />,
+    [SYNC_STATES.SYNCING]: <RefreshCw size={15} className="spinning" />,
     [SYNC_STATES.SUCCESS]: <CheckCircle size={15} />,
     [SYNC_STATES.ERROR]: <WifiOff size={15} />,
   }[syncState];
@@ -654,11 +656,13 @@ const enviarNotificacionPersonalizada = async () => {
         className="ap-overlay"
         onClick={(e) => e.target === e.currentTarget && onCerrar()}
       >
-        <div className="ap-panel">
+        <div className="ap-panel" role="dialog" aria-modal="true" aria-label="Panel de control">
           {/* TOPBAR */}
           <div className="ap-topbar">
             <div className="ap-brand">
-              <div className="ap-brand-icon">🛠️</div>
+              <div className="ap-brand-icon">
+                <Wrench size={18} />
+              </div>
               <div className="ap-brand-text">
                 <h2>Panel de Control</h2>
                 <span>Ministerio La Roca</span>
@@ -702,7 +706,7 @@ const enviarNotificacionPersonalizada = async () => {
                 }
               >
                 {repairState === "running" ? (
-                  <Loader size={15} className="ap-spinning" />
+                  <Loader size={15} className="spinning" />
                 ) : repairState === "ok" ? (
                   <CheckCircle size={15} />
                 ) : repairState === "error" ? (
@@ -738,6 +742,7 @@ const enviarNotificacionPersonalizada = async () => {
                 onClick={onCerrar}
                 className="ap-btn-close"
                 title="Cerrar"
+                aria-label="Cerrar panel de control"
               >
                 <X size={17} />
               </button>
@@ -786,26 +791,17 @@ const enviarNotificacionPersonalizada = async () => {
             <table className="ap-table">
               <thead>
                 <tr>
-                  <th
-                    onClick={() => toggleSort("fecha")}
-                    className={sortConfig.key === "fecha" ? "sorted" : ""}
-                  >
+                  <th {...sortHeaderProps("fecha", "fecha")}>
                     <div className="ap-th-inner">
                       Fecha <SortIcon col="fecha" />
                     </div>
                   </th>
-                  <th
-                    onClick={() => toggleSort("titulo")}
-                    className={sortConfig.key === "titulo" ? "sorted" : ""}
-                  >
+                  <th {...sortHeaderProps("titulo", "título")}>
                     <div className="ap-th-inner">
                       Título <SortIcon col="titulo" />
                     </div>
                   </th>
-                  <th
-                    onClick={() => toggleSort("predicador")}
-                    className={sortConfig.key === "predicador" ? "sorted" : ""}
-                  >
+                  <th {...sortHeaderProps("predicador", "predicador")}>
                     <div className="ap-th-inner">
                       Predicador <SortIcon col="predicador" />
                     </div>
@@ -820,7 +816,9 @@ const enviarNotificacionPersonalizada = async () => {
                   <tr>
                     <td colSpan={4}>
                       <div className="ap-empty">
-                        // Sin resultados para "{busqueda}"
+                        {busqueda
+                          ? `// Sin resultados para "${busqueda}"`
+                          : "// Todavía no hay mensajes sincronizados"}
                       </div>
                     </td>
                   </tr>
@@ -842,6 +840,7 @@ const enviarNotificacionPersonalizada = async () => {
                             <input
                               type="date"
                               className="ap-input"
+                              aria-label="Fecha"
                               value={form.fecha}
                               onChange={(e) =>
                                 setForm({ ...form, fecha: e.target.value })
@@ -852,6 +851,7 @@ const enviarNotificacionPersonalizada = async () => {
                             <input
                               type="text"
                               className="ap-input"
+                              aria-label="Título"
                               value={form.titulo}
                               onChange={(e) =>
                                 setForm({ ...form, titulo: e.target.value })
@@ -862,6 +862,7 @@ const enviarNotificacionPersonalizada = async () => {
                           <td style={{ width: "200px" }}>
                             <select
                               className="ap-input"
+                              aria-label="Predicador"
                               value={form.predicador}
                               onChange={(e) =>
                                 setForm({ ...form, predicador: e.target.value })
@@ -890,11 +891,12 @@ const enviarNotificacionPersonalizada = async () => {
                                 disabled={guardando}
                                 className="ap-icon-btn ap-save-btn"
                                 title="Guardar"
+                                aria-label="Guardar cambios"
                               >
                                 {guardando ? (
                                   <RefreshCw
                                     size={15}
-                                    className="ap-spinning"
+                                    className="spinning"
                                   />
                                 ) : (
                                   <Save size={15} />
@@ -904,6 +906,7 @@ const enviarNotificacionPersonalizada = async () => {
                                 onClick={() => setEditandoId(null)}
                                 className="ap-icon-btn ap-cancel-btn"
                                 title="Cancelar"
+                                aria-label="Cancelar edición"
                               >
                                 <X size={15} />
                               </button>
@@ -940,6 +943,7 @@ const enviarNotificacionPersonalizada = async () => {
                                 onClick={() => empezarEdicion(predica)}
                                 className="ap-icon-btn ap-edit-btn"
                                 title="Editar"
+                                aria-label={`Editar "${predica.titulo}"`}
                               >
                                 <Edit2 size={14} />
                               </button>
@@ -964,13 +968,14 @@ const enviarNotificacionPersonalizada = async () => {
               {showLog && syncLog.length > 0 && (
                 <button
                   onClick={() => setShowLog((v) => !v)}
+                  aria-expanded={showLog}
                   style={{
                     background: "none",
                     border: "none",
                     cursor: "pointer",
-                    fontFamily: "JetBrains Mono, monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "0.65rem",
-                    color: "rgba(212,175,55,0.4)",
+                    color: "rgba(217,125,53,0.55)",
                     letterSpacing: "0.5px",
                   }}
                 >
@@ -1001,15 +1006,19 @@ const enviarNotificacionPersonalizada = async () => {
           className="ap-notify-overlay"
           onClick={(e) => e.target === e.currentTarget && setShowNotifyModal(false)}
         >
-          <div className="ap-notify-box">
+          <div className="ap-notify-box" role="dialog" aria-modal="true" aria-labelledby="notify-modal-title">
             <div className="ap-notify-head">
-              <h3>📢 Notificación personalizada</h3>
-              <button className="ap-btn-close" onClick={() => setShowNotifyModal(false)}>
+              <h3 id="notify-modal-title">📢 Notificación personalizada</h3>
+              <button
+                className="ap-btn-close"
+                onClick={() => setShowNotifyModal(false)}
+                aria-label="Cerrar"
+              >
                 <X size={16} />
               </button>
             </div>
 
-            <label className="ap-notify-label">
+            <label className="ap-notify-label" htmlFor="notify-title">
               Título
               <span
                 className={`ap-char-count ${customNotify.title.length > NOTIFY_TITLE_MAX - 10 ? "warn" : ""}`}
@@ -1018,6 +1027,7 @@ const enviarNotificacionPersonalizada = async () => {
               </span>
             </label>
             <input
+              id="notify-title"
               type="text"
               className="ap-input"
               placeholder="Ej: Encuentro especial esta noche"
@@ -1026,7 +1036,7 @@ const enviarNotificacionPersonalizada = async () => {
               onChange={(e) => setCustomNotify({ ...customNotify, title: e.target.value })}
             />
 
-            <label className="ap-notify-label" style={{ marginTop: 12 }}>
+            <label className="ap-notify-label" htmlFor="notify-body" style={{ marginTop: 12 }}>
               Mensaje
               <span
                 className={`ap-char-count ${customNotify.body.length > NOTIFY_BODY_MAX - 20 ? "warn" : ""}`}
@@ -1035,6 +1045,7 @@ const enviarNotificacionPersonalizada = async () => {
               </span>
             </label>
             <textarea
+              id="notify-body"
               className="ap-input"
               rows={3}
               placeholder="Mensaje que va a recibir la gente"
@@ -1044,13 +1055,16 @@ const enviarNotificacionPersonalizada = async () => {
               style={{ resize: "none" }}
             />
 
+            <label className="ap-notify-label" htmlFor="notify-url" style={{ marginTop: 12 }}>
+              URL de destino (opcional)
+            </label>
             <input
+              id="notify-url"
               type="text"
               className="ap-input"
               placeholder="URL al tocarla (opcional, default: /)"
               value={customNotify.url}
               onChange={(e) => setCustomNotify({ ...customNotify, url: e.target.value })}
-              style={{ marginTop: 12 }}
             />
 
             <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
@@ -1066,7 +1080,7 @@ const enviarNotificacionPersonalizada = async () => {
                 onClick={enviarNotificacionPersonalizada}
                 disabled={sendingCustom}
               >
-                {sendingCustom ? <Loader size={15} className="ap-spinning" /> : <BellRing size={15} />}
+                {sendingCustom ? <Loader size={15} className="spinning" /> : <BellRing size={15} />}
                 <span>Enviar a todos</span>
               </button>
             </div>
@@ -1074,7 +1088,7 @@ const enviarNotificacionPersonalizada = async () => {
             {/* HISTORIAL */}
             <div className="ap-notify-history">
               <div className="ap-notify-history-title">
-                Últimas enviadas {loadingHistory && <Loader size={11} className="ap-spinning" />}
+                Últimas enviadas {loadingHistory && <Loader size={11} className="spinning" />}
               </div>
               {notifyHistory.length === 0 && !loadingHistory && (
                 <div className="ap-empty" style={{ padding: "16px 0" }}>

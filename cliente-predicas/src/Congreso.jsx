@@ -11,10 +11,8 @@ const getDriveId = (url) => {
 };
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
-
   .cg-root {
-    font-family: 'Lato', sans-serif;
+    font-family: var(--font-body);
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
@@ -25,12 +23,12 @@ const styles = `
   .cg-hero {
     position: relative;
     background: linear-gradient(160deg, #2a1205 0%, #1a0a00 50%, #12102a 100%);
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
     padding: 36px 24px 32px;
     text-align: center;
     overflow: hidden;
     margin-bottom: 20px;
-    border: 1px solid rgba(201,108,40,0.2);
+    border: 1px solid rgba(194, 97, 26, 0.2);
     box-sizing: border-box;
   }
 
@@ -44,19 +42,19 @@ const styles = `
 
   .cg-hero-badge {
     display: inline-block;
-    background: #c96c28;
+    background: var(--copper);
     color: #fff;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 2.5px;
     text-transform: uppercase;
     padding: 5px 14px;
-    border-radius: 20px;
+    border-radius: var(--radius-full);
     margin-bottom: 14px;
   }
 
   .cg-hero-title {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-display);
     font-size: clamp(1.8rem, 6vw, 2.6rem);
     font-weight: 400;
     color: #f0e8d8;
@@ -66,7 +64,7 @@ const styles = `
 
   .cg-hero-title em {
     font-style: italic;
-    color: #c96c28;
+    color: var(--copper-light);
   }
 
   .cg-hero-sub {
@@ -96,7 +94,7 @@ const styles = `
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #c96c28;
+    background: var(--copper-light);
     flex-shrink: 0;
   }
 
@@ -111,16 +109,16 @@ const styles = `
   .cg-stat {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 14px 8px;
     text-align: center;
     box-sizing: border-box;
   }
 
   .cg-stat-num {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-display);
     font-size: 26px;
-    color: #c96c28;
+    color: var(--copper);
     line-height: 1;
     margin-bottom: 4px;
   }
@@ -136,7 +134,7 @@ const styles = `
     display: flex;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     padding: 5px;
     gap: 4px;
     margin-bottom: 20px;
@@ -149,11 +147,11 @@ const styles = `
     flex: 1 1 0;
     min-width: 0;
     padding: 10px 4px;
-    border-radius: 12px;
+    border-radius: var(--radius-sm);
     border: none;
     background: transparent;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background var(--transition-base);
     text-align: center;
     box-sizing: border-box;
     overflow: hidden;
@@ -162,8 +160,8 @@ const styles = `
   .cg-tab:hover { background: var(--hover-bg); }
 
   .cg-tab.active {
-    background: linear-gradient(135deg, #c96c28, #a04e1a);
-    box-shadow: 0 4px 12px rgba(201,108,40,0.3);
+    background: linear-gradient(135deg, var(--copper), var(--copper-dark));
+    box-shadow: var(--shadow-copper);
   }
 
   .cg-tab-day {
@@ -177,7 +175,7 @@ const styles = `
   .cg-tab.active .cg-tab-day { color: rgba(255,255,255,0.7); }
 
   .cg-tab-name {
-    font-family: 'Playfair Display', serif;
+    font-family: var(--font-display);
     font-size: 15px;
     color: var(--text-primary);
     white-space: nowrap;
@@ -214,16 +212,16 @@ const styles = `
     flex-shrink: 0;
   }
 
-  .pill-predica {
-    background: rgba(201,108,40,0.12);
-    color: #c96c28;
-    border: 1px solid rgba(201,108,40,0.25);
+  .cg-section-pill.pill-predica {
+    background: var(--accent-glow);
+    color: var(--copper);
+    border: 1px solid rgba(194, 97, 26, 0.25);
   }
 
-  .pill-taller {
-    background: rgba(106,90,191,0.12);
-    color: #8878d8;
-    border: 1px solid rgba(106,90,191,0.25);
+  .cg-section-pill.pill-taller {
+    background: var(--taller-bg);
+    color: var(--taller);
+    border: 1px solid rgba(124, 108, 212, 0.25);
   }
 
   .cg-section-line {
@@ -237,7 +235,7 @@ const styles = `
     padding: 48px 24px;
     color: var(--text-secondary);
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     border: 1px dashed var(--border);
   }
 
@@ -247,26 +245,7 @@ const styles = `
     color: var(--text-secondary);
   }
 
-  /* Badge tipo dentro de card-meta */
-  .tipo-badge {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    padding: 1px 7px;
-    border-radius: 6px;
-  }
-
-  .tipo-badge.predica {
-    background: rgba(201,108,40,0.12);
-    color: #c96c28;
-  }
-
-  .tipo-badge.taller {
-    background: rgba(106,90,191,0.12);
-    color: #8878d8;
-  }
-
-  /* En congreso, el play también hereda el estilo mobile de App.css */
+  /* El play hereda el estilo mobile de App.css */
 `;
 
 const ArchDecor = () => (
@@ -276,16 +255,18 @@ const ArchDecor = () => (
     height="130"
     viewBox="0 0 100 100"
     fill="none"
+    aria-hidden="true"
+    focusable="false"
   >
     <path
       d="M15 95 L15 38 Q15 5 50 5 Q85 5 85 38 L85 95"
-      stroke="#c96c28"
+      stroke="var(--copper)"
       strokeWidth="7"
       strokeLinecap="round"
     />
     <path
       d="M24 95 L24 41 Q24 14 50 14 Q76 14 76 41 L76 95"
-      stroke="#c96c28"
+      stroke="var(--copper)"
       strokeWidth="3"
       strokeLinecap="round"
     />
@@ -349,7 +330,9 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
       try {
         await navigator.share({ title: sesion.nombre, url: sesion.url });
         return;
-      } catch {}
+      } catch {
+        // Usuario canceló el share sheet o el navegador lo rechazó: caemos al portapapeles.
+      }
     }
     navigator.clipboard?.writeText(sesion.url);
   };
@@ -382,15 +365,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
             <span className="pill-date">{diaLabel}</span>
           </div>
           <div className="card-title">{sesion.nombre}</div>
-          <div
-            className="card-author"
-            style={{
-              color: "var(--copper, #c96c28)",
-              fontWeight: 600,
-              fontStyle: "normal",
-              fontSize: "0.82rem",
-            }}
-          >
+          <div className="card-author">
             {sesion.predicador || "Congreso 2026"}
           </div>
         </div>
@@ -399,7 +374,12 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           <button
             onClick={() => toggleFavorito(sesion.id)}
             className={`favorite-btn ${esFav ? "active" : ""}`}
-            title="Favorito"
+            aria-pressed={esFav}
+            aria-label={
+              esFav
+                ? `Quitar "${sesion.nombre}" de favoritos`
+                : `Agregar "${sesion.nombre}" a favoritos`
+            }
           >
             <Heart size={20} fill={esFav ? "currentColor" : "none"} />
           </button>
@@ -407,7 +387,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           <button
             onClick={() => compartir(sesion)}
             className="share-btn"
-            title="Compartir"
+            aria-label={`Compartir "${sesion.nombre}"`}
           >
             <Share2 size={18} />
           </button>
@@ -416,6 +396,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
             href={`${(import.meta.env.DEV ? "http://localhost:3001" : "")}/api/download/${getDriveId(sesion.url)}?name=${encodeURIComponent(sesion.nombre)}`}
             className="download-btn"
             title="Descargar"
+            aria-label={`Descargar "${sesion.nombre}"`}
             download
             onClick={(e) => e.stopPropagation()}
           >
@@ -433,6 +414,7 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
             }
             className="play-btn-round cg-play-round"
             title={isPlaying ? "Reproduciendo..." : "Escuchar"}
+            aria-label={isPlaying ? `Reproduciendo "${sesion.nombre}"` : `Escuchar "${sesion.nombre}"`}
           >
             {isPlaying ? (
               <Pause size={20} fill="currentColor" />
@@ -477,12 +459,14 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
           </div>
         </div>
 
-        <div className="cg-tabs">
+        <div className="cg-tabs" role="tablist" aria-label="Día del congreso">
           {DIAS_CONFIG.map((dia) => {
             const count = (sesiones[dia.key] || []).length;
             return (
               <button
                 key={dia.key}
+                role="tab"
+                aria-selected={diaActivo === dia.key}
                 className={`cg-tab ${diaActivo === dia.key ? "active" : ""}`}
                 onClick={() => setDiaActivo(dia.key)}
               >
@@ -501,11 +485,8 @@ export default function Congreso({ onReproducir, predicaReproduciendo }) {
         </div>
 
         {cargando ? (
-          <div className="cg-loading">
-            <RefreshCw
-              size={32}
-              style={{ animation: "spin 1s linear infinite", color: "#c96c28" }}
-            />
+          <div className="cg-loading" role="status">
+            <RefreshCw size={32} className="spinning" style={{ color: "var(--copper)" }} />
             <p style={{ marginTop: 16 }}>Cargando sesiones...</p>
           </div>
         ) : error ? (
