@@ -388,10 +388,10 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
       // 1. Verificar que el servidor esté vivo
       setSyncProgress(20);
       addLog("Verificando salud del servidor...", "info");
-      const pingRes = await fetch(`${apiUrl}/ping`, {
+      const pingRes = await fetch(`${apiUrl}/api/ping`, {
         signal: AbortSignal.timeout(8000),
       });
-      if (!pingRes.ok) throw new Error("El servidor no responde (/ping falló)");
+      if (!pingRes.ok) throw new Error("El servidor no responde (/api/ping falló)");
       const pingData = await pingRes.json();
       addLog(
         `Servidor OK — última sync: ${pingData.ultimaSync ? new Date(pingData.ultimaSync).toLocaleString("es-AR") : "nunca"}`,

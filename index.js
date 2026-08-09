@@ -719,7 +719,7 @@ app.get("/api/congreso", async (req, res) => {
 });
 
 // === 💓 HEALTH CHECK ===
-app.get("/ping", async (req, res) => {
+app.get("/api/ping", async (req, res) => {
   try {
     await pool.query("SELECT 1");
     res.json({
