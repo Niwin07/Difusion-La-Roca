@@ -1336,6 +1336,14 @@ select:focus {
 .login-card button:hover {
   background: var(--accent-hover);
 }
+.login-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.login-card input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .login-card button.volver {
   background: transparent;
   color: var(--text-secondary);

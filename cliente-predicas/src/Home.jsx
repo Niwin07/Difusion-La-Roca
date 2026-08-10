@@ -360,6 +360,7 @@ const RutasProtegidasAdmin = () => {
   const [autenticado, setAutenticado] = useState(false);
   const [password, setPassword] = useState("");
   const [errorLogin, setErrorLogin] = useState("");
+  const [verificando, setVerificando] = useState(false);
   const [, setLocation] = useLocation();
   const [predicasAdmin, setPredicasAdmin] = useState([]);
   const [cargando, setCargando] = useState(false);
@@ -383,13 +384,34 @@ const RutasProtegidasAdmin = () => {
   }, [autenticado]);
 
   if (!autenticado) {
-    const intentarEntrar = (e) => {
+    // La contraseña se valida contra el servidor (ADMIN_PASSWORD), no
+    // contra un valor fijo en el cliente — así el login refleja la
+    // contraseña real configurada en el backend en cada momento.
+    const intentarEntrar = async (e) => {
       e.preventDefault();
-      if (password === "roca2026") {
-        setErrorLogin("");
-        setAutenticado(true);
-      } else {
-        setErrorLogin("Contraseña incorrecta. Volvé a intentarlo.");
+      if (!password.trim() || verificando) return;
+
+      setVerificando(true);
+      setErrorLogin("");
+      try {
+        const apiUrl = import.meta.env.DEV ? "http://localhost:3001" : "";
+        const res = await fetch(
+          `${apiUrl}/api/notify-history?password=${encodeURIComponent(password)}`,
+        );
+
+        if (res.ok) {
+          setAutenticado(true);
+        } else if (res.status === 503) {
+          setErrorLogin(
+            "El panel de administración no está configurado en el servidor (falta ADMIN_PASSWORD).",
+          );
+        } else {
+          setErrorLogin("Contraseña incorrecta. Volvé a intentarlo.");
+        }
+      } catch {
+        setErrorLogin("No se pudo conectar con el servidor. Probá de nuevo.");
+      } finally {
+        setVerificando(false);
       }
     };
 
@@ -411,6 +433,7 @@ const RutasProtegidasAdmin = () => {
               type="password"
               autoComplete="current-password"
               autoFocus
+              disabled={verificando}
               aria-invalid={!!errorLogin}
               aria-describedby={errorLogin ? "admin-password-error" : undefined}
               value={password}
@@ -428,8 +451,17 @@ const RutasProtegidasAdmin = () => {
             </p>
           )}
 
-          <button type="submit">Entrar</button>
-          <button type="button" className="volver" onClick={() => setLocation("/")}>
+          <button type="submit" disabled={verificando}>
+            {verificando ? (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+                <RefreshCw size={16} className="spinning" aria-hidden="true" />
+                Verificando...
+              </span>
+            ) : (
+              "Entrar"
+            )}
+          </button>
+          <button type="button" className="volver" onClick={() => setLocation("/")} disabled={verificando}>
             Volver al inicio
           </button>
         </form>
