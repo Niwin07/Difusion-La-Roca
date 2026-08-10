@@ -408,11 +408,12 @@ export const AdminPanel = ({ predicas, onCerrar, onRecargar, password }) => {
       const syncRes = await fetch(`${apiUrl}/api/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
         signal: AbortSignal.timeout(30000),
       });
-      if (!syncRes.ok)
-        throw new Error(`El servidor rechazó el sync (${syncRes.status})`);
       const syncData = await syncRes.json();
+      if (!syncRes.ok)
+        throw new Error(syncData.error || `El servidor rechazó el sync (${syncRes.status})`);
       addLog(`Drive: ${syncData.message || "Sincronización iniciada"}`, "ok");
 
       // 3. Esperar un poco para que el servidor procese los archivos
