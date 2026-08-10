@@ -45,13 +45,18 @@ DEALLOCATE PREPARE stmt;
 
 -- 3) suscripciones_push.endpoint — buscado en cada POST /api/subscribe
 --    antes de insertar, para no duplicar suscripciones.
+--    endpoint es TEXT/BLOB en esta base, así que MySQL exige un largo de
+--    prefijo explícito para indexarla (no puede indexar el TEXT completo).
+--    255 alcanza de sobra: los endpoints de push son URLs
+--    (https://fcm.googleapis.com/..., https://updates.push.services.mozilla.com/...)
+--    que ya difieren bien antes del carácter 255.
 SET @idx_exists = (
   SELECT COUNT(1) FROM information_schema.statistics
   WHERE table_schema = DATABASE() AND table_name = 'suscripciones_push' AND index_name = 'idx_suscripciones_endpoint'
 );
 SET @sql = IF(
   @idx_exists = 0,
-  'CREATE INDEX idx_suscripciones_endpoint ON suscripciones_push (endpoint)',
+  'CREATE INDEX idx_suscripciones_endpoint ON suscripciones_push (endpoint(255))',
   'SELECT "idx_suscripciones_endpoint ya existe" AS info'
 );
 PREPARE stmt FROM @sql;
@@ -74,5 +79,10 @@ DEALLOCATE PREPARE stmt;
 -- Si ambas consultas no devuelven filas, es seguro correr:
 --
 --   ALTER TABLE predicas ADD UNIQUE INDEX uq_predicas_drive_id (drive_id);
---   ALTER TABLE suscripciones_push ADD UNIQUE INDEX uq_suscripciones_endpoint (endpoint);
+--   ALTER TABLE suscripciones_push ADD UNIQUE INDEX uq_suscripciones_endpoint (endpoint(255));
+--
+-- Ojo: un UNIQUE con prefijo (255) no garantiza unicidad al 100% si dos
+-- endpoints distintos comparten los primeros 255 caracteres (en la
+-- práctica no pasa con URLs de push, pero no es una garantía matemática
+-- como sí lo sería un UNIQUE sobre la columna completa).
 -- =====================================================================
