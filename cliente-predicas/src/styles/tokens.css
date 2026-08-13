@@ -1,0 +1,155 @@
+/* ===================================================================
+   DESIGN TOKENS — fuente única de verdad para todo el frontend.
+   Identidad: editorial cálido (cobre/terracota/crema), pensado para una
+   librería de mensajes en audio — cercano a un producto de podcasts/medios,
+   no a un sitio institucional estático.
+   =================================================================== */
+
+:root {
+  /* ---------- Marca / acento ---------- */
+  --copper-50: #fdf3e9;
+  --copper-200: #e8c9a3;
+  --copper-400: #d97d35;
+  --copper-500: #c2611a;
+  --copper-600: #9c4c12;
+  --copper-900: #3a1f0a;
+
+  --accent: var(--copper-500);
+  --accent-hover: var(--copper-400);
+  --accent-active: var(--copper-600);
+  --accent-contrast: #ffffff;
+  --accent-tint: rgba(194, 97, 26, 0.1);
+  --accent-tint-strong: rgba(194, 97, 26, 0.18);
+  --accent-ring: rgba(194, 97, 26, 0.35);
+
+  /* ---------- Superficies (tema claro por default) ---------- */
+  --bg: #f7f1e6;
+  --bg-subtle: #efe3d1;
+  --surface: rgba(255, 251, 244, 0.92);
+  --surface-solid: #fffbf4;
+  --surface-sunken: rgba(0, 0, 0, 0.03);
+  --border: rgba(154, 98, 41, 0.18);
+  --border-strong: rgba(154, 98, 41, 0.32);
+  --overlay-scrim: rgba(30, 16, 6, 0.55);
+
+  /* ---------- Texto ---------- */
+  --text-strong: #2c1808;
+  --text: #4a3018;
+  --text-muted: #8a6a4a;
+  --text-faint: #b6997c;
+  --text-on-accent: #ffffff;
+
+  /* ---------- Semánticos ---------- */
+  --success: #1a9c6e;
+  --success-tint: rgba(26, 156, 110, 0.12);
+  --success-border: rgba(26, 156, 110, 0.35);
+  --danger: #e2483d;
+  --danger-tint: rgba(226, 72, 61, 0.1);
+  --danger-border: rgba(226, 72, 61, 0.32);
+  --warning: #d1890a;
+  --warning-tint: rgba(209, 137, 10, 0.12);
+  --warning-border: rgba(209, 137, 10, 0.32);
+  --info: #3b7dd1;
+  --info-tint: rgba(59, 125, 209, 0.12);
+  --info-border: rgba(59, 125, 209, 0.32);
+  --taller: #7256c9;
+  --taller-tint: rgba(114, 86, 201, 0.12);
+  --taller-border: rgba(114, 86, 201, 0.32);
+
+  /* ---------- Tipografía ---------- */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-ui: "Syne", sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.375rem;
+  --text-4xl: 3rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.6;
+
+  /* ---------- Espaciado (base 4px) ---------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* ---------- Radios ---------- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* ---------- Sombras (elevación) ---------- */
+  --shadow-xs: 0 1px 2px rgba(58, 31, 10, 0.06);
+  --shadow-sm: 0 2px 8px rgba(58, 31, 10, 0.08);
+  --shadow-md: 0 8px 24px rgba(58, 31, 10, 0.12);
+  --shadow-lg: 0 20px 48px rgba(58, 31, 10, 0.18);
+  --shadow-accent: 0 8px 24px rgba(194, 97, 26, 0.28);
+
+  /* ---------- Movimiento ---------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 360ms;
+
+  /* ---------- Capas ---------- */
+  --z-header: 100;
+  --z-player: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+
+  /* ---------- Contenedores ---------- */
+  --container-max: 1180px;
+  --container-padding: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* ---------- Tema oscuro ---------- */
+:root[data-theme="dark"] {
+  --bg: #150d05;
+  --bg-subtle: #1d1309;
+  --surface: rgba(31, 20, 10, 0.85);
+  --surface-solid: #201408;
+  --surface-sunken: rgba(0, 0, 0, 0.22);
+  --border: rgba(217, 125, 53, 0.2);
+  --border-strong: rgba(217, 125, 53, 0.35);
+  --overlay-scrim: rgba(0, 0, 0, 0.7);
+
+  --text-strong: #f7ead6;
+  --text: #e3c8a8;
+  --text-muted: #b08a63;
+  --text-faint: #7c5c3c;
+
+  --accent: var(--copper-400);
+  --accent-hover: #e8943f;
+  --accent-active: var(--copper-500);
+  --accent-tint: rgba(217, 125, 53, 0.14);
+  --accent-tint-strong: rgba(217, 125, 53, 0.22);
+  --accent-ring: rgba(217, 125, 53, 0.4);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.6);
+  --shadow-accent: 0 8px 24px rgba(217, 125, 53, 0.25);
+}
+
+/* Breakpoints de referencia (documentados, no hay custom media en CSS
+   plano): 480 mobile chico · 768 tablet · 1024 laptop · 1280 desktop. */

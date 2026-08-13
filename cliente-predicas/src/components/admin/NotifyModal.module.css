@@ -1,0 +1,81 @@
+.count {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.count.warn {
+  color: var(--warning);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.history {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.historyTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+  margin-bottom: var(--space-3);
+}
+
+.historyItem {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.historyTop {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.historyTop strong {
+  color: var(--text-strong);
+  font-size: var(--text-sm);
+}
+
+.historyDate {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.historyBody {
+  margin: 4px 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.historyStat {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-faint);
+}
+
+.emptyHistory {
+  text-align: center;
+  padding: var(--space-4) 0;
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+}
