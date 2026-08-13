@@ -1,0 +1,58 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sm {
+  width: 34px;
+  height: 34px;
+}
+
+.solid {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: var(--shadow-accent);
+}
+.solid:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--accent-contrast);
+  border-color: var(--accent-hover);
+}
+
+.active {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.active:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+  opacity: 0.9;
+}

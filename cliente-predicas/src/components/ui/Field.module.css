@@ -1,0 +1,75 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  text-align: left;
+}
+
+.label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--text-strong);
+  outline: none;
+  transition: border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+  box-sizing: border-box;
+}
+
+.control::placeholder {
+  color: var(--text-faint);
+}
+
+.control:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+
+.control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.control[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--danger);
+}
+
+select.control {
+  cursor: pointer;
+  appearance: auto;
+}
+
+textarea.control {
+  resize: vertical;
+  min-height: 90px;
+}
